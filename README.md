@@ -80,9 +80,9 @@ Proyek ini telah dikonfigurasi 100% kompatibel dengan hosting Vercel.
 epe-matematika/
 ├── index.html                  # Halaman utama aplikasi (3 Tab: Diagnostik, Latihan, Riwayat)
 ├── README.md                   # Dokumentasi lengkap & panduan deployment
-├── package.json                # Skrip build Vite & dependensi
-├── vite.config.ts              # Konfigurasi bundler Vite
-├── vercel.json                 # Konfigurasi rilis Vercel hosting
+├── package.json                # Dependensi & skrip siap deploy
+├── vite.config.js              # Konfigurasi bundler Vite (Pure JS)
+├── vercel.json                 # Konfigurasi rilis Vercel hosting (Zero-config static)
 ├── dist/                       # Direktori siap rilis untuk hosting web
 ├── css/
 │   └── style.css               # Desain modern, responsive, dark/light mode, media recording styling
