@@ -3,6 +3,8 @@
  * Error Pattern Engine (EPE)
  */
 
+import { saveDiagnosisToSupabase } from "../data/supabaseClient.js";
+
 export class HistoryManager {
   constructor(storageKey = "epe_diagnosis_history") {
     this.storageKey = storageKey;
@@ -56,6 +58,8 @@ export class HistoryManager {
       this.history.pop();
     }
     this._saveHistory();
+    // Simpan otomatis ke database cloud Supabase secara asinkron
+    saveDiagnosisToSupabase(resultPackage);
     return entry;
   }
 
