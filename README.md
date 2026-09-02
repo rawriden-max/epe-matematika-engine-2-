@@ -83,7 +83,6 @@ epe-matematika/
 ├── package.json                # Dependensi & skrip siap deploy
 ├── vite.config.js              # Konfigurasi bundler Vite (Pure JS)
 ├── vercel.json                 # Konfigurasi rilis Vercel hosting (Zero-config static)
-├── dist/                       # Direktori siap rilis untuk hosting web
 ├── css/
 │   └── style.css               # Desain modern, responsive, dark/light mode, media recording styling
 └── js/
