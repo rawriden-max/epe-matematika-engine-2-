@@ -185,6 +185,7 @@ class EpeAppV2 {
       evidenceText: document.getElementById("evidence-text"),
       remediationText: document.getElementById("remediation-text"),
       btnStartRemediationFromDiag: document.getElementById("btn-start-remediation-from-diag"),
+      btnViewCubeOnDash: document.getElementById("btn-view-cube-on-dash"),
 
       // Tab 2: Bank Latihan & Ujian
       practiceQuestionList: document.getElementById("practice-question-list"),
@@ -366,7 +367,16 @@ class EpeAppV2 {
       this.elements.sectionDashboard?.classList.remove("hidden");
       this.motivationManager?.updateDashboardWidgets();
       this.updateDashboardRecentSummary();
-      if (this.cubeEngine) this.cubeEngine.resize();
+      if (this.cubeEngine) {
+        this.cubeEngine.resize();
+        if (this.pendingDropCubeId) {
+          const qToDrop = this.pendingDropCubeId;
+          this.pendingDropCubeId = null;
+          setTimeout(() => {
+            if (this.cubeEngine) this.cubeEngine.triggerDropAnimation(qToDrop);
+          }, 180);
+        }
+      }
     } else if (tabName === "diagnostic") {
       this.elements.tabBtnDiagnostic?.classList.add("active");
       this.elements.sectionDiagnostic?.classList.remove("hidden");
@@ -577,6 +587,7 @@ class EpeAppV2 {
 
     // Micro-reward sequence: perbarui Learning Cubes
     this.motivationManager?.handleQuestionSubmitted(this.activeQuestionId, result);
+    this.pendingDropCubeId = this.activeQuestionId;
 
     // Refresh visual navigator grid
     this.renderQuestionGrid();
@@ -621,6 +632,10 @@ class EpeAppV2 {
       } else {
         this.elements.btnStartRemediationFromDiag.classList.add("hidden");
       }
+    }
+
+    if (this.elements.btnViewCubeOnDash) {
+      this.elements.btnViewCubeOnDash.classList.remove("hidden");
     }
   }
 
@@ -1101,6 +1116,12 @@ class EpeAppV2 {
         if (this.latestResult) {
           this.startAdaptiveRemediation(this.latestResult.primaryErrorCode, this.latestResult.domainId);
         }
+      });
+    }
+
+    if (this.elements.btnViewCubeOnDash) {
+      this.elements.btnViewCubeOnDash.addEventListener("click", () => {
+        this.switchTab("dashboard");
       });
     }
 
