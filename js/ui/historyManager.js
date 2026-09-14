@@ -47,6 +47,8 @@ export class HistoryManager {
       confidence: resultPackage.confidenceText,
       evidence: resultPackage.evidence,
       remediation: resultPackage.remediation,
+      studentSteps: resultPackage.studentSteps || "",
+      studentAnswer: resultPackage.studentAnswer || "",
       isCorrect: resultPackage.isCorrect || false,
       hasImage: !!resultPackage.media?.image,
       hasAudio: !!resultPackage.media?.audio
@@ -155,7 +157,8 @@ export class HistoryManager {
       escapeCsv(item.remediation)
     ]);
 
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
+    // Menambahkan BOM \uFEFF dan direktif sep=, agar Microsoft Excel di semua versi/region (termasuk Windows Indonesia) otomatis membagi kolom dengan rapi
+    const csvContent = "\uFEFFsep=,\r\n" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const filename = `epe_riwayat_diagnosa_${new Date().toISOString().slice(0, 10)}.csv`;
 

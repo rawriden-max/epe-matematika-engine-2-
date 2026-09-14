@@ -1,9 +1,9 @@
 /**
- * app.js - Controller Utama Aplikasi Error Pattern Engine (EPE) & Bank Soal Latihan
- * Menghubungkan Mode Diagnostik Baku, Mode Bank Soal Multimedia, dan Riwayat Statistik
+ * app.js - Controller Utama Error Pattern Engine (EPE) V2
+ * Menghubungkan 3D Learning Cubes, Radial Theme Selector, Error Profile,
+ * Mode Diagnostik Baku, Bank Latihan Multimedia, dan Mode Riset Pakar.
  */
 
-// Note: style.css is already loaded via <link> in index.html
 import { QUESTIONS, DOMAINS } from "./data/questions.js";
 import { SAMPLE_PRESETS } from "./data/samplePresets.js";
 import { CustomQuestionStore } from "./data/customQuestionStore.js";
@@ -12,28 +12,38 @@ import { MathToolbar } from "./ui/mathToolbar.js";
 import { HistoryManager } from "./ui/historyManager.js";
 import { NotificationToast } from "./ui/notification.js";
 import { MediaManager, VoiceRecorder } from "./ui/mediaManager.js";
+import { syncAllHistoryToSupabase, exportCloudDataToCSV } from "./data/supabaseClient.js";
 
-class EpeApp {
+// Modul Baru EPE V2
+import { CubeStore, CUBE_STATES } from "./data/cubeStore.js";
+import { IsometricCubeEngine } from "./ui/cubeEngine.js";
+import { ThemeManager } from "./ui/themeManager.js";
+import { MotivationManager } from "./ui/motivationManager.js";
+import { ErrorProfileManager } from "./ui/errorProfile.js";
+
+class EpeAppV2 {
   constructor() {
     this.questions = QUESTIONS;
     this.domains = DOMAINS;
     this.presets = SAMPLE_PRESETS;
     this.historyManager = new HistoryManager();
     this.customStore = new CustomQuestionStore();
+    this.cubeStore = new CubeStore();
+
+    // State Navigasi ('dashboard' | 'diagnostic' | 'practice' | 'error-profile' | 'research')
+    this.activeTab = "dashboard";
+    this.currentMode = "student"; // 'student' | 'research'
 
     // State Diagnostik Baku
     this.activeQuestionId = "Q1";
     this.activeDomainFilter = "ALL";
     this.latestResult = null;
-    this.theme = localStorage.getItem("epe_theme") || "light";
-
-    // State Mode Navigasi Tab ('diagnostic' | 'practice' | 'history')
-    this.activeTab = "diagnostic";
+    this.remediationTargetQuestionId = null;
 
     // State Latihan Mandiri
     this.activePracticeQuestionId = null;
-    this.studentPhotoData = null; // { name, dataUrl, size }
-    this.studentVoiceData = null; // { blob, url, base64, duration }
+    this.studentPhotoData = null;
+    this.studentVoiceData = null;
     this.studentVoiceRecorder = null;
 
     // State Modal Tambah Soal
@@ -42,53 +52,113 @@ class EpeApp {
     this.newQAudio = null;
     this.newQVoiceRecorder = null;
 
-    // DOM Elements Cache
+    // Engines & Managers
+    this.themeManager = null;
+    this.cubeEngine = null;
+    this.motivationManager = null;
+    this.errorProfileManager = null;
+
     this.elements = {};
   }
 
   init() {
     this.cacheElements();
-    this.applyTheme(this.theme);
-    
-    // Inisialisasi Mode Diagnostik Baku
+
+    // 1. Inisialisasi Theme Manager & Radial Color Menu
+    this.themeManager = new ThemeManager({
+      onThemeChange: (palette) => {
+        if (this.cubeEngine) {
+          this.cubeEngine.setThemeColors({
+            accent: palette.accent,
+            accentGlow: palette.accentGlow
+          });
+        }
+      }
+    });
+
+    // 2. Inisialisasi 3D Isometric Cube Engine
+    this.initCubeEngine();
+
+    // 3. Inisialisasi Motivation Layer
+    this.motivationManager = new MotivationManager({
+      cubeStore: this.cubeStore,
+      cubeEngine: this.cubeEngine,
+      onNavigateQuestion: (qid) => {
+        this.selectQuestion(qid);
+        this.switchTab("diagnostic");
+      },
+      onStartRemediation: (errCode, domainId) => {
+        this.startAdaptiveRemediation(errCode, domainId);
+      }
+    });
+
+    // 4. Inisialisasi Error Profile Manager
+    this.errorProfileManager = new ErrorProfileManager({
+      historyManager: this.historyManager,
+      cubeStore: this.cubeStore,
+      onStartRemediation: (errCode, domainId) => {
+        this.startAdaptiveRemediation(errCode, domainId);
+      }
+    });
+
+    // 5. Inisialisasi Komponen Diagnostik Baku
     this.renderDomainFilters();
     this.renderQuestionGrid();
     this.renderPresetSelector();
     this.renderMathToolbar();
     this.selectQuestion(this.activeQuestionId);
 
-    // Inisialisasi Mode Latihan Mandiri
+    // 6. Inisialisasi Latihan Mandiri & Voice Recorders
     this.initPracticeMode();
-
-    // Inisialisasi Perekam Suara (Voice Recorders)
     this.initVoiceRecorders();
 
-    // Inisialisasi Event Handlers
+    // 7. Binding Event Handlers
     this.bindEvents();
 
-    // Update Statistik Awal
+    // 8. Update Statistik Awal
     this.updateStatsAndHistory();
+    this.updateDashboardRecentSummary();
 
-    console.log("Error Pattern Engine (EPE) & Practice Store Berhasil Diinisialisasi.");
+    console.log("EPE V2 (Error Pattern Engine & Learning Cubes) Berhasil Diinisialisasi.");
   }
 
   cacheElements() {
     this.elements = {
-      // Theme & Guide
-      themeToggleBtn: document.getElementById("theme-toggle-btn"),
-      themeIcon: document.getElementById("theme-icon"),
+      // Navigation Tabs
+      tabBtnDashboard: document.getElementById("tab-btn-dashboard"),
+      tabBtnDiagnostic: document.getElementById("tab-btn-diagnostic"),
+      tabBtnPractice: document.getElementById("tab-btn-practice"),
+      tabBtnErrorProfile: document.getElementById("tab-btn-error-profile"),
+      tabBtnResearch: document.getElementById("tab-btn-research"),
+
+      // Section Containers
+      sectionDashboard: document.getElementById("section-dashboard-mode"),
+      sectionDiagnostic: document.getElementById("section-diagnostic-mode"),
+      sectionPractice: document.getElementById("section-practice-mode"),
+      sectionErrorProfile: document.getElementById("section-error-profile"),
+      sectionResearch: document.getElementById("section-research-mode"),
+
+      // Mode Switcher
+      btnModeStudent: document.getElementById("btn-mode-student"),
+      btnModeResearch: document.getElementById("btn-mode-research"),
+      btnModeStudentM: document.getElementById("btn-mode-student-m"),
+      btnModeResearchM: document.getElementById("btn-mode-research-m"),
+
+      // Guide Modal
       btnOpenGuide: document.getElementById("btn-open-guide"),
       btnCloseGuide: document.getElementById("btn-close-guide"),
       btnCloseGuide2: document.getElementById("btn-close-guide-2"),
       guideModal: document.getElementById("guide-modal"),
 
-      // Navigation Tabs
-      tabBtnDiagnostic: document.getElementById("tab-btn-diagnostic"),
-      tabBtnPractice: document.getElementById("tab-btn-practice"),
-      tabBtnHistory: document.getElementById("tab-btn-history"),
-      sectionDiagnostic: document.getElementById("section-diagnostic-mode"),
-      sectionPractice: document.getElementById("section-practice-mode"),
-      sectionHistory: document.getElementById("section-history-mode"),
+      // Dashboard Elements
+      dashStudentName: document.getElementById("dash-student-name"),
+      dashRecentEvidence: document.getElementById("dash-recent-evidence"),
+      dashRecentQBadge: document.getElementById("dash-recent-q-badge"),
+      dashRecentRemedyBox: document.getElementById("dash-recent-remedy-box"),
+      dashRecentRemedyText: document.getElementById("dash-recent-remedy-text"),
+      dashBtnOpenDiagnostic: document.getElementById("dash-btn-open-diagnostic"),
+      dashBtnOpenPractice: document.getElementById("dash-btn-open-practice"),
+      cubeTooltip: document.getElementById("cube-tooltip"),
 
       // Tab 1: Diagnostik Baku
       domainFilterContainer: document.getElementById("domain-filter-container"),
@@ -108,16 +178,15 @@ class EpeApp {
       btnAnalyze: document.getElementById("btn-analyze"),
       btnReset: document.getElementById("btn-reset"),
       btnCopyOutput: document.getElementById("btn-copy-output"),
-      outputSection: document.getElementById("output-section"),
-      outputPlainText: document.getElementById("output-plain-text"),
       confidenceBar: document.getElementById("confidence-bar"),
       confidenceScoreText: document.getElementById("confidence-score-text"),
       primaryTaxonomyBadge: document.getElementById("primary-taxonomy-badge"),
       secondaryTaxonomyBadge: document.getElementById("secondary-taxonomy-badge"),
       evidenceText: document.getElementById("evidence-text"),
       remediationText: document.getElementById("remediation-text"),
+      btnStartRemediationFromDiag: document.getElementById("btn-start-remediation-from-diag"),
 
-      // Tab 2: Bank Latihan & Ujian Siswa
+      // Tab 2: Bank Latihan & Ujian
       practiceQuestionList: document.getElementById("practice-question-list"),
       practiceQuestionCountBadge: document.getElementById("practice-question-count-badge"),
       btnOpenCreateModal: document.getElementById("btn-open-create-question-modal"),
@@ -164,7 +233,7 @@ class EpeApp {
       practiceResultEvidence: document.getElementById("practice-result-evidence"),
       practiceResultRemediation: document.getElementById("practice-result-remediation"),
 
-      // Tab 3: Riwayat & Statistik
+      // Tab 4: Riset & Statistik Pakar
       statTotalCount: document.getElementById("stat-total-count"),
       statE0Count: document.getElementById("stat-e0-count"),
       statE0Sub: document.getElementById("stat-e0-sub"),
@@ -176,12 +245,16 @@ class EpeApp {
       statE3Sub: document.getElementById("stat-e3-sub"),
       statE4Count: document.getElementById("stat-e4-count"),
       statE4Sub: document.getElementById("stat-e4-sub"),
+      outputPlainText: document.getElementById("output-plain-text"),
+      btnCopyResearchText: document.getElementById("btn-copy-research-text"),
       historyTableBody: document.getElementById("history-table-body"),
       historyEmptyState: document.getElementById("history-empty-state"),
+      btnSyncSupabase: document.getElementById("btn-sync-supabase"),
+      btnExportCloudCsv: document.getElementById("btn-export-cloud-csv"),
       btnExportCsvTab: document.getElementById("btn-export-csv-tab"),
       btnClearHistory: document.getElementById("btn-clear-history"),
 
-      // Modal Tambah Soal Baru
+      // Modal Tambah Soal
       createQuestionModal: document.getElementById("create-question-modal"),
       createQuestionForm: document.getElementById("create-question-form"),
       btnCloseCreateModal: document.getElementById("btn-close-create-modal"),
@@ -210,7 +283,7 @@ class EpeApp {
       newQAudioPlayer: document.getElementById("new-q-audio-player"),
       btnNewQRemoveAudio: document.getElementById("btn-new-q-remove-audio"),
 
-      // Lightbox Zoom Gambar
+      // Lightbox
       imageLightboxModal: document.getElementById("image-lightbox-modal"),
       lightboxImg: document.getElementById("lightbox-img"),
       btnCloseLightbox: document.getElementById("btn-close-lightbox")
@@ -218,62 +291,123 @@ class EpeApp {
   }
 
   // =========================================================================
-  // THEME MANAGEMENT
+  // 3D ISOMETRIC CUBES ENGINE INITIALIZATION
   // =========================================================================
-  applyTheme(theme) {
-    this.theme = theme;
-    localStorage.setItem("epe_theme", theme);
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-      document.body.classList.add("theme-dark");
-      if (this.elements.themeIcon) {
-        this.elements.themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>`;
+  initCubeEngine() {
+    this.cubeEngine = new IsometricCubeEngine({
+      canvasId: "cube-monument-canvas",
+      cubeStore: this.cubeStore,
+      onCubeClick: (cubeData) => {
+        if (!cubeData) return;
+        this.selectQuestion(cubeData.questionId);
+        this.switchTab("diagnostic");
+        NotificationToast.show(`Membuka soal ${cubeData.questionId} (${cubeData.domainId})`, "info");
+      },
+      onCubeHover: (cubeData, pos) => {
+        const tooltip = this.elements.cubeTooltip;
+        if (!tooltip) return;
+
+        if (!cubeData) {
+          tooltip.classList.add("opacity-0");
+          setTimeout(() => tooltip.classList.add("hidden"), 150);
+          return;
+        }
+
+        const stateLabels = {
+          LOCKED: "🔒 Belum Dikerjakan",
+          DIAGNOSED_E0: "✨ Akurat (E0)",
+          DIAGNOSED_ERROR: `⚠️ Pola: ${cubeData.errorCode || "Perlu Perhatian"}`,
+          REMEDIATED: "💎 Kristal (Telah Diremediasi)",
+          VERIFIED: "👑 Terverifikasi"
+        };
+
+        tooltip.innerHTML = `
+          <div class="font-mono font-bold text-blue-400 mb-0.5">${cubeData.questionId} · ${cubeData.domainId}</div>
+          <div class="font-bold text-white text-xs line-clamp-1">${cubeData.title}</div>
+          <div class="text-[11px] text-slate-300 mt-1">${stateLabels[cubeData.state] || cubeData.state}</div>
+        `;
+
+        tooltip.style.left = `${pos.clientX + 14}px`;
+        tooltip.style.top = `${pos.clientY - 10}px`;
+        tooltip.classList.remove("hidden");
+        requestAnimationFrame(() => tooltip.classList.remove("opacity-0"));
       }
-    } else {
-      document.documentElement.classList.remove("dark");
-      document.body.classList.remove("theme-dark");
-      if (this.elements.themeIcon) {
-        this.elements.themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>`;
-      }
-    }
+    });
   }
 
-  toggleTheme() {
-    this.applyTheme(this.theme === "dark" ? "light" : "dark");
-  }
-
   // =========================================================================
-  // TAB NAVIGATION
+  // TAB & MODE NAVIGATION
   // =========================================================================
   switchTab(tabName) {
     this.activeTab = tabName;
 
-    // Reset tab button styles
-    [this.elements.tabBtnDiagnostic, this.elements.tabBtnPractice, this.elements.tabBtnHistory].forEach((btn) => {
-      if (btn) btn.classList.remove("active");
-    });
+    // Reset button states
+    const navButtons = [
+      this.elements.tabBtnDashboard,
+      this.elements.tabBtnDiagnostic,
+      this.elements.tabBtnPractice,
+      this.elements.tabBtnErrorProfile,
+      this.elements.tabBtnResearch
+    ];
+    navButtons.forEach((btn) => btn?.classList.remove("active"));
 
     // Hide all sections
-    if (this.elements.sectionDiagnostic) this.elements.sectionDiagnostic.classList.add("hidden");
-    if (this.elements.sectionPractice) this.elements.sectionPractice.classList.add("hidden");
-    if (this.elements.sectionHistory) this.elements.sectionHistory.classList.add("hidden");
+    const sections = [
+      this.elements.sectionDashboard,
+      this.elements.sectionDiagnostic,
+      this.elements.sectionPractice,
+      this.elements.sectionErrorProfile,
+      this.elements.sectionResearch
+    ];
+    sections.forEach((sec) => sec?.classList.add("hidden"));
 
-    if (tabName === "diagnostic") {
+    if (tabName === "dashboard") {
+      this.elements.tabBtnDashboard?.classList.add("active");
+      this.elements.sectionDashboard?.classList.remove("hidden");
+      this.motivationManager?.updateDashboardWidgets();
+      this.updateDashboardRecentSummary();
+      if (this.cubeEngine) this.cubeEngine.resize();
+    } else if (tabName === "diagnostic") {
       this.elements.tabBtnDiagnostic?.classList.add("active");
       this.elements.sectionDiagnostic?.classList.remove("hidden");
+      this.renderQuestionGrid();
     } else if (tabName === "practice") {
       this.elements.tabBtnPractice?.classList.add("active");
       this.elements.sectionPractice?.classList.remove("hidden");
       this.renderPracticeQuestionList();
-    } else if (tabName === "history") {
-      this.elements.tabBtnHistory?.classList.add("active");
-      this.elements.sectionHistory?.classList.remove("hidden");
+    } else if (tabName === "error-profile") {
+      this.elements.tabBtnErrorProfile?.classList.add("active");
+      this.elements.sectionErrorProfile?.classList.remove("hidden");
+      this.errorProfileManager?.render();
+    } else if (tabName === "research") {
+      this.elements.tabBtnResearch?.classList.add("active");
+      this.elements.sectionResearch?.classList.remove("hidden");
       this.updateStatsAndHistory();
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  setMode(mode) {
+    this.currentMode = mode;
+    [this.elements.btnModeStudent, this.elements.btnModeStudentM].forEach((b) => {
+      if (b) b.classList.toggle("active", mode === "student");
+    });
+    [this.elements.btnModeResearch, this.elements.btnModeResearchM].forEach((b) => {
+      if (b) b.classList.toggle("active", mode === "research");
+    });
+
+    if (mode === "research") {
+      this.switchTab("research");
+      NotificationToast.show("Mode Riset & Guru Aktif.", "info");
+    } else {
+      this.switchTab("dashboard");
+      NotificationToast.show("Mode Siswa Aktif.", "info");
     }
   }
 
   // =========================================================================
-  // TAB 1: DIAGNOSTIK BAKU (24 SOAL)
+  // TAB 1: DIAGNOSTIK BAKU (24 SOAL PENELITIAN)
   // =========================================================================
   renderDomainFilters() {
     if (!this.elements.domainFilterContainer) return;
@@ -296,17 +430,37 @@ class EpeApp {
     if (!this.elements.questionGridContainer) return;
     const filtered = this.questions.filter((q) => this.activeDomainFilter === "ALL" || q.domainId === this.activeDomainFilter);
     let html = "";
+
     filtered.forEach((q) => {
       const isActive = q.id === this.activeQuestionId;
+      const cube = this.cubeStore.getCube(q.id);
+      let statusDotClass = "q-status-unsolved";
+      let statusTitle = "Belum dikerjakan";
+
+      if (cube) {
+        if (cube.state === CUBE_STATES.DIAGNOSED_E0) {
+          statusDotClass = "q-status-e0";
+          statusTitle = "Selesai Akurat (E0)";
+        } else if (cube.state === CUBE_STATES.DIAGNOSED_ERROR) {
+          statusDotClass = "q-status-error";
+          statusTitle = `Perlu Remedi (${cube.errorCode || "Error"})`;
+        } else if (cube.state === CUBE_STATES.REMEDIATED || cube.state === CUBE_STATES.VERIFIED) {
+          statusDotClass = "q-status-remediated";
+          statusTitle = "Telah Diremediasi (Crystal)";
+        }
+      }
+
       html += `
-        <button data-qid="${q.id}" class="q-btn ${isActive ? "active" : ""}" title="Soal ${q.id} (${q.domainId})">
-          <span class="q-badge">${q.domainId}</span>
-          <span>${q.id}</span>
+        <button data-qid="${q.id}" class="q-nav-item ${isActive ? "active" : ""}" title="${q.id} · ${statusTitle}">
+          <span class="text-[10px] opacity-75">${q.domainId}</span>
+          <span class="text-xs font-bold font-mono">${q.id}</span>
+          <span class="q-status-dot ${statusDotClass}"></span>
         </button>
       `;
     });
+
     this.elements.questionGridContainer.innerHTML = html;
-    this.elements.questionGridContainer.querySelectorAll(".q-btn").forEach((btn) => {
+    this.elements.questionGridContainer.querySelectorAll("[data-qid]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         this.selectQuestion(e.currentTarget.getAttribute("data-qid"));
       });
@@ -315,7 +469,7 @@ class EpeApp {
 
   renderPresetSelector() {
     if (!this.elements.presetSelect) return;
-    let html = '<option value="">-- Pilih Contoh Jawaban Simulasi Siswa --</option>';
+    let html = '<option value="">-- Pilih Contoh Simulasi Respon Siswa --</option>';
     const categories = [
       { code: "E0", label: "Jawaban Benar / Akurat (E0)" },
       { code: "E1", label: "Kesalahan Konseptual (E1)" },
@@ -405,6 +559,7 @@ class EpeApp {
       return;
     }
 
+    // Eksekusi core Error Pattern Engine (preserve research logic 100%)
     const result = ErrorPatternEngine.analyze({
       studentId,
       questionId: this.activeQuestionId,
@@ -414,10 +569,19 @@ class EpeApp {
 
     this.latestResult = result;
     this.historyManager.addEntry(result);
+
+    // Render output
     this.renderDiagnosticOutput(result);
     this.updateStatsAndHistory();
+    this.updateDashboardRecentSummary(result);
 
-    NotificationToast.show("Diagnosis EPE berhasil dijalankan!", "success");
+    // Micro-reward sequence: perbarui Learning Cubes
+    this.motivationManager?.handleQuestionSubmitted(this.activeQuestionId, result);
+
+    // Refresh visual navigator grid
+    this.renderQuestionGrid();
+
+    // Scroll to output on smaller screens
     if (window.innerWidth < 1024 && this.elements.outputSection) {
       this.elements.outputSection.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -437,7 +601,7 @@ class EpeApp {
     if (this.elements.primaryTaxonomyBadge) {
       const isCorrect = result.primaryErrorCode === "E0";
       this.elements.primaryTaxonomyBadge.textContent = result.primaryErrorText;
-      this.elements.primaryTaxonomyBadge.className = isCorrect ? "text-xs font-bold text-emerald-600 dark:text-emerald-400" : "text-xs font-bold text-rose-600 dark:text-rose-400";
+      this.elements.primaryTaxonomyBadge.className = isCorrect ? "text-xs font-bold text-emerald-400" : "text-xs font-bold text-amber-400";
     }
     if (this.elements.secondaryTaxonomyBadge) {
       this.elements.secondaryTaxonomyBadge.textContent = result.secondaryErrorText || "Tidak ada";
@@ -448,15 +612,49 @@ class EpeApp {
     if (this.elements.remediationText) {
       this.elements.remediationText.textContent = result.remediation;
     }
+
+    // Toggle tombol mulai remediasi jika bukan E0
+    if (this.elements.btnStartRemediationFromDiag) {
+      if (result.primaryErrorCode !== "E0") {
+        this.elements.btnStartRemediationFromDiag.classList.remove("hidden");
+        this.elements.btnStartRemediationFromDiag.textContent = `Mulai Latihan Remediasi untuk ${result.primaryErrorCode}`;
+      } else {
+        this.elements.btnStartRemediationFromDiag.classList.add("hidden");
+      }
+    }
+  }
+
+  startAdaptiveRemediation(errorCode, domainId) {
+    this.remediationTargetQuestionId = this.activeQuestionId;
+    this.switchTab("practice");
+    NotificationToast.show(`Memulai remediasi untuk pola ${errorCode || "perbaikan"}...`, "info");
+  }
+
+  updateDashboardRecentSummary(result = null) {
+    const r = result || this.latestResult || (this.historyManager.getAll()[0] || null);
+    if (!r) return;
+
+    if (this.elements.dashRecentQBadge) {
+      this.elements.dashRecentQBadge.textContent = r.questionId;
+    }
+    if (this.elements.dashRecentEvidence) {
+      this.elements.dashRecentEvidence.textContent = r.evidence || "Analisis diagnostik selesai.";
+      this.elements.dashRecentEvidence.classList.remove("italic");
+    }
+    if (this.elements.dashRecentRemedyBox && this.elements.dashRecentRemedyText) {
+      this.elements.dashRecentRemedyText.textContent = r.remediation || "-";
+      this.elements.dashRecentRemedyBox.classList.remove("hidden");
+    }
   }
 
   handleCopyOutput() {
-    if (!this.latestResult || !this.latestResult.rawPlainText) {
+    const text = this.latestResult ? this.latestResult.rawPlainText : this.elements.outputPlainText?.textContent;
+    if (!text) {
       NotificationToast.show("Belum ada hasil analisis untuk disalin.", "warning");
       return;
     }
-    navigator.clipboard.writeText(this.latestResult.rawPlainText).then(() => {
-      NotificationToast.show("Teks diagnosis berhasil disalin ke clipboard!", "success");
+    navigator.clipboard.writeText(text).then(() => {
+      NotificationToast.show("Format baku penelitian berhasil disalin ke clipboard!", "success");
     }).catch(() => {
       NotificationToast.show("Gagal menyalin teks.", "error");
     });
@@ -559,7 +757,7 @@ class EpeApp {
       }
     }
 
-    // Multimedia: Image
+    // Media Image
     if (this.elements.practiceMediaImageBox && this.elements.practiceMediaImgTag) {
       if (q.image && q.image.dataUrl) {
         this.elements.practiceMediaImgTag.src = q.image.dataUrl;
@@ -569,7 +767,7 @@ class EpeApp {
       }
     }
 
-    // Multimedia: Audio
+    // Media Audio
     if (this.elements.practiceMediaAudioBox && this.elements.practiceMediaAudioPlayer) {
       if (q.audioNote && (q.audioNote.dataUrl || q.audioNote.url)) {
         this.elements.practiceMediaAudioPlayer.src = q.audioNote.dataUrl || q.audioNote.url;
@@ -580,7 +778,7 @@ class EpeApp {
       }
     }
 
-    // Multimedia: File
+    // Media File
     if (this.elements.practiceMediaFileBox && this.elements.practiceMediaFileLink) {
       if (q.fileAttachment && q.fileAttachment.dataUrl) {
         this.elements.practiceMediaFileLink.href = q.fileAttachment.dataUrl;
@@ -592,7 +790,7 @@ class EpeApp {
       }
     }
 
-    // Update Kunci & Pembahasan
+    // Kunci Jawaban
     if (this.elements.practiceStandardAnswerText) {
       this.elements.practiceStandardAnswerText.textContent = `Kunci: ${q.standardAnswer || "-"}`;
     }
@@ -639,6 +837,12 @@ class EpeApp {
     this.historyManager.addEntry(result);
     this.updateStatsAndHistory();
 
+    // Jika ini adalah sesi latihan remediasi untuk kubus tertentu
+    if (this.remediationTargetQuestionId && result.isCorrect) {
+      this.motivationManager?.handleRemediationCompleted(this.remediationTargetQuestionId);
+      this.remediationTargetQuestionId = null;
+    }
+
     // Render Output Latihan
     if (this.elements.practiceOutputCard) {
       this.elements.practiceOutputCard.classList.remove("hidden");
@@ -651,7 +855,7 @@ class EpeApp {
       if (this.elements.practiceResultStatus) {
         const isCorrect = result.primaryErrorCode === "E0";
         this.elements.practiceResultStatus.textContent = isCorrect ? "Sangat Baik (Akurat)" : "Perlu Remediasi";
-        this.elements.practiceResultStatus.className = isCorrect ? "text-xs font-bold text-emerald-600 dark:text-emerald-400" : "text-xs font-bold text-amber-600 dark:text-amber-400";
+        this.elements.practiceResultStatus.className = isCorrect ? "text-xs font-bold text-emerald-400" : "text-xs font-bold text-amber-400";
       }
       if (this.elements.practiceResultEvidence) {
         this.elements.practiceResultEvidence.textContent = result.evidence;
@@ -667,10 +871,9 @@ class EpeApp {
   }
 
   // =========================================================================
-  // VOICE RECORDERS & MEDIA UPLOAD
+  // VOICE RECORDERS
   // =========================================================================
   initVoiceRecorders() {
-    // 1. Perekam Suara Siswa pada Pengerjaan Soal
     this.studentVoiceRecorder = new VoiceRecorder({
       onStateChange: ({ isRecording, time }) => {
         if (this.elements.voiceRecordTimer) {
@@ -692,11 +895,10 @@ class EpeApp {
           this.elements.studentVoicePlayer.src = audioData.url;
           this.elements.studentVoicePlayerBox.classList.remove("hidden");
         }
-        NotificationToast.show("Rekaman suara penalaran siswa berhasil disimpan!", "success");
+        NotificationToast.show("Rekaman suara penalaran berhasil disimpan!", "success");
       }
     });
 
-    // 2. Perekam Suara Guru / Pembuat Soal Baru
     this.newQVoiceRecorder = new VoiceRecorder({
       onStateChange: ({ isRecording, time }) => {
         if (this.elements.newQRecordTimer) {
@@ -730,13 +932,12 @@ class EpeApp {
   }
 
   // =========================================================================
-  // TAB 3: RIWAYAT & STATISTIK
+  // TAB 4: RESEARCH & STATISTICS
   // =========================================================================
   updateStatsAndHistory() {
     const stats = this.historyManager.getStats();
     const history = this.historyManager.getAll();
 
-    // Update Counter Badges
     if (this.elements.statTotalCount) this.elements.statTotalCount.textContent = stats.total;
     if (this.elements.statE0Count) this.elements.statE0Count.textContent = `${stats.percentages.E0}%`;
     if (this.elements.statE0Sub) this.elements.statE0Sub.textContent = `${stats.counts.E0} data`;
@@ -749,7 +950,6 @@ class EpeApp {
     if (this.elements.statE4Count) this.elements.statE4Count.textContent = `${stats.percentages.E4}%`;
     if (this.elements.statE4Sub) this.elements.statE4Sub.textContent = `${stats.counts.E4} data`;
 
-    // Render Table Body
     if (!this.elements.historyTableBody) return;
 
     if (history.length === 0) {
@@ -768,12 +968,12 @@ class EpeApp {
           <td class="px-3 py-2.5 text-[11px] whitespace-nowrap text-slate-500">${item.timestamp}</td>
           <td class="px-3 py-2.5 font-bold text-slate-900 dark:text-white">${item.studentId}</td>
           <td class="px-3 py-2.5">
-            <span class="font-mono font-bold text-blue-600 dark:text-blue-400">${item.questionId}</span>
+            <span class="font-mono font-bold text-blue-500">${item.questionId}</span>
             <div class="text-[10px] text-slate-400 truncate max-w-[120px]">${item.questionTitle || item.domain}</div>
           </td>
           <td class="px-3 py-2.5">
             <span class="px-2 py-0.5 rounded text-[11px] font-bold ${
-              isCorrect ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300" : "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300"
+              isCorrect ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
             }">
               ${item.primaryError}
             </span>
@@ -832,7 +1032,7 @@ class EpeApp {
   }
 
   // =========================================================================
-  // LIGHTBOX MODAL
+  // LIGHTBOX
   // =========================================================================
   openLightbox(imageSrc) {
     if (!this.elements.imageLightboxModal || !this.elements.lightboxImg) return;
@@ -847,14 +1047,29 @@ class EpeApp {
   }
 
   // =========================================================================
-  // EVENT LISTENERS BINDING
+  // BIND ALL EVENTS
   // =========================================================================
   bindEvents() {
-    // Theme & Tabs
-    if (this.elements.themeToggleBtn) this.elements.themeToggleBtn.addEventListener("click", () => this.toggleTheme());
+    // Navigation Tabs
+    if (this.elements.tabBtnDashboard) this.elements.tabBtnDashboard.addEventListener("click", () => this.switchTab("dashboard"));
     if (this.elements.tabBtnDiagnostic) this.elements.tabBtnDiagnostic.addEventListener("click", () => this.switchTab("diagnostic"));
     if (this.elements.tabBtnPractice) this.elements.tabBtnPractice.addEventListener("click", () => this.switchTab("practice"));
-    if (this.elements.tabBtnHistory) this.elements.tabBtnHistory.addEventListener("click", () => this.switchTab("history"));
+    if (this.elements.tabBtnErrorProfile) this.elements.tabBtnErrorProfile.addEventListener("click", () => this.switchTab("error-profile"));
+    if (this.elements.tabBtnResearch) this.elements.tabBtnResearch.addEventListener("click", () => this.switchTab("research"));
+
+    // Mode Switchers
+    if (this.elements.btnModeStudent) this.elements.btnModeStudent.addEventListener("click", () => this.setMode("student"));
+    if (this.elements.btnModeResearch) this.elements.btnModeResearch.addEventListener("click", () => this.setMode("research"));
+    if (this.elements.btnModeStudentM) this.elements.btnModeStudentM.addEventListener("click", () => this.setMode("student"));
+    if (this.elements.btnModeResearchM) this.elements.btnModeResearchM.addEventListener("click", () => this.setMode("research"));
+
+    // Dashboard Quick Buttons
+    if (this.elements.dashBtnOpenDiagnostic) {
+      this.elements.dashBtnOpenDiagnostic.addEventListener("click", () => this.switchTab("diagnostic"));
+    }
+    if (this.elements.dashBtnOpenPractice) {
+      this.elements.dashBtnOpenPractice.addEventListener("click", () => this.switchTab("practice"));
+    }
 
     // Guide Modal
     const openGuide = () => this.elements.guideModal?.classList.remove("hidden");
@@ -879,8 +1094,17 @@ class EpeApp {
     if (this.elements.btnAnalyze) this.elements.btnAnalyze.addEventListener("click", () => this.handleAnalysis());
     if (this.elements.btnReset) this.elements.btnReset.addEventListener("click", () => this.handleResetForm());
     if (this.elements.btnCopyOutput) this.elements.btnCopyOutput.addEventListener("click", () => this.handleCopyOutput());
+    if (this.elements.btnCopyResearchText) this.elements.btnCopyResearchText.addEventListener("click", () => this.handleCopyOutput());
 
-    // Tab 2: Pengerjaan Latihan & Foto / Audio
+    if (this.elements.btnStartRemediationFromDiag) {
+      this.elements.btnStartRemediationFromDiag.addEventListener("click", () => {
+        if (this.latestResult) {
+          this.startAdaptiveRemediation(this.latestResult.primaryErrorCode, this.latestResult.domainId);
+        }
+      });
+    }
+
+    // Tab 2 Events (Foto, Audio, Latihan)
     if (this.elements.studentPhotoDropzone && this.elements.inputStudentPhoto) {
       this.elements.studentPhotoDropzone.addEventListener("click", () => this.elements.inputStudentPhoto.click());
       this.elements.inputStudentPhoto.addEventListener("change", async (e) => {
@@ -894,7 +1118,7 @@ class EpeApp {
             this.elements.studentPhotoDropzone.classList.add("hidden");
             this.elements.btnRemoveStudentPhoto?.classList.remove("hidden");
           }
-          NotificationToast.show("Foto coretan siswa berhasil diunggah!", "success");
+          NotificationToast.show("Foto coretan berhasil diunggah!", "success");
         }
       });
     }
@@ -909,7 +1133,6 @@ class EpeApp {
       });
     }
 
-    // Voice Recorder Pengerjaan Siswa
     if (this.elements.btnStartRecordVoice) {
       this.elements.btnStartRecordVoice.addEventListener("click", async () => {
         try {
@@ -949,7 +1172,6 @@ class EpeApp {
       });
     }
 
-    // Practice Media Image Zoom Click
     if (this.elements.practiceMediaImagePreview) {
       this.elements.practiceMediaImagePreview.addEventListener("click", () => {
         if (this.elements.practiceMediaImgTag?.src) {
@@ -1010,7 +1232,6 @@ class EpeApp {
     if (this.elements.btnCloseCreateModal) this.elements.btnCloseCreateModal.addEventListener("click", closeCreateModal);
     if (this.elements.btnCancelCreateQ) this.elements.btnCancelCreateQ.addEventListener("click", closeCreateModal);
 
-    // Live KaTeX Preview in Create Modal
     if (this.elements.newQLatex) {
       this.elements.newQLatex.addEventListener("input", (e) => {
         const val = e.target.value.trim();
@@ -1023,7 +1244,6 @@ class EpeApp {
       });
     }
 
-    // Modal Image Upload
     if (this.elements.newQImageDropzone && this.elements.newQImageInput) {
       this.elements.newQImageDropzone.addEventListener("click", () => this.elements.newQImageInput.click());
       this.elements.newQImageInput.addEventListener("change", async (e) => {
@@ -1050,7 +1270,6 @@ class EpeApp {
       });
     }
 
-    // Modal File Upload
     if (this.elements.newQFileDropzone && this.elements.newQFileInput) {
       this.elements.newQFileDropzone.addEventListener("click", () => this.elements.newQFileInput.click());
       this.elements.newQFileInput.addEventListener("change", async (e) => {
@@ -1074,7 +1293,6 @@ class EpeApp {
       });
     }
 
-    // Modal Voice Recorder
     if (this.elements.btnNewQRecordStart) {
       this.elements.btnNewQRecordStart.addEventListener("click", async () => {
         try {
@@ -1113,7 +1331,6 @@ class EpeApp {
       });
     }
 
-    // Form Submit Create Question
     if (this.elements.createQuestionForm) {
       this.elements.createQuestionForm.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -1125,7 +1342,7 @@ class EpeApp {
         const explanation = this.elements.newQExplanation?.value.trim();
 
         if (!title || !promptText || !standardAnswer) {
-          NotificationToast.show("Mohon isi judul, deskripsi soal, dan kunci jawaban.", "warning");
+          NotificationToast.show("Mohon lengkapi data judul, deskripsi soal, dan kunci jawaban.", "warning");
           return;
         }
 
@@ -1142,7 +1359,7 @@ class EpeApp {
           audioNote: this.newQAudio
         });
 
-        NotificationToast.show("Soal latihan baru berhasil ditambahkan ke Bank Soal!", "success");
+        NotificationToast.show("Soal latihan baru berhasil ditambahkan!", "success");
         this.elements.createQuestionForm.reset();
         this.newQImage = null;
         this.newQFile = null;
@@ -1157,7 +1374,36 @@ class EpeApp {
       });
     }
 
-    // Tab 3 CSV & Clear
+    // Tab 4 Events (Supabase, CSV, Clear)
+    if (this.elements.btnSyncSupabase) {
+      this.elements.btnSyncSupabase.addEventListener("click", async () => {
+        const allEntries = this.historyManager.getAll();
+        if (allEntries.length === 0) {
+          NotificationToast.show("Belum ada data riwayat di browser untuk diunggah.", "warning");
+          return;
+        }
+        NotificationToast.show(`Menyinkronkan ${allEntries.length} data riwayat ke Supabase...`, "info");
+        const res = await syncAllHistoryToSupabase(allEntries);
+        if (res.success) {
+          NotificationToast.show(`Berhasil mengunggah ${res.count} data riwayat ke database Supabase!`, "success");
+        } else {
+          NotificationToast.show(`Sinkronisasi gagal: ${res.message}`, "error");
+        }
+      });
+    }
+
+    if (this.elements.btnExportCloudCsv) {
+      this.elements.btnExportCloudCsv.addEventListener("click", async () => {
+        NotificationToast.show("Mengunduh data lengkap dari Cloud Supabase...", "info");
+        const res = await exportCloudDataToCSV();
+        if (res.success) {
+          NotificationToast.show(`Berhasil mengunduh ${res.count} rekaman Supabase ke CSV!`, "success");
+        } else {
+          NotificationToast.show(res.message, "warning");
+        }
+      });
+    }
+
     if (this.elements.btnExportCsvTab) {
       this.elements.btnExportCsvTab.addEventListener("click", () => {
         const res = this.historyManager.exportToCSV();
@@ -1178,13 +1424,13 @@ class EpeApp {
   }
 }
 
-// Inisialisasi otomatis saat dokumen siap
+// Inisialisasi Otomatis
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
-    window.epeApp = new EpeApp();
+    window.epeApp = new EpeAppV2();
     window.epeApp.init();
   });
 } else {
-  window.epeApp = new EpeApp();
+  window.epeApp = new EpeAppV2();
   window.epeApp.init();
 }

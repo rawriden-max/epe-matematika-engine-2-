@@ -54,7 +54,9 @@ export class ErrorPatternEngine {
         confidence,
         remediation,
         question: resolvedQuestion,
-        media
+        media,
+        studentSteps: trimmedSteps,
+        studentAnswer: trimmedAnswer
       });
     }
 
@@ -84,14 +86,16 @@ export class ErrorPatternEngine {
       confidence,
       remediation,
       question: resolvedQuestion,
-      media
+      media,
+      studentSteps: trimmedSteps,
+      studentAnswer: trimmedAnswer
     });
   }
 
   /**
    * Menyusun paket hasil analisis baik dalam format objek maupun teks baku
    */
-  static _buildResultPackage({ studentId, questionId, domainCode, primaryError, secondaryError, evidence, confidence, remediation, question, media = null }) {
+  static _buildResultPackage({ studentId, questionId, domainCode, primaryError, secondaryError, evidence, confidence, remediation, question, media = null, studentSteps = "", studentAnswer = "" }) {
     const primaryErrorFormatted = formatErrorLabel(primaryError);
     const secondaryErrorFormatted = formatErrorLabel(secondaryError);
     const confidenceFormatted = `${confidence}%`;
@@ -131,7 +135,9 @@ export class ErrorPatternEngine {
       primaryTaxonomy,
       secondaryTaxonomy,
       isCorrect: primaryError === "E0",
-      media
+      media,
+      studentSteps,
+      studentAnswer
     };
   }
 

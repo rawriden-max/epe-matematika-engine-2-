@@ -1,15 +1,45 @@
-# Error Pattern Engine (EPE) - Diagnostik Persamaan Kuadrat & Bank Latihan Ujian
+# Error Pattern Engine (EPE) V2 - Diagnostik Persamaan Kuadrat & Learning Cubes
 
-Aplikasi web cerdas berbasis kecerdasan buatan untuk mendeteksi, mendiagnosis, dan merespons pola kesalahan kognitif siswa dalam pemecahan masalah matematika materi **Persamaan Kuadrat**, dilengkapi dengan **Bank Soal Multimedia (Gambar, File, Audio/Voice Note)** untuk persiapan ulangan & ujian.
+Aplikasi web penelitian modern berbasis kecerdasan buatan (*Educational Technology & AI Research Platform*) untuk mendeteksi, mendiagnosis, dan merespons pola kesalahan kognitif siswa dalam pemecahan masalah matematika materi **Persamaan Kuadrat**, terintegrasi dengan **Sistem Gamifikasi 3D Learning Cubes**, **Radial Color Theme Selector**, **Dedicated Error Profile**, serta **Bank Soal Multimedia (Foto Coretan, File, Audio/Voice Note)** untuk persiapan ulangan & ujian.
 
 Dikembangkan untuk mendukung penelitian:  
 **"Pengembangan Error Pattern Engine Berbasis Kecerdasan Buatan untuk Adaptive Learning dalam Mendeteksi dan Merespons Pola Kesalahan Siswa pada Pemecahan Masalah Matematika"**
 
 ---
 
-## 🌟 Fitur Utama
+## 🌟 Fitur Utama EPE V2
 
-### 1. 🔬 Mode Diagnostik Baku (24 Soal Penelitian Q1 - Q24)
+### 1. 🧊 Sistem Gamifikasi 3D Learning Cubes (24 Collectible Blocks)
+- **Monumen Isometrik Koleksi 24 Kubus**:
+  - Menampilkan struktur 3D bertingkat (*Tier 0: 12 fondasi, Tier 1: 7 tengah, Tier 2: 4 atas, Tier 3: 1 mahkota capstone*).
+  - Terinspirasi estetika balok kristal transparan dengan *neon top stud* dan pencahayaan lembut.
+  - Ringan dan berkinerja tinggi (Canvas 2D, 60 FPS pada laptop maupun smartphone tanpa WebGL berat).
+- **Completion Pull**:
+  - Kubus yang belum dikerjakan (`LOCKED`) tetap terlihat sebagai siluet wireframe transparan pada posisinya, memicu dorongan motivasi: *"Aku sudah mulai membangun sesuatu. Tinggal sedikit lagi sampai lengkap."*
+- **Reward untuk Proses (Bukan Hanya Jawaban Benar)**:
+  - Jawaban salah **tetap memberikan kubus** dengan status `DIAGNOSED_ERROR` (warna amber hangat, bukan tanda gagal).
+  - Setelah menyelesaikan latihan remediasi adaptif, kubus berevolusi menjadi `REMEDIATED` (*Crystal Teal Shimmer*) hingga `VERIFIED`.
+- **Interaktivitas Ringan**:
+  - Hover balok untuk efek elevasi dan *floating tooltip* detail soal.
+  - Klik balok untuk langsung membuka lembar soal di workspace.
+  - Modal **"Buka Koleksi (View Collection)"** untuk melihat rincian progres dan milestone.
+
+---
+
+### 2. 🎨 Radial Circular Color Theme Selector
+- Menu pemilih warna melingkar di navbar dengan animasi *spring scale-rotate-fade*.
+- 6 pilihan tema warna kurasi:
+  1. **Electric Blue** (Default AI Research)
+  2. **Violet** (Deep Modern Intelligence)
+  3. **Emerald** (Bio-Tech Growth)
+  4. **Amber** (Warm Cognitive Focus)
+  5. **Rose** (Vibrant Minimalist)
+  6. **Cyan** (Futuristic Quantum Glow)
+- Mengubah design tokens CSS (`--accent`, `--accent-glow`, `--accent-subtle`, dan rona monumen kubus 3D) secara instan dan tersimpan di `localStorage`.
+
+---
+
+### 3. 🔬 Mode Diagnostik Baku (Alur 3-Langkah Minimalis)
 - **6 Domain Kompetensi ($D1$ s.d. $D6$)**:
   - **D1: Konsep Dasar (Q1 - Q4)** — Bentuk baku, identifikasi koefisien bertanda ($a, b, c$), konsep akar vs koefisien, uji diskriminan dasar.
   - **D2: Faktorisasi (Q5 - Q8)** — Pemfaktoran $a=1$, $a>1$, konstanta negatif, sifat perkalian nol.
@@ -27,79 +57,80 @@ Dikembangkan untuk mendukung penelitian:
 
 ---
 
-### 2. 📝 Mode Bank Soal & Latihan Persiapan Ujian (Multimedia)
-- **Input Soal Mandiri oleh Siswa & Guru**:
-  - **🖼️ Input Gambar**: Upload diagram, grafik fungsi, atau geometri soal (PNG, JPG, WebP) dengan thumbnail dan preview modal.
-  - **📁 Input File Lampiran**: Lampirkan materi / lembar kerja dokumen pendukung (PDF, TXT, DOCX) dengan tombol unduh otomatis.
-  - **🎙️ Input Audio / Voice Note**: Rekam suara penjelasan langsung menggunakan mikrofon browser (*Record / Stop / Play*) atau upload file audio MP3/WAV.
+### 4. 📊 Dedicated Error Profile Page
+- Halaman visual khusus yang memetakan pola kelemahan siswa secara objektif.
+- Grafik sebaran taksonomi $E1 - E4$.
+- Indikator **Pola Dominan** (*e.g., E2 Prosedural*) & **Domain Paling Menantang** (*e.g., D3 Rumus ABC*).
+- **Before vs After Remediation Tracker**: Rekaman kuantitatif pemulihan pola kesalahan setelah intervensi belajar adaptif.
+
+---
+
+### 5. 📝 Mode Bank Soal & Latihan Ujian (Multimedia)
+- **Input Soal Mandiri Guru & Siswa**:
+  - 🖼️ Lampiran Gambar Diagram (PNG, JPG, WebP) dengan Lightbox Zoom.
+  - 📁 Lampiran Dokumen Lembar Kerja (PDF, TXT, DOCX).
+  - 🎙️ Rekaman Suara Penjelasan Soal via Mikrofon Browser (WebM/WAV).
   - Penulisan rumus matematika interaktif berbasis **KaTeX** ($\LaTeX$).
 - **Lembar Pengerjaan Siswa**:
-  - Coretan langkah aljabar teks & simbol matematika.
-  - **Upload Foto Coretan Siswa**: Foto kertas pengerjaan siswa langsung diunggah ke sistem.
-  - **Rekam Suara Penalaran Siswa**: Siswa dapat merekam penalaran lisannya saat memecahkan soal matematika.
-  - **Analisis Diagnostik Otomatis**: Sistem otomatis mengklasifikasikan pola kesalahan pengerjaan siswa pada soal latihan dan memberikan remediasi adaptif.
-  - Tombol toggle untuk melihat kunci jawaban & pembahasan detail.
-  - Ekspor & Impor Bank Soal dalam format file JSON.
+  - Upload Foto Coretan Kertas langsung dari HP/kamera.
+  - Rekam Suara Penalaran Lisan saat memecahkan masalah.
+  - Analisis diagnostik otomatis & toggle kunci jawaban/pembahasan.
+  - Ekspor & Impor Bank Soal (JSON).
 
 ---
 
-### 3. 📊 Mode Riwayat & Statistik
-- Ringkasan statistik performa: Total Uji, % Akurat (E0), % Konseptual (E1), % Prosedural (E2), % Komputasi (E3), dan % Interpretasi (E4).
-- Tabel riwayat diagnosis interaktif dengan waktu, nama siswa, butir soal, kategori kesalahan, dan bukti analisis.
-- Tombol **Ekspor CSV / Excel** untuk pengolahan data penelitian lebih lanjut.
-- Fitur penghapusan entri individual atau pengosongan seluruh riwayat.
+### 6. 🏛️ Mode Riset & Guru (Research Mode Terpisah)
+- Memisahkan dashboard siswa dengan tampilan analitik penelitian saintifik.
+- Matriks distribusi $D1-D6 \times E1-E4$, tingkat keyakinan sistem, dan bukti analisis.
+- Sinkronisasi Cloud Database Supabase & Ekspor CSV Lokal.
 
 ---
 
-## 🚀 Panduan Deployment ke Vercel (Lengkap & Mudah)
+## 🚀 Panduan Menjalankan Aplikasi
 
-Proyek ini telah dikonfigurasi 100% kompatibel dengan hosting Vercel.
-
-### Cara 1: Deploy via GitHub & Vercel (Rekomendasi 100% Berhasil)
-1. Push semua berkas terbaru ke repositori GitHub Anda (misal: `rawriden-max/epe-matematika-engine`).
-2. Buka dashboard proyek di [vercel.com](https://vercel.com).
-3. Pada menu **Settings** -> **Build & Development Settings**:
-   - **Framework Preset**: Pilih **`Other`** (atau biarkan default)
-   - **Build Command**: Kosongkan / Override (Tidak butuh build command karena aplikasi berjalan murni vanilla ES Modules)
-   - **Output Directory**: Kosongkan / default `.` (Root)
-4. Klik **Deploy** / **Redeploy**. Website akan online dalam 2 detik tanpa hambatan build/esbuild!
-
-### Cara 2: Menjalankan secara Lokal
-- Buka file `index.html` langsung di browser Anda (Google Chrome, Microsoft Edge, Mozilla Firefox) atau jalankan ekstensi *Live Server* di VS Code.
-- Atau jika ingin menggunakan Vite dev server:
-  ```bash
-  npm install
-  npm run dev
+### Cara 1: Menjalankan secara Lokal
+- Jalankan file server ringan via PowerShell:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\server.ps1
   ```
+  Lalu buka **`http://127.0.0.1:8080/`** di browser Anda.
+
+### Cara 2: Deploy ke Vercel / GitHub Pages
+1. Push repositori ke GitHub.
+2. Hubungkan ke [vercel.com](https://vercel.com).
+3. Biarkan framework preset default (**Other** / static), website langsung online tanpa proses compile!
 
 ---
 
-## 📁 Struktur Berkas
+## 📁 Struktur Berkas EPE V2
 
 ```
 epe-matematika/
-├── index.html                  # Halaman utama aplikasi (3 Tab: Diagnostik, Latihan, Riwayat)
-├── README.md                   # Dokumentasi lengkap & panduan deployment
-├── package.json                # Dependensi & skrip siap deploy
-├── vite.config.js              # Konfigurasi bundler Vite (Pure JS)
-├── vercel.json                 # Konfigurasi rilis Vercel hosting (Zero-config static)
+├── index.html                  # Antarmuka utama EPE V2 (Progressive Disclosure)
+├── README.md                   # Dokumentasi lengkap V2
+├── server.ps1                  # Server lokal PowerShell siap pakai (port 8080)
 ├── css/
-│   └── style.css               # Desain modern, responsive, dark/light mode, media recording styling
+│   └── style.css               # Design system tokens, radial color menu, 3D styling
 └── js/
-    ├── app.js                  # Controller utama aplikasi web
+    ├── app.js                  # Master Controller EPE V2
     ├── data/
-    │   ├── supabaseClient.js   # Penghubung Cloud Database Supabase (Real-time Sync)
-    │   ├── questions.js        # Basis data 24 butir soal diagnostik (Q1-Q24)
-    │   ├── samplePresets.js    # Preset simulasi jawaban siswa (E0-E4)
-    │   └── customQuestionStore.js # Pengelola Bank Soal Latihan Mandiri & Storage
+    │   ├── cubeStore.js        # Data store & state machine 24 Learning Cubes
+    │   ├── questions.js        # Basis data 24 butir soal diagnostik baku (Q1-Q24)
+    │   ├── samplePresets.js    # Preset simulasi pengerjaan siswa (E0-E4)
+    │   ├── customQuestionStore.js # Bank Soal latihan mandiri & storage
+    │   └── supabaseClient.js   # Sinkronisasi Cloud Database Supabase
     ├── engine/
-    │   ├── taxonomy.js         # Definisi taksonomi kesalahan & generator remediasi
+    │   ├── diagnosticRules.js  # 24 Aturan pakar diagnostik (Research Core - Untouched)
+    │   ├── epeEngine.js        # Core Error Pattern Engine (Untouched)
     │   ├── stepAnalyzer.js     # Parser analisis langkah matematika
-    │   ├── diagnosticRules.js  # Basis 24 aturan pakar diagnostik
-    │   └── epeEngine.js        # Core Error Pattern Engine (Diagnostik 24 Soal & Soal Latihan)
+    │   └── taxonomy.js         # Definisi taksonomi E0-E4 & generator remediasi
     └── ui/
-        ├── mediaManager.js     # Perekam suara browser (Audio Recorder) & upload gambar/file
-        ├── mathToolbar.js      # Toolbar simbol matematika
+        ├── cubeEngine.js       # 3D Isometric Monument Engine (24 blocks canvas)
+        ├── themeManager.js     # Radial circular color selector (6 palettes)
+        ├── motivationManager.js# Micro-rewards, milestones, continue learning
+        ├── errorProfile.js     # Visualisasi profil pola kesalahan & evolusi remediasi
         ├── historyManager.js   # Manajemen riwayat & ekspor CSV
+        ├── mathToolbar.js      # Toolbar simbol matematika
+        ├── mediaManager.js     # Audio recorder & upload foto/dokumen
         └── notification.js     # Toast notifikasi
 ```

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Error Pattern Engine (EPE) - Diagnostik & Latihan Persiapan Ujian Matematika</title>
+  <title>Error Pattern Engine (EPE) V2 - AI Research Platform & Adaptive Learning</title>
 
   <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -26,74 +26,108 @@
     }
   </script>
 
-  <!-- KaTeX CDN untuk Render Notasi Matematika -->
+  <!-- KaTeX CDN untuk Notasi Matematika -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 
-  <!-- Supabase JS CDN (Real-time Cloud Database) -->
+  <!-- Supabase JS CDN (Cloud Sync) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Custom Stylesheet -->
+  <!-- Custom Stylesheet (Design System Tokens & 3D Styling) -->
   <link rel="stylesheet" href="./css/style.css" />
 </head>
-<body class="antialiased flex flex-col min-h-screen">
+<body class="antialiased flex flex-col min-h-screen theme-dark">
 
-  <!-- Header Bersih & Elegan -->
-  <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+  <!-- ========================================================================= -->
+  <!-- HEADER UTAMA EPE V2                                                       -->
+  <!-- ========================================================================= -->
+  <header class="bg-white/80 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
       
-      <!-- Brand & Subtitle -->
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-blue-600 dark:bg-blue-500 text-white font-bold flex items-center justify-center text-sm shadow-sm flex-shrink-0">
-          EPE
-        </div>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
-              Error Pattern Engine (EPE) Matematika
-            </h1>
-            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-              Persamaan Kuadrat &amp; Latihan Ujian
-            </span>
+      <!-- Brand & Mode Switcher -->
+      <div class="flex items-center justify-between w-full lg:w-auto gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-extrabold flex items-center justify-center text-sm shadow-md flex-shrink-0 tracking-tight">
+            EPE
           </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Sistem Diagnostik Pola Kesalahan Kognitif &amp; Bank Latihan Siswa
-          </p>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                Error Pattern Engine
+              </h1>
+              <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                V2
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+              Sistem Diagnostik &amp; Adaptive Learning Matematika
+            </p>
+          </div>
+        </div>
+
+        <!-- Mode Switcher: Student vs Research (Mobile toggle) -->
+        <div class="mode-switch-pill lg:hidden">
+          <button id="btn-mode-student-m" class="mode-switch-btn active" data-mode="student">Siswa</button>
+          <button id="btn-mode-research-m" class="mode-switch-btn" data-mode="research">Riset</button>
         </div>
       </div>
 
       <!-- Navigation Tabs & Action Tools -->
-      <div class="flex items-center gap-2 flex-wrap w-full md:w-auto justify-between md:justify-end">
+      <div class="flex items-center gap-2 flex-wrap w-full lg:w-auto justify-between lg:justify-end">
         
-        <!-- Mode Tabs -->
-        <div class="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60">
-          <button id="tab-btn-diagnostic" class="nav-tab-btn active text-xs">
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 overflow-x-auto max-w-full">
+          <button id="tab-btn-dashboard" class="nav-tab-btn active text-xs">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <span>Dashboard</span>
+          </button>
+
+          <button id="tab-btn-diagnostic" class="nav-tab-btn text-xs">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-            <span>Diagnostik Baku (24 Soal)</span>
+            <span>Diagnostik Baku</span>
           </button>
           
           <button id="tab-btn-practice" class="nav-tab-btn text-xs">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-            <span>Bank Soal &amp; Latihan Ujian</span>
+            <span>Bank Latihan</span>
           </button>
 
-          <button id="tab-btn-history" class="nav-tab-btn text-xs">
+          <button id="tab-btn-error-profile" class="nav-tab-btn text-xs">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-            <span>Riwayat &amp; Statistik</span>
+            <span>Error Profile</span>
           </button>
-        </div>
 
-        <!-- Action Tools -->
+          <button id="tab-btn-research" class="nav-tab-btn text-xs text-indigo-500 dark:text-indigo-400">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+            <span>Mode Riset</span>
+          </button>
+        </nav>
+
+        <!-- Tools: Mode Pill, Theme Radial Selector, Dark/Light Toggle -->
         <div class="flex items-center gap-1.5">
-          <button id="btn-open-guide" title="Panduan Singkat" class="btn-secondary px-2.5 py-1.5 text-xs">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span class="hidden sm:inline">Panduan</span>
+          <!-- Desktop Mode Switcher -->
+          <div class="mode-switch-pill hidden lg:inline-flex">
+            <button id="btn-mode-student" class="mode-switch-btn active" data-mode="student">Siswa</button>
+            <button id="btn-mode-research" class="mode-switch-btn" data-mode="research">Riset</button>
+          </div>
+
+          <!-- Radial Theme Color Selector Button -->
+          <button id="radial-theme-trigger-btn" title="Pilih Tema Warna (Radial Menu)" class="p-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5">
+            <span class="w-3.5 h-3.5 rounded-full bg-[var(--accent)] shadow-sm"></span>
+            <span class="text-[11px] font-bold hidden sm:inline">Tema</span>
           </button>
 
+          <!-- Light/Dark Toggle -->
           <button id="theme-toggle-btn" title="Ganti Mode Terang / Gelap" class="p-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
             <svg id="theme-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
             </svg>
+          </button>
+
+          <!-- Panduan -->
+          <button id="btn-open-guide" title="Panduan Penggunaan" class="btn-secondary px-2.5 py-1.5 text-xs">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="hidden sm:inline">Panduan</span>
           </button>
         </div>
 
@@ -102,13 +136,162 @@
     </div>
   </header>
 
-  <!-- ========================================================================= -->
-  <!-- TAB 1: MODE DIAGNOSTIK BAKU (24 SOAL PENELITIAN D1 - D6) -->
-  <!-- ========================================================================= -->
-  <main id="section-diagnostic-mode" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
+  <!-- Floating Tooltip for 3D Monument Canvas -->
+  <div id="cube-tooltip" class="cube-hover-tooltip hidden opacity-0"></div>
 
-    <!-- Petunjuk Alur Singkat -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+  <!-- ========================================================================= -->
+  <!-- TAB 0: MAIN DASHBOARD (STUDENT OVERVIEW & 3D LEARNING CUBES MONUMENT)     -->
+  <!-- ========================================================================= -->
+  <main id="section-dashboard-mode" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    
+    <!-- Welcome Banner Hero -->
+    <div class="card-clean p-6 bg-gradient-to-r from-slate-900 via-slate-900/90 to-blue-950/40 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+      <div class="space-y-1.5">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+            Student Space
+          </span>
+          <span class="text-xs text-slate-400">ID Pengguna: <strong id="dash-student-name" class="text-white">Siswa_01</strong></span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+          Selamat Datang di Error Pattern Engine V2
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-400 max-w-xl leading-relaxed">
+          Bangun monumen belajarmu. Setiap soal yang kamu selesaikan akan menghasilkan <strong>Learning Cube</strong>. Temukan pola kesalahan, lakukan perbaikan, dan evolusikan kubusmu menjadi kristal.
+        </p>
+      </div>
+
+      <!-- Quick Action: Continue Diagnostic CTA -->
+      <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 flex flex-col gap-2 w-full md:w-auto min-w-[260px]">
+        <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Target Belajar Terdekat:</span>
+        <h4 id="next-target-title" class="text-xs font-bold text-white line-clamp-1">Memuat Target...</h4>
+        <p id="next-target-desc" class="text-[11px] text-slate-400 line-clamp-1">Lanjutkan pengerjaan soal diagnostik.</p>
+        <button id="btn-continue-diagnostic" class="btn-primary py-2 px-3 text-xs font-bold w-full mt-1 shadow-md">
+          <span>Lanjutkan Diagnostik</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- WORKSTATION UTAMA DASHBOARD: 3D MONUMENT + MOTIVATION WIDGETS -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- KOLOM KIRI: 3D LEARNING CUBES MONUMENT CANVAS (7 Kolom) -->
+      <div class="lg:col-span-7 space-y-4">
+        <section class="card-clean p-5 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🧊</span>
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Monumen Koleksi Learning Cubes</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">24 Balok Isometrik 3D yang merepresentasikan progres nyata pengerjaanmu</p>
+              </div>
+            </div>
+
+            <button id="btn-open-collection" class="btn-secondary text-xs px-3 py-1.5 font-bold flex items-center gap-1.5">
+              <span>Buka Koleksi</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
+          </div>
+
+          <!-- The Isometric 3D Canvas Box -->
+          <div class="cube-monument-canvas-box border border-slate-200 dark:border-slate-800/80">
+            <canvas id="cube-monument-canvas" width="480" height="340"></canvas>
+          </div>
+
+          <!-- Legend Status Kubus (Non-Punitive, Growth-Mindset) -->
+          <div class="flex items-center justify-between gap-2 flex-wrap text-[11px] text-slate-500 pt-1 px-1">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm bg-slate-800 border border-slate-600"></span> Belum (Locked)
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm bg-blue-500 shadow-sm"></span> Akurat (E0)
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm bg-amber-500 shadow-sm"></span> Pola Terdeteksi (Perlu Remedi)
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm bg-teal-400 shadow-sm"></span> Kristal (Remediated)
+            </span>
+          </div>
+        </section>
+      </div>
+
+      <!-- KOLOM KANAN: STATISTIK & RECENT DIAGNOSIS (5 Kolom) -->
+      <div class="lg:col-span-5 space-y-5">
+        
+        <!-- Kartu Progress Progresif (Completion Pull) -->
+        <section class="card-clean p-5 space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+            <h4 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Progress Diagnostik 24 Soal</h4>
+            <span id="cube-counter-text" class="text-sm font-mono font-extrabold text-[var(--accent)]">0 / 24</span>
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs text-slate-500">
+              <span>Tingkat Kelengkapan Struktur:</span>
+              <span id="cube-progress-percent" class="font-mono font-bold text-white">0%</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+              <div id="cube-progress-bar" class="bg-[var(--accent)] h-full transition-all duration-500 rounded-full" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Milestone Badges Quick Row -->
+          <div class="space-y-1.5 pt-1">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Milestone Terbuka:</span>
+            <div id="milestone-badge-container" class="flex flex-wrap gap-2">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Kartu Ringkasan Diagnosis Terbaru (Progressive Disclosure) -->
+        <section class="card-clean p-5 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+            <h4 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Diagnosis Terakhir</h4>
+            <span id="dash-recent-q-badge" class="font-mono text-xs font-bold text-blue-400">-</span>
+          </div>
+
+          <div id="dash-recent-diag-content" class="space-y-2">
+            <p id="dash-recent-evidence" class="text-xs text-slate-600 dark:text-slate-400 italic">
+              Belum ada pengerjaan soal yang diuji pada sesi ini. Buka tab Diagnostik Baku untuk memulai.
+            </p>
+            <div id="dash-recent-remedy-box" class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300 hidden">
+              <span class="font-bold block mb-0.5">Saran Belajar:</span>
+              <span id="dash-recent-remedy-text"></span>
+            </div>
+          </div>
+
+          <button id="dash-btn-open-diagnostic" class="btn-secondary w-full py-2 text-xs font-bold">
+            Buka Lembar Diagnostik Lengkap
+          </button>
+        </section>
+
+        <!-- Rekomendasi Latihan Adaptif Berdasarkan Pola Kesalahan -->
+        <section class="card-clean p-5 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+            <h4 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Latihan Adaptif Direkomendasikan</h4>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Multimedia</span>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-400">
+            Terapkan pemahamanmu pada latihan berbasis konteks nyata dengan upload foto coretan atau rekam suara.
+          </p>
+          <button id="dash-btn-open-practice" class="btn-accent w-full py-2 text-xs font-bold">
+            Buka Bank Latihan &amp; Soal Ujian
+          </button>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- TAB 1: MODE DIAGNOSTIK BAKU (STREAMLINED 3-STEP WORKFLOW)                 -->
+  <!-- ========================================================================= -->
+  <main id="section-diagnostic-mode" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 hidden">
+    
+    <!-- Alur 3 Langkah Minimalis -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div class="card-subtle p-3 flex items-center gap-3">
         <span class="step-number">1</span>
         <div>
@@ -119,56 +302,52 @@
       <div class="card-subtle p-3 flex items-center gap-3">
         <span class="step-number">2</span>
         <div>
-          <h4 class="text-xs font-bold text-slate-900 dark:text-white">Input / Coba Jawaban</h4>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">Tulis pengerjaan atau pilih contoh simulasi</p>
+          <h4 class="text-xs font-bold text-slate-900 dark:text-white">Workspace Pengerjaan</h4>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">Tulis langkah pengerjaanmu dengan tenang</p>
         </div>
       </div>
       <div class="card-subtle p-3 flex items-center gap-3">
         <span class="step-number">3</span>
         <div>
           <h4 class="text-xs font-bold text-slate-900 dark:text-white">Hasil &amp; Remediasi</h4>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">Analisis pola kesalahan (E1-E4) &amp; solusi belajar</p>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">Dapatkan Learning Cube &amp; rekomendasi adaptif</p>
         </div>
       </div>
     </div>
 
-    <!-- WORKSTATION: 2 KOLOM -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-
-      <!-- KOLOM KIRI: SOAL & INPUT (7 Kolom) -->
+    <!-- WORKSTATION: 2 KOLOM (SOAL & INPUT vs DIAGNOSIS) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- KOLOM KIRI: PILIH SOAL & LEMBAR KERJA (7 Kolom) -->
       <div class="lg:col-span-7 space-y-5">
-
-        <!-- LANGKAH 1: PILIH SOAL & DETAIL SOAL TERPADU -->
+        
+        <!-- STEP 1: PILIH NOMOR SOAL & PREVIEW -->
         <section class="card-clean p-5 space-y-4">
           <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
             <div class="flex items-center gap-2.5">
               <span class="step-number">1</span>
               <div>
-                <h2 class="text-sm font-bold text-slate-900 dark:text-white">
-                  Pilih Nomor Soal Diagnostik
-                </h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400">
-                  Klik nomor soal (Q1 s.d. Q24) untuk memuat soal yang ingin diuji
-                </p>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Navigator Soal Diagnostik</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Pilih salah satu nomor soal (Q1 s.d. Q24)</p>
               </div>
             </div>
           </div>
 
-          <!-- Filter Domain Tabs -->
+          <!-- Domain Filter Buttons -->
           <div id="domain-filter-container" class="flex flex-wrap gap-1.5">
             <!-- Rendered via JS -->
           </div>
 
-          <!-- Question Grid Q1 - Q24 -->
-          <div id="question-grid-container" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-1.5">
+          <!-- Compact Question Grid 01 - 24 -->
+          <div id="question-grid-container" class="q-nav-grid">
             <!-- Rendered via JS -->
           </div>
 
-          <!-- Pratinjau Teks & Rumus Soal Aktif -->
-          <div class="mt-2 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 space-y-2">
+          <!-- Card Pratinjau Teks & Rumus Soal Aktif -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 space-y-2">
             <div class="flex items-center justify-between gap-2 flex-wrap">
               <div class="flex items-center gap-2">
-                <span id="q-number-badge" class="px-2 py-0.5 rounded-md bg-blue-600 dark:bg-blue-500 text-white font-mono font-bold text-xs">
+                <span id="q-number-badge" class="px-2 py-0.5 rounded-md bg-[var(--accent)] text-white font-mono font-bold text-xs">
                   Q1
                 </span>
                 <span id="q-domain-badge" class="px-2 py-0.5 rounded-md text-xs font-semibold badge-d1">
@@ -180,7 +359,7 @@
               </span>
             </div>
 
-            <h3 id="q-title" class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+            <h3 id="q-title" class="text-sm font-bold text-slate-900 dark:text-slate-100">
               Identifikasi Bentuk Persamaan Kuadrat
             </h3>
 
@@ -189,36 +368,32 @@
             </p>
 
             <!-- KaTeX Math Display -->
-            <div id="q-math-display" class="p-2.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-center font-serif text-slate-800 dark:text-blue-200 text-sm overflow-x-auto">
+            <div id="q-math-display" class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center font-serif text-slate-800 dark:text-blue-200 text-sm overflow-x-auto">
               <!-- KaTeX rendered here -->
             </div>
           </div>
         </section>
 
-        <!-- LANGKAH 2: INPUT PENGERJAAN SISWA -->
+        <!-- STEP 2: WORKSPACE PENGERJAAN SISWA -->
         <section class="card-clean p-5 space-y-4">
           <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
             <div class="flex items-center gap-2.5">
               <span class="step-number">2</span>
               <div>
-                <h3 class="text-sm font-bold text-slate-900 dark:text-white">
-                  Masukkan Pengerjaan / Respon Siswa
-                </h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400">
-                  Gunakan contoh simulasi siap uji atau ketikkan coretan jawaban siswa
-                </p>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Workspace Pengerjaan</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Jelaskan langkah pengerjaan aljabar Anda secara berurutan</p>
               </div>
             </div>
           </div>
 
-          <!-- Fitur Uji Cepat (Preset Simulasi) -->
+          <!-- Fitur Cepat: Contoh Simulasi Jawaban -->
           <div class="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/60 space-y-2">
             <div class="flex items-center justify-between">
               <label for="preset-select" class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                <span>Uji Coba Cepat (Pilih Contoh Simulasi):</span>
+                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <span>Uji Coba Cepat (Contoh Simulasi Jawaban):</span>
               </label>
-              <span class="text-[11px] text-slate-500">Sekali klik langsung terisi</span>
+              <span class="text-[11px] text-slate-400">Sekali klik langsung terisi</span>
             </div>
             
             <div class="flex flex-col sm:flex-row gap-2">
@@ -240,24 +415,24 @@
               type="text"
               id="student-id-input"
               value="Siswa_01"
-              placeholder="Contoh: Siswa_Aisyah_01"
+              placeholder="Contoh: Siswa_01"
               class="input-clean w-full px-3 py-2 text-xs sm:text-sm font-medium"
             />
           </div>
 
-          <!-- Field 2: Langkah Coretan / Pengerjaan (Prioritas Utama) -->
+          <!-- Field 2: Langkah Pengerjaan -->
           <div>
             <div class="flex items-center justify-between gap-1 mb-1.5">
               <label for="student-steps-input" class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <span>Langkah Pengerjaan / Coret-coretan:</span>
-                <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                <span>Jelaskan langkah pengerjaanmu:</span>
+                <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                   Prioritas Utama
                 </span>
               </label>
               <span class="text-[11px] text-slate-400">Sisip simbol jika perlu</span>
             </div>
 
-            <!-- Toolbar Simbol Matematika Sederhana -->
+            <!-- Toolbar Simbol Matematika -->
             <div class="mb-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-wrap gap-1 items-center">
               <span class="text-[10px] font-semibold text-slate-500 uppercase mr-1">SIMBOL:</span>
               <div id="math-toolbar-container" class="flex flex-wrap gap-1">
@@ -268,7 +443,7 @@
             <textarea
               id="student-steps-input"
               rows="4"
-              placeholder="Tuliskan baris langkah pengerjaan atau coret-coretan aljabar siswa di sini...&#10;Contoh: (x + 3)(x - 2) = 0 => x = -3 atau x = 2"
+              placeholder="Tuliskan baris langkah pengerjaan atau coret-coretan aljabar di sini...&#10;Contoh: (x + 3)(x - 2) = 0 => x = -3 atau x = 2"
               class="input-clean w-full p-3 text-xs sm:text-sm font-mono leading-relaxed"
             ></textarea>
           </div>
@@ -308,10 +483,10 @@
 
       </div>
 
-      <!-- KOLOM KANAN: HASIL DIAGNOSIS & REMEDIASI (5 Kolom) -->
+      <!-- KOLOM KANAN: HASIL DIAGNOSIS & REMEDIASI BERHIERARKI (5 Kolom) -->
       <div class="lg:col-span-5 space-y-5">
-
-        <!-- LANGKAH 3: HASIL DIAGNOSIS -->
+        
+        <!-- STEP 3: HASIL DIAGNOSIS -->
         <section id="output-section" class="card-clean p-5 space-y-4">
           <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
             <div class="flex items-center gap-2.5">
@@ -321,18 +496,19 @@
                   Hasil Diagnosis &amp; Remediasi
                 </h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400">
-                  Laporan diagnostik kognitif &amp; rekomendasi belajar
+                  Laporan diagnostik kognitif &amp; saran belajar
                 </p>
               </div>
             </div>
 
+            <!-- Tombol Salin Format Baku (Research Copy) -->
             <button
               id="btn-copy-output"
               title="Salin Teks Format Baku ke Clipboard"
               class="btn-secondary text-xs px-2.5 py-1.5"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-              <span class="hidden sm:inline">Salin Teks</span>
+              <span class="hidden sm:inline">Salin Format Baku</span>
             </button>
           </div>
 
@@ -340,12 +516,12 @@
           <div class="space-y-1.5">
             <div class="flex justify-between items-center text-xs">
               <span class="font-semibold text-slate-700 dark:text-slate-300">Tingkat Keyakinan Sistem:</span>
-              <span id="confidence-score-text" class="font-mono font-bold text-blue-600 dark:text-blue-400">0%</span>
+              <span id="confidence-score-text" class="font-mono font-bold text-blue-500">0%</span>
             </div>
             <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
               <div
                 id="confidence-bar"
-                class="bg-blue-600 dark:bg-blue-500 h-full transition-all duration-500 rounded-full"
+                class="bg-[var(--accent)] h-full transition-all duration-500 rounded-full"
                 style="width: 0%;"
               ></div>
             </div>
@@ -355,7 +531,7 @@
           <div class="grid grid-cols-2 gap-2.5">
             <!-- Kesalahan Utama -->
             <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 space-y-1">
-              <span class="text-[10px] font-bold uppercase text-slate-500 tracking-wider block">Kesalahan Utama:</span>
+              <span class="text-[10px] font-bold uppercase text-slate-500 tracking-wider block">Klasifikasi Pola:</span>
               <div id="primary-taxonomy-badge" class="text-xs font-bold text-slate-900 dark:text-slate-100">
                 Belum Dianalisis
               </div>
@@ -363,7 +539,7 @@
 
             <!-- Kesalahan Kedua -->
             <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 space-y-1">
-              <span class="text-[10px] font-bold uppercase text-slate-500 tracking-wider block">Kesalahan Kedua:</span>
+              <span class="text-[10px] font-bold uppercase text-slate-500 tracking-wider block">Pola Sekunder:</span>
               <div id="secondary-taxonomy-badge" class="text-xs font-semibold text-slate-600 dark:text-slate-400">
                 Tidak ada
               </div>
@@ -375,56 +551,33 @@
             
             <!-- Bukti Analisis Kognitif -->
             <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 space-y-1">
-              <span class="text-[11px] font-bold uppercase text-slate-500 tracking-wider block">Bukti Analisis Kognitif:</span>
+              <span class="text-[11px] font-bold uppercase text-slate-500 tracking-wider block">Bukti Analisis Langkah:</span>
               <p id="evidence-text" class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                Pilih salah satu contoh simulasi atau ketik pengerjaan siswa lalu klik "Jalankan Analisis Diagnosis" untuk melihat bukti diagnostik.
+                Tuliskan pengerjaan siswa lalu klik "Jalankan Analisis Diagnosis" untuk melihat bukti diagnostik.
               </p>
             </div>
 
-            <!-- Saran Remediasi -->
-            <div class="p-3 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 space-y-1">
+            <!-- Saran Remediasi Adaptif -->
+            <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 space-y-2">
               <span class="text-[11px] font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                 Rekomendasi Belajar (Remediasi):
               </span>
               <p id="remediation-text" class="text-xs text-blue-950 dark:text-blue-200 font-medium leading-relaxed">
                 Saran belajar adaptif akan muncul di sini setelah diagnosis dijalankan.
               </p>
+              
+              <button id="btn-start-remediation-from-diag" class="btn-accent w-full py-2 text-xs font-bold mt-1 hidden">
+                Mulai Latihan Remediasi Sekarang
+              </button>
             </div>
 
-          </div>
-
-          <!-- Format Teks Baku Penelitian -->
-          <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Format Teks Baku Penelitian:</span>
-              <span class="text-[11px] text-slate-400">Siap dicopy ke laporan</span>
+            <!-- Next Step Guidance -->
+            <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+              <strong class="text-slate-900 dark:text-white block mb-0.5">Langkah Selanjutnya:</strong>
+              Setelah latihan remediasi selesai, sistem akan mengevaluasi kembali pola pemahamanmu dan mengevolusi Learning Cube terkait.
             </div>
-            <pre
-              id="output-plain-text"
-              class="output-code-box p-3.5 overflow-x-auto whitespace-pre-wrap select-all"
-            >Nama pengguna/pribadi = Siswa_01
-Nomor soal = Q1
-Bagian = D1 - Konsep Dasar
-Kesalahan satu = -
-Kesalahan kedua = Tidak ada
-Bukti = -
-Kepercayaan diri = 0%
-Remediasi = -</pre>
-          </div>
-        </section>
 
-        <!-- Panduan Singkat 4 Kategori Kesalahan (E1 - E4) -->
-        <section class="card-clean p-4 space-y-2 text-xs">
-          <h4 class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            Panduan Singkat Kategori Kesalahan (E1 - E4):
-          </h4>
-          <div class="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-400 leading-normal">
-            <p><strong class="text-slate-900 dark:text-slate-200">E1 (Konseptual):</strong> Salah memahami prinsip dasar (contoh: menganggap D &lt; 0 akarnya bernilai negatif).</p>
-            <p><strong class="text-slate-900 dark:text-slate-200">E2 (Prosedural):</strong> Konsep benar tapi algoritma aljabar keliru (contoh: tanda pembuat nol faktor terbalik).</p>
-            <p><strong class="text-slate-900 dark:text-slate-200">E3 (Komputasi):</strong> Konsep &amp; prosedur tepat tapi salah hitung numerik atau tanda minus (-4ac).</p>
-            <p><strong class="text-slate-900 dark:text-slate-200">E4 (Interpretasi):</strong> Hitungan selesai tapi salah menafsirkan arti fisis (contoh: memilih ukuran panjang negatif).</p>
           </div>
         </section>
 
@@ -433,19 +586,19 @@ Remediasi = -</pre>
   </main>
 
   <!-- ========================================================================= -->
-  <!-- TAB 2: BANK SOAL & LATIHAN PERSIAPAN UJIAN (INPUT GAMBAR, FILE, AUDIO) -->
+  <!-- TAB 2: BANK SOAL & LATIHAN UJIAN (MULTIMEDIA FOTO, AUDIO, DOKUMEN)        -->
   <!-- ========================================================================= -->
-  <main id="section-practice-mode" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5 hidden">
+  <main id="section-practice-mode" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 hidden">
     
-    <!-- Header Banner Mode Latihan -->
-    <div class="card-clean p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 dark:from-slate-900 dark:via-blue-950/30 dark:to-slate-900">
+    <!-- Banner Mode Latihan -->
+    <div class="card-clean p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 dark:from-slate-900 dark:via-blue-950/30 dark:to-slate-900">
       <div class="space-y-1">
         <div class="flex items-center gap-2">
           <span class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-blue-600 text-white">Bank Soal &amp; Tryout</span>
           <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Latihan Mandiri &amp; Persiapan Ujian Matematika</h2>
         </div>
         <p class="text-xs text-slate-600 dark:text-slate-400">
-          Siswa dapat mengerjakan latihan soal persiapan ulangan/ujian, mengunggah foto coretan, merekam suara penalaran, atau menginput soal baru dengan gambar, file &amp; audio.
+          Kerjakan latihan soal persiapan ulangan/ujian dengan dukungan unggah <strong>Foto Coretan Tangan</strong> dan <strong>Rekaman Suara Penalaran</strong>.
         </p>
       </div>
 
@@ -458,7 +611,7 @@ Remediasi = -</pre>
 
         <button id="btn-export-bank-json" title="Unduh Bank Soal sebagai file JSON" class="btn-secondary py-2 px-3 text-xs font-semibold">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-          <span>Ekspor Bank Soal</span>
+          <span>Ekspor JSON</span>
         </button>
 
         <label for="input-import-bank-json" title="Impor Bank Soal dari file JSON" class="btn-secondary py-2 px-3 text-xs font-semibold cursor-pointer">
@@ -470,14 +623,14 @@ Remediasi = -</pre>
     </div>
 
     <!-- WORKSTATION LATIHAN: DAFTAR SOAL + WORKSPACE PENGERJAAN -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       
       <!-- KOLOM KIRI: DAFTAR SOAL BANK LATIHAN (4 Kolom) -->
       <div class="lg:col-span-4 space-y-3">
         <div class="card-clean p-4 space-y-3">
           <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
             <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+              <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
               <span>Daftar Soal Latihan</span>
             </h3>
             <span id="practice-question-count-badge" class="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
@@ -530,18 +683,18 @@ Remediasi = -</pre>
             <div id="practice-media-image-box" class="card-subtle p-2.5 space-y-1.5 hidden">
               <span class="text-[10px] font-bold uppercase text-slate-500 flex items-center gap-1">
                 <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <span>Gambar / Diagram Soal</span>
+                <span>Gambar / Diagram</span>
               </span>
               <div id="practice-media-image-preview" class="media-thumbnail-preview cursor-pointer" title="Klik untuk memperbesar gambar">
                 <img id="practice-media-img-tag" src="" alt="Gambar Soal" />
               </div>
             </div>
 
-            <!-- Audio Petunjuk / Rekaman Soal -->
+            <!-- Audio Petunjuk Soal -->
             <div id="practice-media-audio-box" class="card-subtle p-2.5 space-y-1.5 hidden">
               <span class="text-[10px] font-bold uppercase text-slate-500 flex items-center gap-1">
                 <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
-                <span>Audio / Voice Note Soal</span>
+                <span>Audio Soal</span>
               </span>
               <audio id="practice-media-audio-player" controls class="w-full h-8"></audio>
             </div>
@@ -560,20 +713,20 @@ Remediasi = -</pre>
           </div>
         </section>
 
-        <!-- FORMULIR PENGERJAAN LATIHAN SISWA (MULTIMEDIA) -->
+        <!-- FORMULIR PENGERJAAN LATIHAN SISWA -->
         <section class="card-clean p-5 space-y-4">
           <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
             <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
               <span>Lembar Jawaban Siswa</span>
             </h3>
-            <span class="text-[11px] text-slate-500">Mendukung Teks, Foto Coretan &amp; Rekaman Suara</span>
+            <span class="text-[11px] text-slate-500">Mendukung Teks, Foto &amp; Rekaman Suara</span>
           </div>
 
           <!-- Nama Siswa -->
           <div>
             <label for="practice-student-name" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Nama Siswa / Peserta Ujian:
+              Nama Siswa:
             </label>
             <input
               type="text"
@@ -587,24 +740,24 @@ Remediasi = -</pre>
           <!-- Coretan Langkah Teks -->
           <div>
             <label for="practice-steps-input" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Langkah Coretan Aljabar (Ketik di sini):
+              Langkah Coretan Aljabar:
             </label>
             <textarea
               id="practice-steps-input"
               rows="3"
-              placeholder="Ketikkan langkah pengerjaan atau coret-coretan pemecahan masalah matematika..."
+              placeholder="Ketikkan langkah pengerjaan atau coret-coretan aljabar pemecahan masalah..."
               class="input-clean w-full p-3 text-xs sm:text-sm font-mono leading-relaxed"
             ></textarea>
           </div>
 
-          <!-- INPUT MULTIMEDIA SISWA: 1. UPLOAD FOTO CORETAN & 2. REKAM SUARA PENALARAN -->
+          <!-- Input Multimedia Siswa: 1. Foto Coretan & 2. Rekam Suara -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             
-            <!-- 1. FOTO CORETAN TANGAN SISWA -->
+            <!-- 1. Foto Coretan Kertas -->
             <div class="card-subtle p-3 space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                  <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
                   <span>1. Foto Coretan Kertas</span>
                 </span>
                 <button id="btn-remove-student-photo" class="text-[11px] text-rose-500 hover:underline hidden">Hapus</button>
@@ -622,17 +775,16 @@ Remediasi = -</pre>
               </div>
             </div>
 
-            <!-- 2. REKAMAN SUARA PENALARAN SISWA -->
+            <!-- 2. Rekam Suara Penalaran Siswa -->
             <div class="card-subtle p-3 space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                  <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"></path></svg>
                   <span>2. Rekam Suara Penalaran</span>
                 </span>
-                <span id="voice-record-timer" class="text-[11px] font-mono font-bold text-slate-500">00:00</span>
+                <span id="voice-record-timer" class="text-[11px] font-mono font-bold text-slate-400">00:00</span>
               </div>
 
-              <!-- Tombol Kontrol Perekaman Suara -->
               <div class="flex items-center gap-2">
                 <button id="btn-start-record-voice" class="btn-primary flex-1 py-2 px-3 text-xs font-semibold">
                   <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"></path></svg>
@@ -645,7 +797,6 @@ Remediasi = -</pre>
                 </button>
               </div>
 
-              <!-- Audio Player Rekaman Siswa -->
               <div id="student-voice-player-box" class="space-y-1 hidden">
                 <audio id="student-voice-player" controls class="w-full h-8"></audio>
                 <button id="btn-delete-voice" class="text-[10px] text-rose-500 hover:underline block text-right w-full">Hapus Rekaman Suara</button>
@@ -742,74 +893,151 @@ Remediasi = -</pre>
   </main>
 
   <!-- ========================================================================= -->
-  <!-- TAB 3: RIWAYAT DIAGNOSIS & STATISTIK HASIL EVALUASI -->
+  <!-- TAB 3: DEDICATED ERROR PROFILE PAGE                                       -->
   <!-- ========================================================================= -->
-  <main id="section-history-mode" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5 hidden">
+  <main id="section-error-profile" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 hidden">
+    <!-- Rendered dynamically by errorProfile.js -->
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- TAB 4: RESEARCH / TEACHER MODE (INTEGRITAS RISET, CSV, SUPABASE, MATRIX)  -->
+  <!-- ========================================================================= -->
+  <main id="section-research-mode" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 hidden">
     
-    <!-- Statistik Ringkasan Diagnostik -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-      <div class="card-clean p-3.5 space-y-1">
-        <span class="text-[10px] font-bold uppercase text-slate-500">Total Uji:</span>
-        <div id="stat-total-count" class="text-xl font-extrabold text-slate-900 dark:text-white">0</div>
-        <span class="text-[10px] text-slate-400">Pengerjaan</span>
+    <!-- Banner Research Mode -->
+    <div class="card-clean p-5 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+            Research &amp; Teacher Portal
+          </span>
+          <span class="text-xs text-slate-400">Validasi Algoritma &bull; Deterministic Diagnosis</span>
+        </div>
+        <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">
+          Pusat Data Penelitian &amp; Evaluasi Pakar EPE
+        </h2>
+        <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+          Akses data mentah penelitian, matriks klasifikasi D1–D6 x E1–E4, format teks baku JMC/laporan, sinkronisasi cloud Supabase, dan ekspor CSV.
+        </p>
       </div>
 
-      <div class="card-clean p-3.5 space-y-1 border-l-4 border-l-emerald-500">
-        <span class="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">E0 - Akurat</span>
-        <div id="stat-e0-count" class="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">0%</div>
-        <span id="stat-e0-sub" class="text-[10px] text-slate-400">0 data</span>
-      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="btn-sync-supabase" class="btn-secondary py-2 px-3 text-xs text-blue-400 hover:text-blue-300 font-semibold" title="Unggah seluruh riwayat ke Cloud Supabase">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+          <span>Sinkronkan ke Cloud</span>
+        </button>
 
-      <div class="card-clean p-3.5 space-y-1 border-l-4 border-l-blue-500">
-        <span class="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400">E1 - Konseptual</span>
-        <div id="stat-e1-count" class="text-xl font-extrabold text-blue-600 dark:text-blue-400">0%</div>
-        <span id="stat-e1-sub" class="text-[10px] text-slate-400">0 data</span>
-      </div>
+        <button id="btn-export-cloud-csv" class="btn-secondary py-2 px-3 text-xs text-emerald-400 hover:text-emerald-300 font-bold" title="Unduh data riwayat Supabase ke CSV">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path></svg>
+          <span>Unduh Cloud CSV</span>
+        </button>
 
-      <div class="card-clean p-3.5 space-y-1 border-l-4 border-l-amber-500">
-        <span class="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">E2 - Prosedural</span>
-        <div id="stat-e2-count" class="text-xl font-extrabold text-amber-600 dark:text-amber-400">0%</div>
-        <span id="stat-e2-sub" class="text-[10px] text-slate-400">0 data</span>
-      </div>
-
-      <div class="card-clean p-3.5 space-y-1 border-l-4 border-l-rose-500">
-        <span class="text-[10px] font-bold uppercase text-rose-600 dark:text-rose-400">E3 - Komputasi</span>
-        <div id="stat-e3-count" class="text-xl font-extrabold text-rose-600 dark:text-rose-400">0%</div>
-        <span id="stat-e3-sub" class="text-[10px] text-slate-400">0 data</span>
-      </div>
-
-      <div class="card-clean p-3.5 space-y-1 border-l-4 border-l-purple-500">
-        <span class="text-[10px] font-bold uppercase text-purple-600 dark:text-purple-400">E4 - Interpretasi</span>
-        <div id="stat-e4-count" class="text-xl font-extrabold text-purple-600 dark:text-purple-400">0%</div>
-        <span id="stat-e4-sub" class="text-[10px] text-slate-400">0 data</span>
+        <button id="btn-export-csv-tab" class="btn-primary py-2 px-3.5 text-xs font-bold">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          <span>Ekspor CSV Lokal</span>
+        </button>
       </div>
     </div>
 
-    <!-- Tabel Riwayat Pengerjaan -->
-    <section class="card-clean p-5 space-y-4">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
-        <div>
-          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Riwayat Diagnosis &amp; Remediasi</h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Daftar rekaman pengerjaan siswa yang tersimpan otomatis di perangkat</p>
-        </div>
+    <!-- Statistik Ringkasan Diagnostik (6 Kotak Taksonomi) -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="card-clean p-3.5 space-y-1">
+        <span class="text-[10px] font-bold uppercase text-slate-400">Total Uji:</span>
+        <div id="stat-total-count" class="text-xl font-extrabold text-white">0</div>
+        <span class="text-[10px] text-slate-500">Pengerjaan</span>
+      </div>
 
-        <div class="flex items-center gap-2">
-          <button id="btn-export-csv-tab" class="btn-primary py-2 px-3 text-xs font-bold">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-            <span>Ekspor File CSV</span>
-          </button>
+      <div class="card-clean p-3.5 space-y-1 border-l-4 border-l-emerald-500">
+        <span class="text-[10px] font-bold uppercase text-emerald-400">E0 - Akurat</span>
+        <div id="stat-e0-count" class="text-xl font-extrabold text-emerald-400">0%</div>
+        <span id="stat-e0-sub" class="text-[10px] text-slate-500">0 data</span>
+      </div>
 
-          <button id="btn-clear-history" class="btn-secondary py-2 px-3 text-xs text-rose-600 hover:text-rose-700">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-            <span>Kosongkan Riwayat</span>
-          </button>
+      <div class="card-clean p-3.5 space-y-1 border-l-4 border-l-rose-500">
+        <span class="text-[10px] font-bold uppercase text-rose-400">E1 - Konseptual</span>
+        <div id="stat-e1-count" class="text-xl font-extrabold text-rose-400">0%</div>
+        <span id="stat-e1-sub" class="text-[10px] text-slate-500">0 data</span>
+      </div>
+
+      <div class="card-clean p-3.5 space-y-1 border-l-4 border-l-amber-500">
+        <span class="text-[10px] font-bold uppercase text-amber-400">E2 - Prosedural</span>
+        <div id="stat-e2-count" class="text-xl font-extrabold text-amber-400">0%</div>
+        <span id="stat-e2-sub" class="text-[10px] text-slate-500">0 data</span>
+      </div>
+
+      <div class="card-clean p-3.5 space-y-1 border-l-4 border-l-yellow-500">
+        <span class="text-[10px] font-bold uppercase text-yellow-400">E3 - Komputasi</span>
+        <div id="stat-e3-count" class="text-xl font-extrabold text-yellow-400">0%</div>
+        <span id="stat-e3-sub" class="text-[10px] text-slate-500">0 data</span>
+      </div>
+
+      <div class="card-clean p-3.5 space-y-1 border-l-4 border-l-purple-500">
+        <span class="text-[10px] font-bold uppercase text-purple-400">E4 - Interpretasi</span>
+        <div id="stat-e4-count" class="text-xl font-extrabold text-purple-400">0%</div>
+        <span id="stat-e4-sub" class="text-[10px] text-slate-500">0 data</span>
+      </div>
+    </div>
+
+    <!-- Format Teks Baku Penelitian & Panduan Taksonomi -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Format Teks Baku (7 Kolom) -->
+      <div class="lg:col-span-7 space-y-3">
+        <div class="card-clean p-5 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div>
+              <h3 class="text-sm font-bold text-white">Format Teks Baku Penelitian</h3>
+              <p class="text-xs text-slate-400">Format output terstandarisasi untuk copy-paste ke laporan riset</p>
+            </div>
+            <button id="btn-copy-research-text" class="btn-secondary text-xs px-2.5 py-1.5 font-semibold">
+              Salin Teks
+            </button>
+          </div>
+          <pre id="output-plain-text" class="output-code-box p-4 overflow-x-auto whitespace-pre-wrap select-all">Nama pengguna/pribadi = Siswa_01
+Nomor soal = Q1
+Bagian = D1 - Konsep Dasar
+Kesalahan satu = -
+Kesalahan kedua = Tidak ada
+Bukti = -
+Kepercayaan diri = 0%
+Remediasi = -</pre>
         </div>
       </div>
 
-      <!-- Tabel Konten -->
+      <!-- Panduan Taksonomi Kesalahan Baku (5 Kolom) -->
+      <div class="lg:col-span-5 space-y-3">
+        <div class="card-clean p-5 space-y-2.5 text-xs">
+          <h4 class="font-bold text-white text-xs flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Taksonomi Kesalahan Kognitif Baku (E0 s.d. E4):</span>
+          </h4>
+          <div class="space-y-2 text-[11px] text-slate-400 leading-relaxed">
+            <p><strong class="text-emerald-400">E0 (Akurat):</strong> Solusi dan seluruh aljabar tepat tanpa kekeliruan.</p>
+            <p><strong class="text-rose-400">E1 (Konseptual):</strong> Salah memahami definisi/teorema (misal: menganggap D &lt; 0 akarnya bernilai negatif).</p>
+            <p><strong class="text-amber-400">E2 (Prosedural):</strong> Konsep benar namun algoritma aljabar keliru (misal: tanda faktor terbalik).</p>
+            <p><strong class="text-yellow-400">E3 (Komputasi):</strong> Konsep dan prosedur tepat, namun salah operasi hitung tanda/angka (-4ac).</p>
+            <p><strong class="text-purple-400">E4 (Interpretasi):</strong> Perhitungan aljabar selesai namun salah menafsirkan arti fisis nyata (misal: panjang bernilai negatif).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabel Riwayat Pengerjaan & Diagnosis -->
+    <section class="card-clean p-5 space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Tabel Riwayat Diagnostik Terperinci</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Seluruh data pengerjaan yang terekam di sistem lokal</p>
+        </div>
+
+        <button id="btn-clear-history" class="btn-secondary py-2 px-3 text-xs text-rose-500 hover:text-rose-400">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+          <span>Kosongkan Riwayat</span>
+        </button>
+      </div>
+
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-          <thead class="text-[11px] uppercase bg-slate-50 dark:bg-slate-800 text-slate-500 border-b border-slate-200 dark:border-slate-700">
+          <thead class="text-[11px] uppercase bg-slate-50 dark:bg-slate-800/60 text-slate-400 border-b border-slate-200 dark:border-slate-700/60">
             <tr>
               <th class="px-3 py-2.5">Waktu</th>
               <th class="px-3 py-2.5">Nama Siswa</th>
@@ -826,14 +1054,71 @@ Remediasi = -</pre>
         </table>
       </div>
 
-      <div id="history-empty-state" class="p-8 text-center text-xs text-slate-400">
+      <div id="history-empty-state" class="p-8 text-center text-xs text-slate-500">
         Belum ada riwayat diagnostik pengerjaan siswa.
       </div>
     </section>
+
   </main>
 
   <!-- ========================================================================= -->
-  <!-- MODAL: FORMULIR TAMBAH SOAL LATIHAN BARU (GAMBAR, FILE, AUDIO) -->
+  <!-- MODAL: VIEW COLLECTION MODAL (LEARNING CUBES MONUMENT DETAIL)             -->
+  <!-- ========================================================================= -->
+  <div id="collection-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="card-clean max-w-2xl w-full p-6 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto border border-slate-800">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🏆</span>
+          <div>
+            <h3 class="text-base font-bold text-white">Koleksi Learning Cubes Siswa</h3>
+            <p class="text-xs text-slate-400">Progres pembangunan monumen pemecahan masalah matematika</p>
+          </div>
+        </div>
+        <button id="btn-close-collection" class="p-1 rounded-lg text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- Ringkasan Statistik Kubus -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+        <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+          <span class="text-[10px] uppercase font-bold text-slate-400 block">Total Diperoleh</span>
+          <span id="collection-count-large" class="text-xl font-extrabold text-[var(--accent)]">0 / 24</span>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+          <span class="text-[10px] uppercase font-bold text-emerald-400 block">Akurat (E0)</span>
+          <span id="collection-stats-accurate" class="text-lg font-bold text-emerald-300">0 Akurat</span>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+          <span class="text-[10px] uppercase font-bold text-amber-400 block">Perlu Remedi</span>
+          <span id="collection-stats-needspractice" class="text-lg font-bold text-amber-300">0 Soal</span>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+          <span class="text-[10px] uppercase font-bold text-teal-400 block">Kristal/Verified</span>
+          <span id="collection-stats-remediated" class="text-lg font-bold text-teal-300">0 Kristal</span>
+        </div>
+      </div>
+
+      <!-- Milestone Details List -->
+      <div class="space-y-2.5">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Daftar Milestone Pembelajaran:</h4>
+        <div id="collection-milestone-list" class="space-y-2">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <div class="pt-3 text-right border-t border-slate-800">
+        <button id="btn-close-collection-2" class="btn-primary text-xs py-2 px-4" onclick="document.getElementById('collection-modal').classList.add('hidden')">
+          Tutup Koleksi
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: FORMULIR TAMBAH SOAL LATIHAN BARU (GAMBAR, FILE, AUDIO)            -->
   <!-- ========================================================================= -->
   <div id="create-question-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
     <div class="card-clean max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -969,7 +1254,7 @@ Remediasi = -</pre>
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL: LIGHTBOX ZOOM GAMBAR -->
+  <!-- MODAL: LIGHTBOX ZOOM GAMBAR                                               -->
   <!-- ========================================================================= -->
   <div id="image-lightbox-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
     <div class="max-w-4xl w-full bg-slate-900/90 rounded-2xl p-4 shadow-2xl relative flex flex-col items-center">
@@ -981,14 +1266,14 @@ Remediasi = -</pre>
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL: PANDUAN PENGGUNAAN SINGKAT -->
+  <!-- MODAL: PANDUAN PENGGUNAAN SINGKAT                                         -->
   <!-- ========================================================================= -->
   <div id="guide-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
     <div class="card-clean max-w-lg w-full p-6 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
         <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center text-xs font-bold">?</span>
-          Panduan Penggunaan Error Pattern Engine
+          Panduan Penggunaan EPE V2
         </h3>
         <button id="btn-close-guide" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -997,16 +1282,16 @@ Remediasi = -</pre>
 
       <div class="space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
         <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <strong class="text-slate-900 dark:text-white block mb-1">1. Mode Diagnostik Baku (Q1 - Q24):</strong>
-          Pilih salah satu dari 24 soal penelitian untuk mendeteksi 4 taksonomi kesalahan kognitif siswa (E1 Konseptual, E2 Prosedural, E3 Komputasi, E4 Interpretasi) dan melihat format teks baku penelitian.
+          <strong class="text-slate-900 dark:text-white block mb-1">1. Sistem 3D Learning Cubes:</strong>
+          Setiap butir dari 24 soal diagnostik yang Anda kerjakan akan mengisi satu kubus pada monumen 3D. Jawaban akurat menghasilkan kubus neon, dan jika terdeteksi kesalahan, kubus tetap Anda peroleh dan dapat dievolusikan menjadi kristal setelah remediasi.
         </div>
         <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <strong class="text-slate-900 dark:text-white block mb-1">2. Mode Bank Soal &amp; Latihan Ujian:</strong>
-          Siswa dapat berlatih menyelesaikan soal-soal matematika persiapan ulangan/ujian. Siswa dapat mengunggah <strong>Foto Coretan Tangan</strong> atau <strong>Merekam Suara Penalaran</strong> secara langsung dari mikrofon perangkat!
+          <strong class="text-slate-900 dark:text-white block mb-1">2. Alur 3-Langkah Diagnostik:</strong>
+          Pilih nomor soal (Step 1), jelaskan langkah aljabar di workspace (Step 2), dan peroleh diagnosis pola kesalahan serta saran remediasi (Step 3).
         </div>
         <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <strong class="text-slate-900 dark:text-white block mb-1">3. Tambah Soal Mandiri (Guru / Siswa):</strong>
-          Klik tombol <em>"Tambah Soal Baru"</em> untuk memasukkan soal latihan kustom dengan menyertakan Gambar diagram, File lembar kerja (PDF), atau Rekaman suara penjelasan.
+          <strong class="text-slate-900 dark:text-white block mb-1">3. Mode Riset &amp; Guru:</strong>
+          Beralih ke <em>Mode Riset</em> untuk melihat data penelitian lengkap, format teks baku JMC siap salin, matriks D1-D6 x E1-E4, dan ekspor CSV.
         </div>
       </div>
 
@@ -1019,14 +1304,14 @@ Remediasi = -</pre>
   </div>
 
   <!-- Footer -->
-  <footer class="mt-auto py-4 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 bg-white dark:bg-slate-900 transition-colors">
+  <footer class="mt-auto py-4 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 bg-white/60 dark:bg-slate-900/60 transition-colors">
     <div class="max-w-7xl mx-auto px-4">
-      <p class="font-medium text-slate-600 dark:text-slate-400">Error Pattern Engine (EPE) Matematika &bull; Sistem Diagnostik &amp; Bank Latihan Siswa</p>
-      <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">24 Soal Penelitian Baku &bull; Bank Soal Latihan Mandiri Multimedia &bull; Remediasi Adaptif</p>
+      <p class="font-medium text-slate-600 dark:text-slate-400">Error Pattern Engine (EPE) V2 Matematika &bull; Platform Riset &amp; Adaptive Learning</p>
+      <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">24 Soal Penelitian Baku &bull; 24 Learning Cubes &bull; Bank Soal Latihan Mandiri Multimedia</p>
     </div>
   </footer>
 
-  <!-- Entry Point Modul Modern JavaScript (Kompatibel 100% Vite & Vercel) -->
+  <!-- Entry Point Modul Modern JavaScript (Kompatibel 100% Vite & Static) -->
   <script type="module" src="./js/app.js"></script>
 </body>
 </html>
