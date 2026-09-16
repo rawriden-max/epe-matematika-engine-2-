@@ -20,6 +20,15 @@ import { IsometricCubeEngine } from "./ui/cubeEngine.js";
 import { ThemeManager } from "./ui/themeManager.js";
 import { MotivationManager } from "./ui/motivationManager.js";
 import { ErrorProfileManager } from "./ui/errorProfile.js";
+import { AiOrbEngine } from "./ui/aiOrbEngine.js";
+import { AiAgentManager } from "./ui/aiAgentManager.js";
+import { TransitionManager } from "./ui/transitionManager.js";
+import { UniverseBackground } from "./ui/universeBackground.js";
+import { AvatarEngine } from "./avatar/avatarEngine.js";
+import { AvatarLab } from "./avatar/avatarLab.js";
+import { CubicWallet } from "./economy/cubicWallet.js";
+import { CubicRewards } from "./economy/cubicRewards.js";
+import { AchievementEngine } from "./achievements/achievementEngine.js";
 
 class EpeAppV2 {
   constructor() {
@@ -29,6 +38,11 @@ class EpeAppV2 {
     this.historyManager = new HistoryManager();
     this.customStore = new CustomQuestionStore();
     this.cubeStore = new CubeStore();
+
+    // AI Companion, 3D Orb & Universe Background
+    this.aiOrbEngine = null;
+    this.aiAgentManager = null;
+    this.universeBackground = null;
 
     // State Navigasi ('dashboard' | 'diagnostic' | 'practice' | 'error-profile' | 'research')
     this.activeTab = "dashboard";
@@ -57,12 +71,24 @@ class EpeAppV2 {
     this.cubeEngine = null;
     this.motivationManager = null;
     this.errorProfileManager = null;
+    this.transitionManager = null;
+    this.avatarLab = null;
 
     this.elements = {};
   }
 
   init() {
     this.cacheElements();
+
+    // 0. Inisialisasi Universe Cosmic Background Interaktif
+    try {
+      this.universeBackground = new UniverseBackground({ canvasId: "universe-canvas" });
+    } catch (e) {
+      console.warn("Gagal inisialisasi UniverseBackground:", e);
+    }
+
+    // 0b. Inisialisasi Transition Manager (Efek Gelombang & Gelembung)
+    this.transitionManager = new TransitionManager();
 
     // 1. Inisialisasi Theme Manager & Radial Color Menu
     this.themeManager = new ThemeManager({
@@ -73,8 +99,14 @@ class EpeAppV2 {
             accentGlow: palette.accentGlow
           });
         }
+        if (this.aiOrbEngine) {
+          this.aiOrbEngine.setColor(palette.accent);
+        }
       }
     });
+
+    // 1b. Inisialisasi 3D AI Orb Engine & AI Agent Manager
+    this.initAiOrbAndAgent();
 
     // 2. Inisialisasi 3D Isometric Cube Engine
     this.initCubeEngine();
@@ -112,6 +144,9 @@ class EpeAppV2 {
     this.initPracticeMode();
     this.initVoiceRecorders();
 
+    // 6b. Inisialisasi EPE V2.1 Avatar & Cubic Economy System
+    this.initAvatarAndEconomy();
+
     // 7. Binding Event Handlers
     this.bindEvents();
 
@@ -119,7 +154,7 @@ class EpeAppV2 {
     this.updateStatsAndHistory();
     this.updateDashboardRecentSummary();
 
-    console.log("EPE V2 (Error Pattern Engine & Learning Cubes) Berhasil Diinisialisasi.");
+    console.log("EPE V2.1 (Error Pattern Engine, Avatar & Cubic Economy) Berhasil Diinisialisasi.");
   }
 
   cacheElements() {
@@ -158,6 +193,8 @@ class EpeAppV2 {
       dashRecentRemedyText: document.getElementById("dash-recent-remedy-text"),
       dashBtnOpenDiagnostic: document.getElementById("dash-btn-open-diagnostic"),
       dashBtnOpenPractice: document.getElementById("dash-btn-open-practice"),
+      dashBtnContinueDiag: document.getElementById("btn-continue-diagnostic"),
+      btnOpenCollection: document.getElementById("btn-open-collection"),
       cubeTooltip: document.getElementById("cube-tooltip"),
 
       // Tab 1: Diagnostik Baku
@@ -339,8 +376,28 @@ class EpeAppV2 {
   // =========================================================================
   // TAB & MODE NAVIGATION
   // =========================================================================
-  switchTab(tabName) {
+  switchTab(tabName, event = null) {
     this.activeTab = tabName;
+
+    // Trigger Efek Gelombang Energi (Wave) & Gelembung Melayang (Bubbles)
+    if (this.transitionManager) {
+      let originX = undefined;
+      let originY = undefined;
+      if (event) {
+        if (typeof event.clientX === "number" && typeof event.clientY === "number" && (event.clientX !== 0 || event.clientY !== 0)) {
+          originX = event.clientX;
+          originY = event.clientY;
+        } else if (event.currentTarget && typeof event.currentTarget.getBoundingClientRect === "function") {
+          const rect = event.currentTarget.getBoundingClientRect();
+          originX = rect.left + rect.width / 2;
+          originY = rect.top + rect.height / 2;
+        }
+      }
+      const accentColor = this.themeManager?.currentPalette
+        ? (this.themeManager.THEME_PALETTES?.[this.themeManager.currentPalette]?.accent || "#3b82f6")
+        : "#3b82f6";
+      this.transitionManager.triggerWaveAndBubble(originX, originY, accentColor);
+    }
 
     // Reset button states
     const navButtons = [
@@ -367,6 +424,9 @@ class EpeAppV2 {
       this.elements.sectionDashboard?.classList.remove("hidden");
       this.motivationManager?.updateDashboardWidgets();
       this.updateDashboardRecentSummary();
+      setTimeout(() => {
+        if (this.aiOrbEngine) this.aiOrbEngine.resumeAndResize();
+      }, 50);
       if (this.cubeEngine) {
         this.cubeEngine.resize();
         if (this.pendingDropCubeId) {
@@ -396,6 +456,7 @@ class EpeAppV2 {
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
+    this.syncAiContext();
   }
 
   setMode(mode) {
@@ -539,6 +600,7 @@ class EpeAppV2 {
     }
 
     this.renderQuestionGrid();
+    this.syncAiContext();
   }
 
   loadPreset(presetId) {
@@ -592,10 +654,125 @@ class EpeAppV2 {
     // Refresh visual navigator grid
     this.renderQuestionGrid();
 
+    // EPE V2.1 Process-Based Non-Punitive Reward (+10 ◆) & Milestone Verification
+    CubicRewards.rewardDiagnostic(this.activeQuestionId);
+    const completedCount = this.cubeStore.getCompletedCount();
+    const hasE0 = result.classification?.code === "E0" || result.primaryErrorCode === "E0";
+    AchievementEngine.checkMilestones({
+      completedQuestionsCount: completedCount,
+      completedRemediationsCount: 0,
+      hasE0Achievement: hasE0
+    });
+
+    // Update AI Context and trigger reactive visual emotion
+    this.syncAiContext();
+    if (this.aiOrbEngine) {
+      if (result.isCorrect) {
+        this.aiOrbEngine.setState("celebrate");
+        setTimeout(() => this.aiOrbEngine.setState("idle"), 3500);
+      } else {
+        this.aiOrbEngine.setState("speaking");
+        setTimeout(() => this.aiOrbEngine.setState("idle"), 3000);
+      }
+    }
+
     // Scroll to output on smaller screens
     if (window.innerWidth < 1024 && this.elements.outputSection) {
       this.elements.outputSection.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  }
+
+  initAiOrbAndAgent() {
+    try {
+      this.aiOrbEngine = new AiOrbEngine({
+        containerId: "ai-orb-container",
+        initialColor: this.themeManager?.currentPalette ? (this.themeManager.THEME_PALETTES?.[this.themeManager.currentPalette]?.accent || "#3b82f6") : "#3b82f6",
+        onClick: () => {
+          if (this.aiAgentManager) this.aiAgentManager.openDrawer();
+        }
+      });
+
+      this.aiAgentManager = new AiAgentManager({
+        orbEngine: this.aiOrbEngine
+      });
+
+      this.syncAiContext();
+    } catch (e) {
+      console.warn("Gagal inisialisasi AI Orb & Agent:", e);
+    }
+  }
+
+  initAvatarAndEconomy() {
+    try {
+      this.avatarLab = new AvatarLab();
+
+      // Render Header Mini Avatar
+      const headerAvatarBox = document.getElementById("header-avatar-container");
+      if (headerAvatarBox) {
+        AvatarEngine.renderInto(headerAvatarBox, null, 24);
+      }
+
+      // Update Header Balance
+      const balanceEl = document.getElementById("header-cubic-balance");
+      if (balanceEl) {
+        balanceEl.textContent = CubicWallet.getBalance().toLocaleString("id-ID");
+      }
+
+      // Bind Header Avatar Click -> Open Avatar Lab
+      const btnHeaderAvatar = document.getElementById("btn-header-avatar");
+      if (btnHeaderAvatar) {
+        btnHeaderAvatar.addEventListener("click", () => {
+          this.avatarLab.openModal();
+        });
+      }
+
+      // Bind Header Cubic Click -> Open Wallet Modal
+      const btnHeaderCubic = document.getElementById("btn-header-cubic");
+      if (btnHeaderCubic) {
+        btnHeaderCubic.addEventListener("click", () => {
+          CubicWallet.openWalletModal();
+        });
+      }
+
+      // React to Avatar Update
+      window.addEventListener("epe-avatar-updated", () => {
+        if (headerAvatarBox) {
+          AvatarEngine.renderInto(headerAvatarBox, null, 24);
+        }
+      });
+
+      // React to Cubic Balance Update
+      window.addEventListener("epe-cubic-balance-updated", (e) => {
+        if (balanceEl && e.detail) {
+          balanceEl.textContent = Number(e.detail.balance).toLocaleString("id-ID");
+        }
+      });
+
+      // Initial check for achievements based on existing data
+      const completedCount = this.cubeStore.getCompletedCount();
+      const history = this.historyManager.getAll();
+      const hasE0 = history.some((r) => r.primaryErrorCode === "E0");
+      AchievementEngine.checkMilestones({
+        completedQuestionsCount: completedCount,
+        completedRemediationsCount: 0,
+        hasE0Achievement: hasE0
+      });
+    } catch (err) {
+      console.warn("Gagal inisialisasi Avatar & Cubic Economy:", err);
+    }
+  }
+
+  syncAiContext() {
+    if (!this.aiAgentManager) return;
+    const activeQ = this.questions.find((q) => q.id === this.activeQuestionId);
+    this.aiAgentManager.updateContext({
+      activeTab: this.activeTab,
+      activeQuestion: activeQ,
+      studentName: this.elements.studentIdInput ? this.elements.studentIdInput.value : "Siswa_01",
+      studentSteps: this.elements.studentStepsInput ? this.elements.studentStepsInput.value : "",
+      studentAnswer: this.elements.studentAnswerInput ? this.elements.studentAnswerInput.value : "",
+      latestDiagnosis: this.latestResult
+    });
   }
 
   renderDiagnosticOutput(result) {
@@ -855,7 +1032,10 @@ class EpeAppV2 {
     // Jika ini adalah sesi latihan remediasi untuk kubus tertentu
     if (this.remediationTargetQuestionId && result.isCorrect) {
       this.motivationManager?.handleRemediationCompleted(this.remediationTargetQuestionId);
+      CubicRewards.rewardRemediation(q.domainId || "remed");
       this.remediationTargetQuestionId = null;
+    } else {
+      CubicRewards.rewardPractice(this.activePracticeQuestionId);
     }
 
     // Render Output Latihan
@@ -1066,11 +1246,11 @@ class EpeAppV2 {
   // =========================================================================
   bindEvents() {
     // Navigation Tabs
-    if (this.elements.tabBtnDashboard) this.elements.tabBtnDashboard.addEventListener("click", () => this.switchTab("dashboard"));
-    if (this.elements.tabBtnDiagnostic) this.elements.tabBtnDiagnostic.addEventListener("click", () => this.switchTab("diagnostic"));
-    if (this.elements.tabBtnPractice) this.elements.tabBtnPractice.addEventListener("click", () => this.switchTab("practice"));
-    if (this.elements.tabBtnErrorProfile) this.elements.tabBtnErrorProfile.addEventListener("click", () => this.switchTab("error-profile"));
-    if (this.elements.tabBtnResearch) this.elements.tabBtnResearch.addEventListener("click", () => this.switchTab("research"));
+    if (this.elements.tabBtnDashboard) this.elements.tabBtnDashboard.addEventListener("click", (e) => this.switchTab("dashboard", e));
+    if (this.elements.tabBtnDiagnostic) this.elements.tabBtnDiagnostic.addEventListener("click", (e) => this.switchTab("diagnostic", e));
+    if (this.elements.tabBtnPractice) this.elements.tabBtnPractice.addEventListener("click", (e) => this.switchTab("practice", e));
+    if (this.elements.tabBtnErrorProfile) this.elements.tabBtnErrorProfile.addEventListener("click", (e) => this.switchTab("error-profile", e));
+    if (this.elements.tabBtnResearch) this.elements.tabBtnResearch.addEventListener("click", (e) => this.switchTab("research", e));
 
     // Mode Switchers
     if (this.elements.btnModeStudent) this.elements.btnModeStudent.addEventListener("click", () => this.setMode("student"));
@@ -1080,10 +1260,16 @@ class EpeAppV2 {
 
     // Dashboard Quick Buttons
     if (this.elements.dashBtnOpenDiagnostic) {
-      this.elements.dashBtnOpenDiagnostic.addEventListener("click", () => this.switchTab("diagnostic"));
+      this.elements.dashBtnOpenDiagnostic.addEventListener("click", (e) => this.switchTab("diagnostic", e));
     }
     if (this.elements.dashBtnOpenPractice) {
-      this.elements.dashBtnOpenPractice.addEventListener("click", () => this.switchTab("practice"));
+      this.elements.dashBtnOpenPractice.addEventListener("click", (e) => this.switchTab("practice", e));
+    }
+    if (this.elements.dashBtnContinueDiag) {
+      this.elements.dashBtnContinueDiag.addEventListener("click", (e) => this.switchTab("diagnostic", e));
+    }
+    if (this.elements.btnOpenCollection) {
+      this.elements.btnOpenCollection.addEventListener("click", (e) => this.switchTab("diagnostic", e));
     }
 
     // Guide Modal
@@ -1120,8 +1306,8 @@ class EpeAppV2 {
     }
 
     if (this.elements.btnViewCubeOnDash) {
-      this.elements.btnViewCubeOnDash.addEventListener("click", () => {
-        this.switchTab("dashboard");
+      this.elements.btnViewCubeOnDash.addEventListener("click", (e) => {
+        this.switchTab("dashboard", e);
       });
     }
 

@@ -80,6 +80,15 @@ export class ThemeManager {
     this.currentPalette = localStorage.getItem("epe_color_palette") || "blue";
     this.isRadialOpen = false;
 
+    // Draggable & Rotatable State
+    this.currentPos = { x: 0, y: 0 };
+    this.isDragging = false;
+    this.dragStart = { x: 0, y: 0 };
+    this.initialPos = { x: 0, y: 0 };
+
+    this.currentAngle = 0;
+    this.isRotating = false;
+
     this.init();
   }
 
@@ -100,6 +109,8 @@ export class ThemeManager {
       document.documentElement.classList.remove("dark");
       document.body.classList.remove("theme-dark");
     }
+    // Re-enforce palette so it stays vivid
+    this.applyPalette(this.currentPalette);
   }
 
   toggleMode() {
@@ -111,15 +122,65 @@ export class ThemeManager {
     this.currentPalette = pal.id;
     localStorage.setItem("epe_color_palette", pal.id);
 
-    const root = document.documentElement;
-    root.style.setProperty("--accent", pal.accent);
-    root.style.setProperty("--accent-hover", pal.accentHover);
-    root.style.setProperty("--accent-subtle", pal.accentSubtle);
-    root.style.setProperty("--accent-text", pal.accentText);
-    root.style.setProperty("--accent-glow", pal.accentGlow);
-    root.style.setProperty("--accent-border", pal.border);
+    // 1. Direct style property assignment
+    const targets = [document.documentElement, document.body].filter(Boolean);
+    targets.forEach((target) => {
+      target.style.setProperty("--accent", pal.accent);
+      target.style.setProperty("--accent-hover", pal.accentHover);
+      target.style.setProperty("--accent-subtle", pal.accentSubtle);
+      target.style.setProperty("--accent-text", pal.accentText);
+      target.style.setProperty("--accent-glow", pal.accentGlow);
+      target.style.setProperty("--accent-border", pal.border);
+    });
 
-    // Update active ring on radial buttons
+    // 2. High-priority dynamic <style> injection with !important
+    // This GUARANTEES colors work in Dark Mode even if external style.css is cached!
+    let styleEl = document.getElementById("dynamic-theme-style");
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = "dynamic-theme-style";
+      document.head.appendChild(styleEl);
+    }
+    styleEl.innerHTML = `
+      :root, html, body, .dark, body.theme-dark, [class*="theme-"] {
+        --accent: ${pal.accent} !important;
+        --accent-hover: ${pal.accentHover} !important;
+        --accent-subtle: ${pal.accentSubtle} !important;
+        --accent-text: ${pal.accentText} !important;
+        --accent-glow: ${pal.accentGlow} !important;
+        --accent-border: ${pal.border} !important;
+      }
+      .btn-primary, button.btn-primary {
+        background-color: ${pal.accent} !important;
+        border-color: ${pal.accent} !important;
+        color: #ffffff !important;
+      }
+      .btn-primary:hover, button.btn-primary:hover {
+        background-color: ${pal.accentHover} !important;
+        border-color: ${pal.accentHover} !important;
+      }
+      .step-number, .mode-switch-btn.active, .nav-tab-btn.active {
+        background-color: ${pal.accentSubtle} !important;
+        color: ${pal.accent} !important;
+        border-color: ${pal.border} !important;
+      }
+      .q-nav-item.active {
+        border-color: ${pal.accent} !important;
+        background-color: ${pal.accentSubtle} !important;
+        color: ${pal.accent} !important;
+        box-shadow: 0 0 0 1px ${pal.accent} !important;
+      }
+      .radial-center-badge {
+        border-color: ${pal.accent} !important;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 12px ${pal.accentGlow} !important;
+      }
+      .floating-ai-trigger {
+        border-color: ${pal.accent} !important;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4), 0 0 15px ${pal.accentGlow} !important;
+      }
+    `;
+
+    // 3. Update active dot in radial menu
     document.querySelectorAll(".radial-color-dot").forEach((dot) => {
       if (dot.getAttribute("data-palette") === pal.id) {
         dot.classList.add("active-palette");
@@ -128,13 +189,27 @@ export class ThemeManager {
       }
     });
 
+    // 4. Update trigger button indicator
+    const triggerDot = document.querySelector("#radial-theme-trigger-btn span");
+    if (triggerDot) {
+      triggerDot.style.backgroundColor = pal.accent;
+    }
+
     if (this.onThemeChange) {
       this.onThemeChange(pal);
     }
   }
 
+  clampPosition(x, y) {
+    const margin = 88;
+    const maxX = Math.max(margin, window.innerWidth - margin);
+    const maxY = Math.max(margin, window.innerHeight - margin);
+    const clampedX = Math.min(maxX, Math.max(margin, x));
+    const clampedY = Math.min(maxY, Math.max(margin, y));
+    return { x: clampedX, y: clampedY };
+  }
+
   renderRadialMenu() {
-    // Inject radial menu container if not exists
     let menu = document.getElementById("radial-theme-menu");
     if (!menu) {
       menu = document.createElement("div");
@@ -144,12 +219,11 @@ export class ThemeManager {
     }
 
     const palettes = Object.values(THEME_PALETTES);
-    const radius = 64; // px radius for radial layout
+    const radius = 68;
     const total = palettes.length;
 
     let dotsHtml = "";
     palettes.forEach((p, idx) => {
-      // Angle for 6 items evenly distributed around circle
       const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
       const x = Math.round(Math.cos(angle) * radius);
       const y = Math.round(Math.sin(angle) * radius);
@@ -169,27 +243,120 @@ export class ThemeManager {
     menu.innerHTML = `
       <div class="radial-theme-backdrop" id="radial-backdrop"></div>
       <div class="radial-theme-circle" id="radial-circle-box">
-        <div class="radial-center-badge">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+        <div class="radial-orbit-ring" id="radial-orbit-guide"></div>
+        <div class="radial-wheel-rotator" id="radial-wheel-rotator">
+          ${dotsHtml}
         </div>
-        ${dotsHtml}
+        
+        <!-- Center Drag & Spin Handle -->
+        <div class="radial-center-badge" id="radial-drag-handle" title="Tahan & Geser untuk memindahkan posisi | Klik untuk Putar Roda!">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16M10 4l-2 4 2 4M14 12l2 4-2 4"></path>
+          </svg>
+          <span class="radial-drag-hint">DRAG</span>
+        </div>
       </div>
     `;
 
-    // Bind dots click
+    this.bindRadialInteractions(menu);
+  }
+
+  bindRadialInteractions(menu) {
+    const circleBox = menu.querySelector("#radial-circle-box");
+    const centerHandle = menu.querySelector("#radial-drag-handle");
+    const rotator = menu.querySelector("#radial-wheel-rotator");
+    const backdrop = menu.querySelector("#radial-backdrop");
+
+    // 1. Color Dots Selection
     menu.querySelectorAll(".radial-color-dot").forEach((dot) => {
       dot.addEventListener("click", (e) => {
         e.stopPropagation();
         const palId = e.currentTarget.getAttribute("data-palette");
         this.applyPalette(palId);
-        this.closeRadialMenu();
       });
     });
 
-    const backdrop = menu.querySelector("#radial-backdrop");
+    // 2. Backdrop closes menu
     if (backdrop) {
       backdrop.addEventListener("click", () => this.closeRadialMenu());
     }
+
+    // 3. Playful Dragging
+    let startPointerX = 0;
+    let startPointerY = 0;
+    let hasMoved = false;
+
+    const onPointerDown = (e) => {
+      if (e.target.closest(".radial-color-dot")) return;
+      e.preventDefault();
+      this.isDragging = true;
+      hasMoved = false;
+      centerHandle?.classList.add("dragging");
+
+      startPointerX = e.touches ? e.touches[0].clientX : e.clientX;
+      startPointerY = e.touches ? e.touches[0].clientY : e.clientY;
+      this.initialPos = { ...this.currentPos };
+
+      document.addEventListener("mousemove", onPointerMove);
+      document.addEventListener("touchmove", onPointerMove, { passive: false });
+      document.addEventListener("mouseup", onPointerUp);
+      document.addEventListener("touchend", onPointerUp);
+    };
+
+    const onPointerMove = (e) => {
+      if (!this.isDragging) return;
+      e.preventDefault();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const deltaX = clientX - startPointerX;
+      const deltaY = clientY - startPointerY;
+
+      if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
+        hasMoved = true;
+      }
+
+      const rawX = this.initialPos.x + deltaX;
+      const rawY = this.initialPos.y + deltaY;
+
+      const safe = this.clampPosition(rawX, rawY);
+      this.currentPos = safe;
+      circleBox.style.left = `${safe.x}px`;
+      circleBox.style.top = `${safe.y}px`;
+    };
+
+    const onPointerUp = () => {
+      this.isDragging = false;
+      centerHandle?.classList.remove("dragging");
+      document.removeEventListener("mousemove", onPointerMove);
+      document.removeEventListener("touchmove", onPointerMove);
+      document.removeEventListener("mouseup", onPointerUp);
+      document.removeEventListener("touchend", onPointerUp);
+
+      // If clicked without dragging, perform a playful spin!
+      if (!hasMoved) {
+        this.spinWheel();
+      }
+    };
+
+    if (circleBox) {
+      circleBox.addEventListener("mousedown", onPointerDown);
+      circleBox.addEventListener("touchstart", onPointerDown, { passive: false });
+    }
+  }
+
+  spinWheel() {
+    const rotator = document.getElementById("radial-wheel-rotator");
+    if (!rotator) return;
+
+    // Spin by 60 or 120 degrees smoothly
+    this.currentAngle += 120;
+    rotator.style.transition = "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)";
+    rotator.style.transform = `rotate(${this.currentAngle}deg)`;
+
+    setTimeout(() => {
+      rotator.style.transition = "transform 0.1s ease";
+    }, 520);
   }
 
   toggleRadialMenu(anchorElement) {
@@ -207,10 +374,12 @@ export class ThemeManager {
 
     if (anchorElement) {
       const rect = anchorElement.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.bottom + 70;
-      circleBox.style.left = `${centerX}px`;
-      circleBox.style.top = `${centerY}px`;
+      const rawX = rect.left + rect.width / 2;
+      const rawY = rect.bottom + 95;
+      const safe = this.clampPosition(rawX, rawY);
+      this.currentPos = safe;
+      circleBox.style.left = `${safe.x}px`;
+      circleBox.style.top = `${safe.y}px`;
     }
 
     menu.classList.remove("hidden");
@@ -244,5 +413,17 @@ export class ThemeManager {
     if (modeBtn) {
       modeBtn.addEventListener("click", () => this.toggleMode());
     }
+
+    window.addEventListener("resize", () => {
+      if (this.isRadialOpen) {
+        const circleBox = document.getElementById("radial-circle-box");
+        if (circleBox) {
+          const safe = this.clampPosition(this.currentPos.x, this.currentPos.y);
+          this.currentPos = safe;
+          circleBox.style.left = `${safe.x}px`;
+          circleBox.style.top = `${safe.y}px`;
+        }
+      }
+    });
   }
 }
