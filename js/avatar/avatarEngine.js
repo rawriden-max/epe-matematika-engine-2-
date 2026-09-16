@@ -521,138 +521,194 @@ export class AvatarEngine {
   static _renderFrontHairLayer(hairItem, hairColor, size) {
     const id = hairItem?.id || "hair_short_black";
 
+    // 1. Hijab Pelajar Modern (Perempuan)
     if (id === "hair_female_hijab") {
-      // Hijab outer cowl & fold lines
       return `
-        <path d="M 28 36 C 24 16, 76 16, 72 36 C 70 24, 30 24, 28 36 Z" fill="#1e40af" />
-        <path d="M 30 40 Q 50 25 70 40" fill="none" stroke="#60a5fa" stroke-width="1.2" opacity="0.6" />
+        <!-- Full Hijab Head Wrap (Completely covers entire skull from y=12) -->
+        <path d="M 24 42 C 20 20, 24 12, 50 12 C 76 12, 80 20, 76 42 C 74 28, 26 28, 24 42 Z" fill="#1e3a8a" />
+        <!-- Front Drape Shading & Folds -->
+        <path d="M 27 36 C 23 16, 77 16, 73 36" fill="none" stroke="#1d4ed8" stroke-width="2.5" />
+        <path d="M 30 40 Q 50 25 70 40" fill="none" stroke="#60a5fa" stroke-width="1.3" opacity="0.7" />
       `;
     }
 
+    // 2. Bob Sebahu Pelajar (Perempuan)
     if (id === "hair_female_bob") {
       return `
-        <!-- Full Bob Cut Framing Face to Chin -->
-        <path d="M 26 44 C 22 20, 78 20, 74 44 C 76 56, 74 65, 71 66 Q 68 64 69 52 Q 68 38 60 36 Q 50 40 40 36 Q 32 38 31 52 Q 32 64 29 66 C 26 65, 24 56, 26 44 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
-        <!-- Front Bangs -->
-        <path d="M 32 37 Q 42 41 50 37 Q 58 41 68 37" fill="none" stroke="${hairColor}" stroke-width="5" stroke-linecap="round" />
-        <!-- Glossy Highlight Strand -->
-        <path d="M 34 32 Q 50 23 66 32" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round" />
+        <!-- Full Solid Bob Cut Framing Entire Skull Down to Chin (Crown at y=13) -->
+        <path d="M 25 44 C 20 22, 25 13, 50 13 C 75 13, 80 22, 75 44 C 77 56, 75 66, 71 67 Q 68 64 69 52 Q 68 38 60 36 Q 50 39 40 36 Q 32 38 31 52 Q 32 64 29 67 C 25 66, 23 56, 25 44 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
+        <!-- Full Neat Horizontal Fringe -->
+        <path d="M 31 36 Q 41 40 50 36 Q 59 40 69 36" fill="none" stroke="${hairColor}" stroke-width="5" stroke-linecap="round" />
+        <!-- Glossy Highlight Strand Arc -->
+        <path d="M 34 22 Q 50 16 66 22" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.8" stroke-linecap="round" />
       `;
     }
 
-    if (id === "hair_female_long_black") {
+    // 3. Belah Samping Klasik (Pria / Scholar Sidepart)
+    if (id === "hair_male_sidepart" || id === "hair_scholar_sidepart") {
       return `
-        <!-- Long Straight Front Framing Strands -->
-        <path d="M 26 40 C 22 20, 78 20, 74 40 C 76 58, 77 75, 75 90 C 71 90, 71 70, 68 55 Q 66 38 58 36 Q 50 39 42 36 Q 34 38 32 55 C 29 70, 29 90, 25 90 C 23 75, 24 58, 26 40 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
-        <path d="M 33 36 Q 44 40 50 36 Q 56 40 67 36" fill="none" stroke="${hairColor}" stroke-width="4.5" stroke-linecap="round" />
-        <!-- Sheen -->
-        <path d="M 36 29 Q 50 22 64 29" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.8" stroke-linecap="round" />
+        <!-- Full Solid Classic Side Part with Thick Volume (Crown at y=13) -->
+        <path d="M 25 46 C 22 24, 25 13, 46 13 C 68 13.5, 78 25, 75 46 L 72 41 Q 62 33 50 34 Q 40 35 29 42 L 25 46 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
+        <!-- Sleek Side-Part Groove on Left -->
+        <line x1="36" y1="15" x2="38" y2="33" stroke="rgba(255,255,255,0.25)" stroke-width="1.3" stroke-linecap="round" />
+        <!-- Swept Hair Volume Lines -->
+        <path d="M 39 20 Q 54 18 68 25" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.6" stroke-linecap="round" />
+        <path d="M 40 26 Q 54 24 67 31" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1.3" stroke-linecap="round" />
+        <!-- Sideburns -->
+        <polygon points="25,41 27,48 29,43" fill="${hairColor}" />
+        <polygon points="75,41 73,48 71,43" fill="${hairColor}" />
       `;
     }
 
+    // 4. Undercut Modern (Pria)
+    if (id === "hair_male_undercut") {
+      return `
+        <!-- Undercut Tapered Sides (Dark Fade) -->
+        <path d="M 25 46 L 27 33 L 32 30 L 32 46 Z" fill="#0f172a" opacity="0.65" />
+        <path d="M 75 46 L 73 33 L 68 30 L 68 46 Z" fill="#0f172a" opacity="0.65" />
+        <!-- High Voluminous Quiff / Pompadour Top (Crown at y=11) -->
+        <path d="M 27 34 C 25 18, 30 11.5, 50 11 C 70 11.5, 75 18, 73 34 Q 63 29 50 28 Q 37 29 27 34 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
+        <!-- Layered Textured Quiff Strands Swept Up -->
+        <path d="M 33 28 Q 42 16 50 13 Q 58 16 67 28" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round" />
+        <path d="M 38 31 Q 45 22 50 20 Q 55 22 62 31" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="1.5" stroke-linecap="round" />
+      `;
+    }
+
+    // 5. Spiky Anime Energik (Pria)
+    if (id === "hair_male_spiky") {
+      return `
+        <!-- Full Solid Spiky Anime Hair Cap with Dynamic Multi-Peaks (Peaks at y=10) -->
+        <path d="M 25 46 L 23 35 L 20 25 L 29 24 L 32 14 L 40 19 L 50 10 L 60 19 L 68 14 L 71 24 L 80 25 L 77 35 L 75 46 L 72 40 Q 64 34 58 38 Q 50 33 42 37 Q 36 34 28 41 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
+        <!-- Internal Spike Ridges -->
+        <line x1="50" y1="10" x2="50" y2="28" stroke="rgba(255,255,255,0.25)" stroke-width="1.6" stroke-linecap="round" />
+        <line x1="40" y1="19" x2="43" y2="30" stroke="rgba(255,255,255,0.2)" stroke-width="1.3" stroke-linecap="round" />
+        <line x1="60" y1="19" x2="57" y2="30" stroke="rgba(255,255,255,0.2)" stroke-width="1.3" stroke-linecap="round" />
+      `;
+    }
+
+    // 6. Ikal Pendek Karismatik (Pria)
+    if (id === "hair_male_curly") {
+      return `
+        <!-- Thick Cloud of Short Male Waves & Curls (Crown at y=12) -->
+        <path d="M 25 46 Q 21 34 24 24 Q 28 14 40 13 Q 50 11.5 60 13 Q 72 14 76 24 Q 79 34 75 46 L 72 41 Q 67 36 62 39 Q 57 34 50 37 Q 43 34 38 39 Q 33 36 28 41 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
+        <!-- Curly Ringlet Forehead Accents -->
+        <circle cx="34" cy="22" r="4" fill="none" stroke="#b45309" stroke-width="1.5" />
+        <circle cx="50" cy="18" r="4.5" fill="none" stroke="#b45309" stroke-width="1.6" />
+        <circle cx="66" cy="22" r="4" fill="none" stroke="#b45309" stroke-width="1.5" />
+        <path d="M 40 37 Q 44 41 48 37" fill="none" stroke="${hairColor}" stroke-width="3" stroke-linecap="round" />
+        <path d="M 52 37 Q 56 41 60 37" fill="none" stroke="${hairColor}" stroke-width="3" stroke-linecap="round" />
+      `;
+    }
+
+    // 7. Electric Blue Waves (Pria)
     if (id === "hair_messy_blue") {
       return `
-        <!-- Electric Blue Waves - Full Head Volume & Spiked Locks -->
-        <path d="M 25 44 C 20 20, 80 18, 75 44 C 74 32, 70 24, 58 22 C 45 20, 32 25, 25 44 Z" fill="#1e3a8a" />
-        <!-- Front Dynamic Electric Blue Swept Locks -->
-        <path d="M 26 40 Q 20 24 35 20 Q 50 16 65 20 Q 78 24 74 38 Q 66 26 50 28 Q 36 28 26 40 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
-        <!-- Front Spikes / Fringe -->
-        <polygon points="32,38 38,44 42,36" fill="${hairColor}" />
-        <polygon points="43,36 50,45 56,36" fill="${hairColor}" />
-        <polygon points="57,36 64,43 68,36" fill="${hairColor}" />
-        <!-- Glowing Neon Highlight Lines -->
-        <path d="M 34 26 Q 50 19 66 25" fill="none" stroke="#67e8f9" stroke-width="2.2" stroke-linecap="round" />
+        <!-- Full Electric Blue Wave Silhouette (Crown at y=12) -->
+        <path d="M 25 46 C 21 26, 25 12.5, 50 12 C 75 12.5, 79 26, 75 46 L 72 40 Q 64 34 57 39 Q 50 33 43 37 Q 36 34 28 41 Z" fill="#1e3a8a" filter="url(#avatar-shadow-${size})" />
+        <!-- Electric Blue Swept Wave Mass -->
+        <path d="M 25 42 Q 22 20 40 14 Q 58 13 74 24 Q 75 38 72 40 Q 64 34 57 39 Q 50 33 43 37 Q 36 34 28 41 Z" fill="${hairColor}" />
+        <!-- Glowing Cyan Neon Streaks -->
+        <path d="M 32 24 Q 48 16 66 22" fill="none" stroke="#67e8f9" stroke-width="2.5" stroke-linecap="round" filter="url(#avatar-glow-${size})" />
+        <path d="M 36 31 Q 50 24 64 30" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" />
       `;
     }
 
-    if (id === "hair_scholar_sidepart") {
+    // 8. Rambut Panjang Anggun (Perempuan)
+    if (id === "hair_female_long_black") {
       return `
-        <!-- Scholarly Side-Parted Volume -->
-        <path d="M 26 42 C 22 22, 78 20, 74 42 C 70 30, 32 30, 26 42 Z" fill="${hairColor}" />
-        <!-- Side Part Sweep from Left to Right -->
-        <path d="M 28 38 Q 40 28 58 30 Q 72 34 72 42 Q 62 33 46 34 Q 35 36 28 38 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
-        <line x1="38" y1="28" x2="42" y2="34" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" />
-        <!-- Sideburns -->
-        <polygon points="27,39 30,48 32,41" fill="${hairColor}" />
-        <polygon points="73,39 70,48 68,41" fill="${hairColor}" />
+        <!-- Full Long Straight Hair Cap & Framing Front Strands to Shoulders (Crown at y=13) -->
+        <path d="M 25 40 C 21 22, 25 13.5, 50 13.5 C 75 13.5, 79 22, 75 40 C 77 58, 78 75, 76 90 C 72 90, 71 70, 68 55 Q 66 38 58 36 Q 50 39 42 36 Q 34 38 32 55 C 29 70, 28 90, 24 90 C 22 75, 23 58, 25 40 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
+        <!-- Front Fringe Strands -->
+        <path d="M 32 36 Q 43 40 50 36 Q 57 40 68 36" fill="none" stroke="${hairColor}" stroke-width="4.5" stroke-linecap="round" />
+        <!-- Silky Gloss Sheen -->
+        <path d="M 34 22 Q 50 16 66 22" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.8" stroke-linecap="round" />
       `;
     }
 
+    // 9. Ikal Caramel Ceria (Perempuan)
     if (id === "hair_female_curly_amber") {
       return `
-        <!-- Bouncy Amber Curls Framing Head & Face -->
-        <path d="M 26 44 C 18 20, 82 20, 74 44 C 78 54, 76 65, 71 68 C 68 62, 69 50, 66 40 Q 58 35 50 38 Q 42 35 34 40 C 31 50, 32 62, 29 68 C 24 65, 22 54, 26 44 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
-        <!-- Curly Forehead Bangs -->
+        <!-- Full Voluminous Bouncy Curly Amber Mane (Crown at y=12) -->
+        <path d="M 25 44 C 18 22, 25 12.5, 50 12.5 C 75 12.5, 82 22, 75 44 C 79 55, 77 66, 72 69 C 69 63, 69 50, 66 40 Q 58 35 50 38 Q 42 35 34 40 C 31 50, 31 63, 28 69 C 23 66, 21 55, 25 44 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
+        <!-- Curly Bangs -->
         <path d="M 33 37 Q 41 43 47 38 Q 53 43 61 37 Q 67 41 68 36" fill="none" stroke="${hairColor}" stroke-width="4.5" stroke-linecap="round" />
-        <!-- Highlights -->
-        <circle cx="30" cy="46" r="3" fill="#f59e0b" opacity="0.6" />
-        <circle cx="70" cy="46" r="3" fill="#f59e0b" opacity="0.6" />
+        <!-- Warm Highlights -->
+        <circle cx="34" cy="22" r="3.5" fill="#f59e0b" opacity="0.6" />
+        <circle cx="66" cy="22" r="3.5" fill="#f59e0b" opacity="0.6" />
       `;
     }
 
+    // 10. Kuncir Kuda Dinamis (Perempuan)
     if (id === "hair_female_ponytail") {
       return `
-        <!-- High Ponytail Head Cap & Front Bangs -->
-        <path d="M 26 42 C 22 22, 78 22, 74 42 C 70 30, 30 30, 26 42 Z" fill="${hairColor}" />
-        <!-- Hair Tie Ring at Top Right -->
-        <ellipse cx="62" cy="24" rx="4.5" ry="3" transform="rotate(-20 62 24)" fill="#a855f7" stroke="#c084fc" stroke-width="1.2" />
-        <!-- Cute Front Bangs -->
+        <!-- High Ponytail Head Cap (Full Volume over Skull from y=13) -->
+        <path d="M 25 42 C 21 22, 25 13.5, 50 13.5 C 75 13.5, 79 22, 75 42 L 72 40 Q 64 36 58 40 Q 50 35 42 39 Q 36 36 28 41 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
+        <!-- High Hair Scrunchie at Top Right -->
+        <ellipse cx="63" cy="20" rx="4.5" ry="3" transform="rotate(-20 63 20)" fill="#a855f7" stroke="#c084fc" stroke-width="1.3" />
+        <!-- Cute Bangs -->
         <path d="M 32 37 Q 42 41 50 36 Q 58 41 66 37" fill="none" stroke="${hairColor}" stroke-width="5" stroke-linecap="round" />
-        <polygon points="27,39 30,47 32,41" fill="${hairColor}" />
-        <polygon points="73,39 70,47 68,41" fill="${hairColor}" />
+        <polygon points="26,39 28,47 31,41" fill="${hairColor}" />
+        <polygon points="74,39 72,47 69,41" fill="${hairColor}" />
       `;
     }
 
+    // 11. Quantum Flow Glow (Unisex)
     if (id === "hair_quantum_cyan") {
       return `
-        <!-- Quantum Flow Glowing Locks -->
-        <path d="M 26 42 C 22 20, 78 20, 74 42 C 70 28, 30 28, 26 42 Z" fill="#083344" />
-        <path d="M 26 38 Q 38 20 64 22 Q 74 26 72 38 Q 58 26 38 32 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
-        <path d="M 33 37 Q 44 42 50 36 Q 56 42 67 37" fill="none" stroke="${hairColor}" stroke-width="4.5" stroke-linecap="round" />
-        <!-- Energy Particles -->
-        <circle cx="36" cy="30" r="1.5" fill="#ffffff" filter="url(#avatar-glow-${size})" />
-        <circle cx="62" cy="28" r="1.8" fill="#ffffff" filter="url(#avatar-glow-${size})" />
+        <!-- Futuristic Full Cyber Hair Cap (Crown at y=12) -->
+        <path d="M 25 46 C 21 25, 25 12.5, 50 12 C 75 12.5, 79 25, 75 46 L 72 40 Q 64 35 57 39 Q 50 33 43 37 Q 36 35 28 41 Z" fill="#083344" filter="url(#avatar-shadow-${size})" />
+        <path d="M 26 38 Q 36 17 64 18 Q 74 22 72 38 Q 58 28 38 32 Z" fill="${hairColor}" />
+        <!-- Glowing Cyan Energy Filaments -->
+        <path d="M 33 22 Q 50 14 67 22" fill="none" stroke="#22d3ee" stroke-width="2.2" stroke-linecap="round" filter="url(#avatar-glow-${size})" />
+        <circle cx="36" cy="24" r="1.5" fill="#ffffff" filter="url(#avatar-glow-${size})" />
+        <circle cx="62" cy="22" r="1.8" fill="#ffffff" filter="url(#avatar-glow-${size})" />
       `;
     }
 
+    // 12. Twin Tails Siber Harajuku (Perempuan)
     if (id === "hair_female_twintail_neon") {
       return `
-        <!-- Twin Tails Front Cap, Hair Ties & Cute Bangs -->
-        <path d="M 26 42 C 22 22, 78 22, 74 42 C 70 30, 30 30, 26 42 Z" fill="${hairColor}" />
-        <!-- Left & Right Hair Ties -->
-        <circle cx="22" cy="38" r="3.5" fill="#06b6d4" stroke="#22d3ee" stroke-width="1" />
-        <circle cx="78" cy="38" r="3.5" fill="#06b6d4" stroke="#22d3ee" stroke-width="1" />
-        <!-- Front Anime Bangs -->
+        <!-- Twin Tails Full Skull Cap (Crown at y=13) -->
+        <path d="M 25 42 C 21 22, 25 13.5, 50 13.5 C 75 13.5, 79 22, 75 42 L 72 40 Q 64 36 57 40 Q 50 35 43 39 Q 36 36 28 41 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
+        <!-- Dual Cyber Hair Ties -->
+        <circle cx="21" cy="34" r="3.5" fill="#06b6d4" stroke="#22d3ee" stroke-width="1" />
+        <circle cx="79" cy="34" r="3.5" fill="#06b6d4" stroke="#22d3ee" stroke-width="1" />
+        <!-- Anime Fringe & Side Wisps -->
         <path d="M 32 37 Q 44 42 50 36 Q 56 42 68 37" fill="none" stroke="${hairColor}" stroke-width="5" stroke-linecap="round" />
-        <!-- Side Hanging Locks -->
-        <path d="M 29 42 Q 26 56 27 65" fill="none" stroke="${hairColor}" stroke-width="3" stroke-linecap="round" />
-        <path d="M 71 42 Q 74 56 73 65" fill="none" stroke="${hairColor}" stroke-width="3" stroke-linecap="round" />
+        <path d="M 28 41 Q 25 56 26 65" fill="none" stroke="${hairColor}" stroke-width="3" stroke-linecap="round" />
+        <path d="M 72 41 Q 75 56 74 65" fill="none" stroke="${hairColor}" stroke-width="3" stroke-linecap="round" />
       `;
     }
 
+    // 13. Mahkota Bintang Surgawi (Perempuan)
     if (id === "hair_female_celestial_crown") {
       return `
-        <!-- Celestial Floating Silver Hair Cap & Front Strands -->
-        <path d="M 26 40 C 20 20, 80 20, 74 40 C 70 28, 30 28, 26 40 Z" fill="${hairColor}" />
+        <!-- Floating Astral Silver Mane (Full Skull Coverage from y=12) -->
+        <path d="M 25 40 C 19 22, 25 12.5, 50 12 C 75 12.5, 81 22, 75 40 L 72 38 Q 63 35 50 34 Q 37 35 28 38 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
+        <!-- Flowing Forehead Strands -->
         <path d="M 30 36 Q 42 40 50 35 Q 58 40 70 36" fill="none" stroke="${hairColor}" stroke-width="4.5" stroke-linecap="round" />
-        <!-- Side Long Celestial Flowing Strands -->
-        <path d="M 28 42 Q 22 60 25 78" fill="none" stroke="${hairColor}" stroke-width="3.5" stroke-linecap="round" />
-        <path d="M 72 42 Q 78 60 75 78" fill="none" stroke="${hairColor}" stroke-width="3.5" stroke-linecap="round" />
+        <path d="M 27 41 Q 21 60 24 78" fill="none" stroke="${hairColor}" stroke-width="3.5" stroke-linecap="round" />
+        <path d="M 73 41 Q 79 60 76 78" fill="none" stroke="${hairColor}" stroke-width="3.5" stroke-linecap="round" />
         <!-- Golden Star Tiara / Crown across Forehead -->
-        <path d="M 30 35 Q 50 40 70 35" fill="none" stroke="#fbbf24" stroke-width="2" filter="url(#avatar-glow-${size})" />
-        <polygon points="50,28 52,33 57,34 53,37 54,42 50,39 46,42 47,37 43,34 48,33" fill="#fef08a" stroke="#d97706" stroke-width="0.8" />
-        <circle cx="36" cy="35" r="1.5" fill="#fbbf24" />
-        <circle cx="64" cy="35" r="1.5" fill="#fbbf24" />
+        <path d="M 28 34 Q 50 39 72 34" fill="none" stroke="#fbbf24" stroke-width="2.2" filter="url(#avatar-glow-${size})" />
+        <polygon points="50,25 52,31 58,32 53,35 55,41 50,38 45,41 47,35 42,32 48,31" fill="#fef08a" stroke="#d97706" stroke-width="0.8" />
+        <circle cx="35" cy="34" r="1.6" fill="#fbbf24" />
+        <circle cx="65" cy="34" r="1.6" fill="#fbbf24" />
       `;
     }
 
-    // Default: Short Black Student Crop
+    // Default: Rambut Pendek Pelajar (Pria - hair_short_black)
     return `
-      <!-- Neat Short Student Hair -->
-      <path d="M 26 42 C 22 22, 78 22, 74 42 C 70 30, 30 30, 26 42 Z" fill="${hairColor}" />
-      <path d="M 30 38 Q 42 41 50 36 Q 58 41 70 38" fill="none" stroke="${hairColor}" stroke-width="5" stroke-linecap="round" />
-      <polygon points="27,38 30,48 32,40" fill="${hairColor}" />
-      <polygon points="73,38 70,48 68,40" fill="${hairColor}" />
+      <!-- Solid Full Hair Cap Covering Entire Skull Crown & Forehead (Crown at y=13.5) -->
+      <path d="M 25 46 C 22 26, 25 13.5, 50 13.5 C 75 13.5, 78 26, 75 46 L 72 41 Q 65 37 58 40 Q 51 34 43 38 Q 36 35 28 41 L 25 46 Z" fill="${hairColor}" filter="url(#avatar-shadow-${size})" />
+      <!-- Hair Texture & Parting Strands -->
+      <path d="M 38 18 Q 42 27 44 36" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="1.3" stroke-linecap="round" />
+      <path d="M 52 17 Q 56 25 58 35" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1.2" stroke-linecap="round" />
+      <!-- Natural Healthy Sheen Arc -->
+      <path d="M 33 21 Q 50 16 67 21" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linecap="round" />
+      <!-- Sideburns -->
+      <polygon points="25,41 27,48 29,43" fill="${hairColor}" />
+      <polygon points="75,41 73,48 71,43" fill="${hairColor}" />
     `;
   }
 

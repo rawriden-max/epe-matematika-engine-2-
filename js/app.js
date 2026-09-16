@@ -30,6 +30,19 @@ import { CubicWallet } from "./economy/cubicWallet.js";
 import { CubicRewards } from "./economy/cubicRewards.js";
 import { AchievementEngine } from "./achievements/achievementEngine.js";
 
+// EPE V2.2 Research Measurement Modules
+import { AssessmentStore } from "./research/assessmentStore.js";
+import { AssessmentUI } from "./research/assessmentUI.js";
+import { ResearchAnalytics } from "./research/researchAnalytics.js";
+import { ResearchExport } from "./research/researchExport.js";
+
+// EPE V3 Multimodal & Profile Customization Modules
+import { ProfileManager } from "./data/profileManager.js";
+import { syncAllAssessmentsToSupabase } from "./data/supabaseClient.js";
+import { MultimodalInputUI } from "./multimodal/multimodalInputUI.js";
+import { HandwritingStepReconstructor } from "./multimodal/handwritingStepReconstructor.js";
+
+
 class EpeAppV2 {
   constructor() {
     this.questions = QUESTIONS;
@@ -38,6 +51,7 @@ class EpeAppV2 {
     this.historyManager = new HistoryManager();
     this.customStore = new CustomQuestionStore();
     this.cubeStore = new CubeStore();
+    this.assessmentUI = new AssessmentUI(this);
 
     // AI Companion, 3D Orb & Universe Background
     this.aiOrbEngine = null;
@@ -147,6 +161,10 @@ class EpeAppV2 {
     // 6b. Inisialisasi EPE V2.1 Avatar & Cubic Economy System
     this.initAvatarAndEconomy();
 
+    // 6c. Inisialisasi EPE V3 Profil Siswa & Multimodal Inputs
+    ProfileManager.init();
+    this.initMultimodalInputs();
+
     // 7. Binding Event Handlers
     this.bindEvents();
 
@@ -161,17 +179,35 @@ class EpeAppV2 {
     this.elements = {
       // Navigation Tabs
       tabBtnDashboard: document.getElementById("tab-btn-dashboard"),
+      tabBtnPretest: document.getElementById("tab-btn-pretest"),
       tabBtnDiagnostic: document.getElementById("tab-btn-diagnostic"),
       tabBtnPractice: document.getElementById("tab-btn-practice"),
+      tabBtnPosttest: document.getElementById("tab-btn-posttest"),
       tabBtnErrorProfile: document.getElementById("tab-btn-error-profile"),
       tabBtnResearch: document.getElementById("tab-btn-research"),
 
       // Section Containers
       sectionDashboard: document.getElementById("section-dashboard-mode"),
+      sectionPretest: document.getElementById("section-pretest-mode"),
       sectionDiagnostic: document.getElementById("section-diagnostic-mode"),
       sectionPractice: document.getElementById("section-practice-mode"),
+      sectionPosttest: document.getElementById("section-posttest-mode"),
       sectionErrorProfile: document.getElementById("section-error-profile"),
       sectionResearch: document.getElementById("section-research-mode"),
+
+      // Pipeline Buttons
+      btnPipelinePretest: document.getElementById("btn-pipeline-pretest"),
+      btnPipelineDiagnostic: document.getElementById("btn-pipeline-diagnostic"),
+      btnPipelineRemediation: document.getElementById("btn-pipeline-remediation"),
+      btnPipelinePosttest: document.getElementById("btn-pipeline-posttest"),
+
+      // Research CSV Export Suite & Comparison
+      btnExportPretestCsv: document.getElementById("btn-export-pretest-csv"),
+      btnExportDiagCsv: document.getElementById("btn-export-diag-csv"),
+      btnExportRemCsv: document.getElementById("btn-export-rem-csv"),
+      btnExportPosttestCsv: document.getElementById("btn-export-posttest-csv"),
+      btnExportCombinedCsv: document.getElementById("btn-export-combined-csv"),
+      researchComparisonContainer: document.getElementById("research-comparison-container"),
 
       // Mode Switcher
       btnModeStudent: document.getElementById("btn-mode-student"),
@@ -223,6 +259,7 @@ class EpeAppV2 {
       remediationText: document.getElementById("remediation-text"),
       btnStartRemediationFromDiag: document.getElementById("btn-start-remediation-from-diag"),
       btnViewCubeOnDash: document.getElementById("btn-view-cube-on-dash"),
+      stepReconstructionCardContainer: document.getElementById("step-reconstruction-card-container"),
 
       // Tab 2: Bank Latihan & Ujian
       practiceQuestionList: document.getElementById("practice-question-list"),
@@ -288,6 +325,7 @@ class EpeAppV2 {
       historyTableBody: document.getElementById("history-table-body"),
       historyEmptyState: document.getElementById("history-empty-state"),
       btnSyncSupabase: document.getElementById("btn-sync-supabase"),
+      btnSyncAssessmentsSupabase: document.getElementById("btn-sync-assessments-supabase"),
       btnExportCloudCsv: document.getElementById("btn-export-cloud-csv"),
       btnExportCsvTab: document.getElementById("btn-export-csv-tab"),
       btnClearHistory: document.getElementById("btn-clear-history"),
@@ -402,8 +440,10 @@ class EpeAppV2 {
     // Reset button states
     const navButtons = [
       this.elements.tabBtnDashboard,
+      this.elements.tabBtnPretest,
       this.elements.tabBtnDiagnostic,
       this.elements.tabBtnPractice,
+      this.elements.tabBtnPosttest,
       this.elements.tabBtnErrorProfile,
       this.elements.tabBtnResearch
     ];
@@ -412,8 +452,10 @@ class EpeAppV2 {
     // Hide all sections
     const sections = [
       this.elements.sectionDashboard,
+      this.elements.sectionPretest,
       this.elements.sectionDiagnostic,
       this.elements.sectionPractice,
+      this.elements.sectionPosttest,
       this.elements.sectionErrorProfile,
       this.elements.sectionResearch
     ];
@@ -424,6 +466,7 @@ class EpeAppV2 {
       this.elements.sectionDashboard?.classList.remove("hidden");
       this.motivationManager?.updateDashboardWidgets();
       this.updateDashboardRecentSummary();
+      this.updateResearchFlowPipeline();
       setTimeout(() => {
         if (this.aiOrbEngine) this.aiOrbEngine.resumeAndResize();
       }, 50);
@@ -437,6 +480,10 @@ class EpeAppV2 {
           }, 180);
         }
       }
+    } else if (tabName === "pretest") {
+      this.elements.tabBtnPretest?.classList.add("active");
+      this.elements.sectionPretest?.classList.remove("hidden");
+      this.assessmentUI?.openPreTest();
     } else if (tabName === "diagnostic") {
       this.elements.tabBtnDiagnostic?.classList.add("active");
       this.elements.sectionDiagnostic?.classList.remove("hidden");
@@ -445,6 +492,10 @@ class EpeAppV2 {
       this.elements.tabBtnPractice?.classList.add("active");
       this.elements.sectionPractice?.classList.remove("hidden");
       this.renderPracticeQuestionList();
+    } else if (tabName === "posttest") {
+      this.elements.tabBtnPosttest?.classList.add("active");
+      this.elements.sectionPosttest?.classList.remove("hidden");
+      this.assessmentUI?.openPostTest();
     } else if (tabName === "error-profile") {
       this.elements.tabBtnErrorProfile?.classList.add("active");
       this.elements.sectionErrorProfile?.classList.remove("hidden");
@@ -453,6 +504,9 @@ class EpeAppV2 {
       this.elements.tabBtnResearch?.classList.add("active");
       this.elements.sectionResearch?.classList.remove("hidden");
       this.updateStatsAndHistory();
+      if (this.elements.researchComparisonContainer) {
+        ResearchAnalytics.renderResearchModeComparison(this.elements.researchComparisonContainer);
+      }
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -621,14 +675,21 @@ class EpeAppV2 {
   }
 
   handleAnalysis() {
-    const studentId = this.elements.studentIdInput?.value || "Siswa_01";
+    const studentId = this.elements.studentIdInput?.value || ProfileManager.getStudentName();
     const studentAnswer = this.elements.studentAnswerInput?.value || "";
     const studentSteps = this.elements.studentStepsInput?.value || "";
+    const multimodal = window._activeMultimodalPayload || null;
 
-    if (!studentAnswer.trim() && !studentSteps.trim()) {
+    if (!studentAnswer.trim() && !studentSteps.trim() && !multimodal) {
       NotificationToast.show("Masukkan langkah pengerjaan atau jawaban siswa terlebih dahulu.", "warning");
       this.elements.studentStepsInput?.focus();
       return;
+    }
+
+    // Rekonstruksi multi-langkah coretan jika ada
+    let stepRecon = null;
+    if (studentSteps.trim()) {
+      stepRecon = HandwritingStepReconstructor.reconstruct(studentSteps);
     }
 
     // Eksekusi core Error Pattern Engine (preserve research logic 100%)
@@ -636,8 +697,14 @@ class EpeAppV2 {
       studentId,
       questionId: this.activeQuestionId,
       studentAnswer,
-      studentSteps
+      studentSteps,
+      media: multimodal,
+      stepReconstruction: stepRecon
     });
+
+    if (stepRecon) {
+      result.stepReconstruction = stepRecon;
+    }
 
     this.latestResult = result;
     this.historyManager.addEntry(result);
@@ -699,6 +766,24 @@ class EpeAppV2 {
       this.syncAiContext();
     } catch (e) {
       console.warn("Gagal inisialisasi AI Orb & Agent:", e);
+    }
+  }
+
+  initMultimodalInputs() {
+    try {
+      this.diagnosticMultimodal = new MultimodalInputUI({
+        containerId: "diagnostic-multimodal-container",
+        targetStepsInputId: "student-steps-input",
+        contextMode: "diagnostic"
+      });
+
+      this.practiceMultimodal = new MultimodalInputUI({
+        containerId: "practice-multimodal-container",
+        targetStepsInputId: "practice-steps-input",
+        contextMode: "practice"
+      });
+    } catch (e) {
+      console.warn("Gagal inisialisasi Multimodal Inputs:", e);
     }
   }
 
@@ -768,7 +853,7 @@ class EpeAppV2 {
     this.aiAgentManager.updateContext({
       activeTab: this.activeTab,
       activeQuestion: activeQ,
-      studentName: this.elements.studentIdInput ? this.elements.studentIdInput.value : "Siswa_01",
+      studentName: this.elements.studentIdInput ? this.elements.studentIdInput.value : ProfileManager.getStudentName(),
       studentSteps: this.elements.studentStepsInput ? this.elements.studentStepsInput.value : "",
       studentAnswer: this.elements.studentAnswerInput ? this.elements.studentAnswerInput.value : "",
       latestDiagnosis: this.latestResult
@@ -801,6 +886,30 @@ class EpeAppV2 {
       this.elements.remediationText.textContent = result.remediation;
     }
 
+    // EPE V3: Render Step Reconstruction Card jika tersedia
+    if (this.elements.stepReconstructionCardContainer) {
+      if (result.stepReconstruction && result.stepReconstruction.steps && result.stepReconstruction.steps.length > 1) {
+        const cardHtml = HandwritingStepReconstructor.formatStepEvidenceCard(result.stepReconstruction);
+        this.elements.stepReconstructionCardContainer.innerHTML = cardHtml || "";
+        this.elements.stepReconstructionCardContainer.classList.remove("hidden");
+        // Render math in element
+        if (window.renderMathInElement) {
+          try {
+            window.renderMathInElement(this.elements.stepReconstructionCardContainer, {
+              delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false }
+              ],
+              throwOnError: false
+            });
+          } catch (e) {}
+        }
+      } else {
+        this.elements.stepReconstructionCardContainer.innerHTML = "";
+        this.elements.stepReconstructionCardContainer.classList.add("hidden");
+      }
+    }
+
     // Toggle tombol mulai remediasi jika bukan E0
     if (this.elements.btnStartRemediationFromDiag) {
       if (result.primaryErrorCode !== "E0") {
@@ -822,7 +931,101 @@ class EpeAppV2 {
     NotificationToast.show(`Memulai remediasi untuk pola ${errorCode || "perbaikan"}...`, "info");
   }
 
+  updateResearchFlowPipeline() {
+    const flow = AssessmentStore.getResearchFlowStatus();
+
+    // 1. Pre-Test
+    const badgePre = document.getElementById("pipeline-badge-pretest");
+    const btnPre = document.getElementById("btn-pipeline-pretest");
+    if (badgePre) {
+      if (flow.pretest.status === "completed") {
+        badgePre.textContent = `✓ Selesai (${flow.pretest.latestScore}%)`;
+        badgePre.className = "text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400";
+        if (btnPre) btnPre.textContent = "Lihat / Ulangi";
+      } else {
+        badgePre.textContent = "○ Belum";
+        badgePre.className = "text-[10px] px-1.5 py-0.5 rounded font-bold bg-slate-800 text-slate-400";
+        if (btnPre) btnPre.textContent = "Mulai Pre-Test";
+      }
+    }
+
+    // 2. Diagnostic
+    const badgeDiag = document.getElementById("pipeline-badge-diagnostic");
+    const btnDiag = document.getElementById("btn-pipeline-diagnostic");
+    if (badgeDiag) {
+      if (flow.diagnostic.status === "completed") {
+        badgeDiag.textContent = "✓ Selesai (24/24)";
+        badgeDiag.className = "text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400";
+        if (btnDiag) btnDiag.textContent = "Buka Diagnostik";
+      } else if (flow.diagnostic.status === "in_progress") {
+        badgeDiag.textContent = `◐ ${flow.diagnostic.completedCount}/24 Soal`;
+        badgeDiag.className = "text-[10px] px-1.5 py-0.5 rounded font-bold bg-indigo-500/20 text-indigo-400";
+        if (btnDiag) btnDiag.textContent = "Lanjutkan Diagnostik";
+      } else {
+        badgeDiag.textContent = "○ 0/24";
+        badgeDiag.className = "text-[10px] px-1.5 py-0.5 rounded font-bold bg-slate-800 text-slate-400";
+        if (btnDiag) btnDiag.textContent = "Mulai Diagnostik";
+      }
+    }
+
+    // 3. Remediation
+    const badgeRem = document.getElementById("pipeline-badge-remediation");
+    const btnRem = document.getElementById("btn-pipeline-remediation");
+    if (badgeRem) {
+      if (flow.remediation.status === "completed") {
+        badgeRem.textContent = "✓ Selesai";
+        badgeRem.className = "text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400";
+        if (btnRem) btnRem.textContent = "Buka Bank Latihan";
+      } else {
+        badgeRem.textContent = "○ Belum";
+        badgeRem.className = "text-[10px] px-1.5 py-0.5 rounded font-bold bg-slate-800 text-slate-400";
+        if (btnRem) btnRem.textContent = "Buka Remediasi";
+      }
+    }
+
+    // 4. Post-Test
+    const badgePost = document.getElementById("pipeline-badge-posttest");
+    const btnPost = document.getElementById("btn-pipeline-posttest");
+    if (badgePost && btnPost) {
+      if (flow.posttest.status === "completed") {
+        badgePost.textContent = `✓ Selesai (${flow.posttest.latestScore}%)`;
+        badgePost.className = "text-[10px] px-1.5 py-0.5 rounded font-bold bg-teal-500/20 text-teal-400";
+        btnPost.textContent = "Lihat / Ulangi";
+        btnPost.className = "btn-secondary w-full py-1.5 text-[11px] font-bold";
+        btnPost.disabled = false;
+      } else if (flow.posttest.status === "available") {
+        badgePost.textContent = "→ Siap Dikerjakan";
+        badgePost.className = "text-[10px] px-1.5 py-0.5 rounded font-bold bg-teal-500/20 text-teal-400 animate-pulse";
+        btnPost.textContent = "Mulai Post-Test";
+        btnPost.className = "btn-primary w-full py-1.5 text-[11px] font-bold bg-teal-600 hover:bg-teal-500 shadow-md";
+        btnPost.disabled = false;
+      } else {
+        badgePost.textContent = "🔒 Terkunci";
+        badgePost.className = "text-[10px] px-1.5 py-0.5 rounded font-bold bg-slate-800 text-slate-500";
+        btnPost.textContent = "🔒 Terkunci";
+        btnPost.className = "btn-secondary w-full py-1.5 text-[11px] font-bold opacity-60 cursor-not-allowed";
+        btnPost.disabled = true;
+      }
+    }
+
+    // Overall label
+    const overallLabel = document.getElementById("pipeline-overall-status");
+    if (overallLabel) {
+      if (flow.posttest.status === "completed") {
+        overallLabel.textContent = "Tahapan Riset Selesai ✓";
+        overallLabel.className = "text-[10px] font-mono text-emerald-400 font-bold";
+      } else if (flow.posttest.status === "available") {
+        overallLabel.textContent = "Siap untuk Post-Test →";
+        overallLabel.className = "text-[10px] font-mono text-teal-400 font-bold";
+      } else {
+        overallLabel.textContent = "Proses Berjalan...";
+        overallLabel.className = "text-[10px] font-mono text-blue-400 font-bold";
+      }
+    }
+  }
+
   updateDashboardRecentSummary(result = null) {
+    this.updateResearchFlowPipeline();
     const r = result || this.latestResult || (this.historyManager.getAll()[0] || null);
     if (!r) return;
 
@@ -1006,11 +1209,12 @@ class EpeAppV2 {
       return;
     }
 
-    const studentName = this.elements.practiceStudentName?.value || "Siswa_01";
+    const studentName = this.elements.practiceStudentName?.value || ProfileManager.getStudentName();
     const studentSteps = this.elements.practiceStepsInput?.value || "";
     const studentAnswer = this.elements.practiceAnswerInput?.value || "";
+    const multimodal = window._activeMultimodalPayload || null;
 
-    if (!studentSteps.trim() && !studentAnswer.trim() && !this.studentPhotoData && !this.studentVoiceData) {
+    if (!studentSteps.trim() && !studentAnswer.trim() && !this.studentPhotoData && !this.studentVoiceData && !multimodal) {
       NotificationToast.show("Masukkan coretan pengerjaan, jawaban, foto, atau rekaman suara Anda.", "warning");
       return;
     }
@@ -1020,7 +1224,7 @@ class EpeAppV2 {
       question: q,
       studentAnswer,
       studentSteps,
-      media: {
+      media: multimodal || {
         image: this.studentPhotoData,
         audio: this.studentVoiceData
       }
@@ -1247,10 +1451,26 @@ class EpeAppV2 {
   bindEvents() {
     // Navigation Tabs
     if (this.elements.tabBtnDashboard) this.elements.tabBtnDashboard.addEventListener("click", (e) => this.switchTab("dashboard", e));
+    if (this.elements.tabBtnPretest) this.elements.tabBtnPretest.addEventListener("click", (e) => this.switchTab("pretest", e));
     if (this.elements.tabBtnDiagnostic) this.elements.tabBtnDiagnostic.addEventListener("click", (e) => this.switchTab("diagnostic", e));
     if (this.elements.tabBtnPractice) this.elements.tabBtnPractice.addEventListener("click", (e) => this.switchTab("practice", e));
+    if (this.elements.tabBtnPosttest) this.elements.tabBtnPosttest.addEventListener("click", (e) => this.switchTab("posttest", e));
     if (this.elements.tabBtnErrorProfile) this.elements.tabBtnErrorProfile.addEventListener("click", (e) => this.switchTab("error-profile", e));
     if (this.elements.tabBtnResearch) this.elements.tabBtnResearch.addEventListener("click", (e) => this.switchTab("research", e));
+
+    // Pipeline Buttons on Dashboard
+    if (this.elements.btnPipelinePretest) {
+      this.elements.btnPipelinePretest.addEventListener("click", (e) => this.switchTab("pretest", e));
+    }
+    if (this.elements.btnPipelineDiagnostic) {
+      this.elements.btnPipelineDiagnostic.addEventListener("click", (e) => this.switchTab("diagnostic", e));
+    }
+    if (this.elements.btnPipelineRemediation) {
+      this.elements.btnPipelineRemediation.addEventListener("click", (e) => this.switchTab("practice", e));
+    }
+    if (this.elements.btnPipelinePosttest) {
+      this.elements.btnPipelinePosttest.addEventListener("click", (e) => this.switchTab("posttest", e));
+    }
 
     // Mode Switchers
     if (this.elements.btnModeStudent) this.elements.btnModeStudent.addEventListener("click", () => this.setMode("student"));
@@ -1599,6 +1819,24 @@ class EpeAppV2 {
       });
     }
 
+    if (this.elements.btnSyncAssessmentsSupabase) {
+      this.elements.btnSyncAssessmentsSupabase.addEventListener("click", async () => {
+        const preList = AssessmentStore.getAllAttempts("pretest");
+        const postList = AssessmentStore.getAllAttempts("posttest");
+        if (preList.length === 0 && postList.length === 0) {
+          NotificationToast.show("Belum ada rekaman Pre-Test atau Post-Test di browser untuk disinkronkan.", "warning");
+          return;
+        }
+        NotificationToast.show(`Menyinkronkan ${preList.length} Pre-Test dan ${postList.length} Post-Test ke Cloud Supabase...`, "info");
+        const res = await syncAllAssessmentsToSupabase(preList, postList);
+        if (res.success) {
+          NotificationToast.show(res.message, "success");
+        } else {
+          NotificationToast.show(`Sinkronisasi gagal: ${res.message}`, "error");
+        }
+      });
+    }
+
     if (this.elements.btnExportCloudCsv) {
       this.elements.btnExportCloudCsv.addEventListener("click", async () => {
         NotificationToast.show("Mengunduh data lengkap dari Cloud Supabase...", "info");
@@ -1618,6 +1856,54 @@ class EpeAppV2 {
         else NotificationToast.show(res.message, "warning");
       });
     }
+
+    // Research Export Suite (5 Varian CSV)
+    if (this.elements.btnExportPretestCsv) {
+      this.elements.btnExportPretestCsv.addEventListener("click", () => {
+        const res = ResearchExport.exportPreTestCSV();
+        if (res.success) NotificationToast.show(`Pre-Test (${res.count} data) berhasil diekspor ke CSV!`, "success");
+      });
+    }
+
+    if (this.elements.btnExportDiagCsv) {
+      this.elements.btnExportDiagCsv.addEventListener("click", () => {
+        const res = ResearchExport.exportDiagnosticCSV();
+        if (res.success) NotificationToast.show(`Diagnostik (${res.count} data) berhasil diekspor ke CSV!`, "success");
+      });
+    }
+
+    if (this.elements.btnExportRemCsv) {
+      this.elements.btnExportRemCsv.addEventListener("click", () => {
+        const res = ResearchExport.exportRemediationCSV();
+        if (res.success) NotificationToast.show(`Remediasi (${res.count} data) berhasil diekspor ke CSV!`, "success");
+      });
+    }
+
+    if (this.elements.btnExportPosttestCsv) {
+      this.elements.btnExportPosttestCsv.addEventListener("click", () => {
+        const res = ResearchExport.exportPostTestCSV();
+        if (res.success) NotificationToast.show(`Post-Test (${res.count} data) berhasil diekspor ke CSV!`, "success");
+      });
+    }
+
+    if (this.elements.btnExportCombinedCsv) {
+      this.elements.btnExportCombinedCsv.addEventListener("click", () => {
+        const res = ResearchExport.exportCombinedResearchDataset();
+        if (res.success) NotificationToast.show("Combined Research Dataset berhasil diekspor ke CSV!", "success");
+      });
+    }
+
+    // Refresh Pipeline & Research Dashboard on Assessment Updates
+    window.addEventListener("epe-assessment-recorded", () => {
+      this.updateResearchFlowPipeline();
+      if (this.activeTab === "research" && this.elements.researchComparisonContainer) {
+        ResearchAnalytics.renderResearchModeComparison(this.elements.researchComparisonContainer);
+      }
+    });
+
+    window.addEventListener("epe-remediation-logged", () => {
+      this.updateResearchFlowPipeline();
+    });
 
     if (this.elements.btnClearHistory) {
       this.elements.btnClearHistory.addEventListener("click", () => {

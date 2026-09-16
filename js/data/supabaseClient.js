@@ -7,7 +7,11 @@ export const SUPABASE_CONFIG = {
   url: "https://ihjehauwzxuvjvrykhwx.supabase.co",
   // Publishable Key dari Dashboard Supabase Anda
   publishableKey: "sb_publishable_iVlvzSYao3zq8GJeK3MSNw_jEiJQSJ8",
-  tableName: "hasil_diagnosis"
+  tableName: "hasil_diagnosis",
+  pretestTable: "hasil_pre-test",
+  posttestTable: "hasil_post-test",
+  pretestCandidates: ["hasil_pre-test", "hasil_pretest", "pretest"],
+  posttestCandidates: ["hasil_post-test", "hasil_posttest", "posttest"]
 };
 
 let _supabaseClient = null;
@@ -294,5 +298,264 @@ export async function exportCloudDataToExcel() {
 
 // Alias fungsi untuk kompatibilitas
 export const exportCloudDataToCSV = exportCloudDataToExcel;
+
+/**
+ * Menyimpan data hasil Pre-Test ke Supabase Cloud
+ */
+export async function savePreTestToSupabase(attemptRecord) {
+  const client = getSupabaseClient();
+  if (!client) return null;
+
+  const payload = {
+    attempt_id: attemptRecord.attemptId,
+    student_id: attemptRecord.studentId || "siswa_01",
+    student_name: attemptRecord.studentName || "Siswa",
+    test_type: "pretest",
+    test_form: attemptRecord.testForm || "Form A",
+    score: attemptRecord.score,
+    accuracy: attemptRecord.accuracy,
+    correct_count: attemptRecord.correctCount,
+    total_questions: attemptRecord.totalQuestions,
+    duration_seconds: attemptRecord.durationSeconds,
+    error_distribution: attemptRecord.errorDistribution,
+    domain_accuracy: attemptRecord.domainAccuracy,
+    responses: attemptRecord.responses
+  };
+
+  try {
+    const candidates = SUPABASE_CONFIG.pretestCandidates || ["hasil_pre-test", "hasil_pretest", "pretest"];
+    let lastError = null;
+
+    for (const tbl of candidates) {
+      try {
+        const { data, error } = await client.from(tbl).insert([payload]);
+        if (!error) {
+          console.log(`[Supabase] Pre-test attempt berhasil disinkronkan ke tabel ${tbl}!`);
+          return data;
+        }
+        lastError = error;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    console.warn("[Supabase] Gagal mengirim Pre-test ke semua kandidat:", lastError?.message || lastError);
+    return null;
+  } catch (err) {
+    console.warn("[Supabase] Gagal mengirim Pre-test:", err);
+    return null;
+  }
+}
+
+/**
+ * Menyimpan data hasil Post-Test ke Supabase Cloud
+ */
+export async function savePostTestToSupabase(attemptRecord) {
+  const client = getSupabaseClient();
+  if (!client) return null;
+
+  const payload = {
+    attempt_id: attemptRecord.attemptId,
+    student_id: attemptRecord.studentId || "siswa_01",
+    student_name: attemptRecord.studentName || "Siswa",
+    test_type: "posttest",
+    test_form: attemptRecord.testForm || "Form B",
+    score: attemptRecord.score,
+    accuracy: attemptRecord.accuracy,
+    correct_count: attemptRecord.correctCount,
+    total_questions: attemptRecord.totalQuestions,
+    duration_seconds: attemptRecord.durationSeconds,
+    error_distribution: attemptRecord.errorDistribution,
+    domain_accuracy: attemptRecord.domainAccuracy,
+    responses: attemptRecord.responses
+  };
+
+  try {
+    const candidates = SUPABASE_CONFIG.posttestCandidates || ["hasil_post-test", "hasil_posttest", "posttest"];
+    let lastError = null;
+
+    for (const tbl of candidates) {
+      try {
+        const { data, error } = await client.from(tbl).insert([payload]);
+        if (!error) {
+          console.log(`[Supabase] Post-test attempt berhasil disinkronkan ke tabel ${tbl}!`);
+          return data;
+        }
+        lastError = error;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    console.warn("[Supabase] Gagal mengirim Post-test ke semua kandidat:", lastError?.message || lastError);
+    return null;
+  } catch (err) {
+    console.warn("[Supabase] Gagal mengirim Post-test:", err);
+    return null;
+  }
+}
+
+/**
+ * Mengambil seluruh data Pre-Test dari Supabase
+ */
+export async function fetchAllPreTestsFromSupabase() {
+  const client = getSupabaseClient();
+  if (!client) return { success: false, data: [] };
+
+  const candidates = SUPABASE_CONFIG.pretestCandidates || ["hasil_pre-test", "hasil_pretest", "pretest"];
+  for (const tbl of candidates) {
+    try {
+      let res = await client.from(tbl).select("*").order("created_at", { ascending: false });
+      if (!res.error && res.data) {
+        return { success: true, table: tbl, data: res.data };
+      }
+    } catch (err) {}
+  }
+  return { success: false, data: [] };
+}
+
+/**
+ * Mengambil seluruh data Post-Test dari Supabase
+ */
+export async function fetchAllPostTestsFromSupabase() {
+  const client = getSupabaseClient();
+  if (!client) return { success: false, data: [] };
+
+  const candidates = SUPABASE_CONFIG.posttestCandidates || ["hasil_post-test", "hasil_posttest", "posttest"];
+  for (const tbl of candidates) {
+    try {
+      let res = await client.from(tbl).select("*").order("created_at", { ascending: false });
+      if (!res.error && res.data) {
+        return { success: true, table: tbl, data: res.data };
+      }
+    } catch (err) {}
+  }
+  return { success: false, data: [] };
+}
+
+/**
+ * Sinkronisasi seluruh attempt Pre-Test dan Post-Test lokal ke Cloud Supabase secara batch
+ */
+export async function syncAllAssessmentsToSupabase(pretestList = [], posttestList = []) {
+  const client = getSupabaseClient();
+  if (!client) return { success: false, message: "Koneksi Supabase belum siap atau sedang offline." };
+
+  let preSynced = 0;
+  let postSynced = 0;
+  const errors = [];
+
+  const preCandidates = SUPABASE_CONFIG.pretestCandidates || ["hasil_pre-test", "hasil_pretest", "pretest"];
+  const postCandidates = SUPABASE_CONFIG.posttestCandidates || ["hasil_post-test", "hasil_posttest", "posttest"];
+
+  // 1. Sync Pre-Test Attempts
+  if (Array.isArray(pretestList) && pretestList.length > 0) {
+    for (const item of pretestList) {
+      const payload = {
+        attempt_id: item.attemptId,
+        student_id: item.studentId || "siswa_01",
+        student_name: item.studentName || "Siswa",
+        test_type: "pretest",
+        test_form: item.testForm || "Form A",
+        score: item.score,
+        accuracy: item.accuracy,
+        correct_count: item.correctCount,
+        total_questions: item.totalQuestions,
+        duration_seconds: item.durationSeconds,
+        error_distribution: item.errorDistribution,
+        domain_accuracy: item.domainAccuracy,
+        responses: item.responses
+      };
+
+      let synced = false;
+      let lastErr = null;
+      for (const tbl of preCandidates) {
+        try {
+          let res = await client.from(tbl).upsert([payload], { onConflict: "attempt_id" });
+          if (res.error) {
+            res = await client.from(tbl).insert([payload]);
+          }
+          if (!res.error) {
+            synced = true;
+            preSynced++;
+            break;
+          }
+          lastErr = res.error;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+
+      if (!synced) {
+        errors.push(`Pre-Test ${item.attemptId}: ${lastErr?.message || "Gagal sinkron"}`);
+      }
+    }
+  }
+
+  // 2. Sync Post-Test Attempts
+  if (Array.isArray(posttestList) && posttestList.length > 0) {
+    for (const item of posttestList) {
+      const payload = {
+        attempt_id: item.attemptId,
+        student_id: item.studentId || "siswa_01",
+        student_name: item.studentName || "Siswa",
+        test_type: "posttest",
+        test_form: item.testForm || "Form B",
+        score: item.score,
+        accuracy: item.accuracy,
+        correct_count: item.correctCount,
+        total_questions: item.totalQuestions,
+        duration_seconds: item.durationSeconds,
+        error_distribution: item.errorDistribution,
+        domain_accuracy: item.domainAccuracy,
+        responses: item.responses
+      };
+
+      let synced = false;
+      let lastErr = null;
+      for (const tbl of postCandidates) {
+        try {
+          let res = await client.from(tbl).upsert([payload], { onConflict: "attempt_id" });
+          if (res.error) {
+            res = await client.from(tbl).insert([payload]);
+          }
+          if (!res.error) {
+            synced = true;
+            postSynced++;
+            break;
+          }
+          lastErr = res.error;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+
+      if (!synced) {
+        errors.push(`Post-Test ${item.attemptId}: ${lastErr?.message || "Gagal sinkron"}`);
+      }
+    }
+  }
+
+  const totalSynced = preSynced + postSynced;
+  if (totalSynced > 0) {
+    return {
+      success: true,
+      preCount: preSynced,
+      postCount: postSynced,
+      totalCount: totalSynced,
+      message: `Berhasil menyinkronkan ${preSynced} Pre-Test dan ${postSynced} Post-Test ke Cloud Supabase.`
+    };
+  }
+
+  if (pretestList.length === 0 && posttestList.length === 0) {
+    return { success: false, message: "Belum ada rekaman Pre-Test atau Post-Test di browser untuk disinkronkan." };
+  }
+
+  return {
+    success: false,
+    message: errors.length > 0 ? errors.join("; ") : "Gagal menyinkronkan data ke Supabase."
+  };
+}
+
+
 
 

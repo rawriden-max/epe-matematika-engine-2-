@@ -20,7 +20,7 @@ export class ErrorPatternEngine {
    * @param {Object} [input.media] - Objek media lampiran pengerjaan siswa (foto/audio)
    * @returns {Object} Hasil analisis berstruktur dan format teks baku
    */
-  static analyze({ studentId = "Siswa_01", questionId = "Q1", question = null, studentAnswer = "", studentSteps = "", media = null }) {
+  static analyze({ studentId = "Siswa_01", questionId = "Q1", question = null, studentAnswer = "", studentSteps = "", media = null, stepReconstruction = null }) {
     let resolvedQuestion = question;
     if (!resolvedQuestion) {
       resolvedQuestion = QUESTIONS.find((q) => q.id === questionId) || QUESTIONS[0];
@@ -37,7 +37,7 @@ export class ErrorPatternEngine {
     const trimmedAnswer = (studentAnswer || "").trim();
     const trimmedSteps = (studentSteps || "").trim();
 
-    if (!trimmedAnswer && !trimmedSteps && !media?.image && !media?.audio) {
+    if (!trimmedAnswer && !trimmedSteps && !media?.image && !media?.audio && !media?.latex) {
       const primaryError = "E1";
       const secondaryError = "none";
       const confidence = 90;
@@ -56,7 +56,8 @@ export class ErrorPatternEngine {
         question: resolvedQuestion,
         media,
         studentSteps: trimmedSteps,
-        studentAnswer: trimmedAnswer
+        studentAnswer: trimmedAnswer,
+        stepReconstruction
       });
     }
 
@@ -71,7 +72,17 @@ export class ErrorPatternEngine {
       diagnosticResult = this._smartPracticeDiagnostic(trimmedSteps, trimmedAnswer, resolvedQuestion, media);
     }
 
-    const { primaryError, secondaryError = "none", confidence = 85, evidence, customAdvice = "" } = diagnosticResult;
+    let { primaryError, secondaryError = "none", confidence = 85, evidence, customAdvice = "" } = diagnosticResult;
+
+    // EPE V3: Perkaya bukti jika terdapat anomali transformasi langkah coretan tangan
+    if (stepReconstruction && stepReconstruction.hasAnomalies && stepReconstruction.primaryAnomaly) {
+      const anomaly = stepReconstruction.primaryAnomaly;
+      evidence = `${evidence} [Bukti Langkah Coretan: Pada baris ${anomaly.toStep} (${anomaly.toExpr}), terdeteksi ${anomaly.evidence}]`;
+      // Jika aturan baku sebelumnya menganggap E2/E3, sesuaikan confidence lebih tinggi
+      if (primaryError === "E2" || primaryError === "E3") {
+        confidence = Math.max(confidence, Math.round((stepReconstruction.overallConfidence || 0.93) * 100));
+      }
+    }
 
     // Generate remediasi adaptif
     const remediation = generateRemediation(primaryError, resolvedQuestion.topic || "Persamaan Kuadrat", customAdvice);
@@ -88,7 +99,8 @@ export class ErrorPatternEngine {
       question: resolvedQuestion,
       media,
       studentSteps: trimmedSteps,
-      studentAnswer: trimmedAnswer
+      studentAnswer: trimmedAnswer,
+      stepReconstruction
     });
   }
 

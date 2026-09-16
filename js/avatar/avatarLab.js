@@ -16,7 +16,8 @@ import { CubicWallet } from "../economy/cubicWallet.js";
 export class AvatarLab {
   constructor() {
     this.activeCategory = "face";
-    this.previewConfig = { ...AvatarEngine.getActiveConfig() };
+    this.savedConfig = { ...AvatarEngine.getActiveConfig() };
+    this.previewConfig = { ...this.savedConfig };
     this.modalEl = null;
 
     this.initListeners();
@@ -30,12 +31,29 @@ export class AvatarLab {
     window.addEventListener("epe-cubic-balance-updated", () => {
       this.updateHeaderBalance();
     });
+
+    window.addEventListener("epe-profile-updated", (e) => {
+      this.updateLabStudentName(e.detail?.studentName);
+    });
+  }
+
+  updateLabStudentName(name = null) {
+    const labNameEl = document.getElementById("avatar-lab-student-name");
+    if (labNameEl) {
+      const activeName = name || 
+        (typeof window !== "undefined" && window.ProfileManager ? window.ProfileManager.getStudentName() : null) || 
+        (typeof localStorage !== "undefined" && localStorage.getItem("epe_student_name")) || 
+        "Siswa_01";
+      labNameEl.textContent = activeName;
+    }
   }
 
   openModal() {
-    this.previewConfig = { ...AvatarEngine.getActiveConfig() };
+    this.savedConfig = { ...AvatarEngine.getActiveConfig() };
+    this.previewConfig = { ...this.savedConfig };
     this.renderModalDOM();
     this.updatePreview();
+    this.updateLabStudentName();
     this.renderCategoryTabs();
     this.renderItemGrid();
     this.updateHeaderBalance();
@@ -46,6 +64,9 @@ export class AvatarLab {
   }
 
   closeModal() {
+    // Revert preview to saved config if there were unowned preview items
+    this.previewConfig = { ...this.savedConfig };
+    this.updatePreview();
     if (this.modalEl) {
       this.modalEl.classList.add("hidden");
     }
@@ -60,6 +81,10 @@ export class AvatarLab {
       document.body.appendChild(modal);
     }
     this.modalEl = modal;
+
+    const activeStudentName = (typeof window !== "undefined" && window.ProfileManager ? window.ProfileManager.getStudentName() : null) || 
+      (typeof localStorage !== "undefined" && localStorage.getItem("epe_student_name")) || 
+      "Siswa_01";
 
     this.modalEl.innerHTML = `
       <div class="card-clean max-w-4xl w-full max-h-[92vh] flex flex-col p-0 overflow-hidden shadow-2xl border border-slate-700 bg-slate-900/95 text-white backdrop-blur-xl">
@@ -104,8 +129,8 @@ export class AvatarLab {
                   <!-- SVG will be rendered here -->
                 </div>
                 <div class="absolute -bottom-2 inset-x-0 flex justify-center">
-                  <span class="px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-[10px] text-cyan-300 font-mono shadow-md">
-                    Siswa_01
+                  <span id="avatar-lab-student-name" class="px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-[10px] text-cyan-300 font-mono shadow-md">
+                    ${activeStudentName}
                   </span>
                 </div>
               </div>
@@ -163,7 +188,31 @@ export class AvatarLab {
     });
 
     this.modalEl.querySelector("#btn-save-avatar-config").addEventListener("click", () => {
-      AvatarEngine.saveConfig(this.previewConfig);
+      const ownedIds = CubicWallet.getOwnedItemIds();
+      const defaultIds = Object.values(DEFAULT_AVATAR_CONFIG);
+      const unownedCategories = [];
+
+      for (const [cat, itemId] of Object.entries(this.previewConfig)) {
+        const isOwned = (ownedIds && ownedIds.includes(itemId)) || defaultIds.includes(itemId);
+        if (!isOwned) {
+          const itemObj = AvatarEngine.getItem(itemId);
+          unownedCategories.push(itemObj ? itemObj.name : itemId);
+          // Revert this category back to the last saved/owned configuration
+          this.previewConfig[cat] = this.savedConfig[cat] || DEFAULT_AVATAR_CONFIG[cat];
+        }
+      }
+
+      if (unownedCategories.length > 0) {
+        alert(
+          `Item berikut belum Anda beli:\n- ${unownedCategories.join("\n- ")}\n\nItem yang belum dibeli tidak dapat disimpan dan telah dikembalikan ke model yang Anda gunakan sebelumnya.`
+        );
+        this.updatePreview();
+        this.renderItemGrid();
+      }
+
+      // Save only owned configuration
+      const finalSaved = AvatarEngine.saveConfig(this.previewConfig);
+      this.savedConfig = { ...finalSaved };
       this.closeModal();
     });
 
@@ -330,8 +379,17 @@ export class AvatarLab {
     const item = COSMETIC_CATALOG.find((it) => it.id === itemId);
     if (!item) return;
 
+    const ownedIds = CubicWallet.getOwnedItemIds();
+    const defaultIds = Object.values(DEFAULT_AVATAR_CONFIG);
+    const isOwned = (ownedIds && ownedIds.includes(itemId)) || defaultIds.includes(itemId);
+    if (!isOwned) {
+      alert(`Item "${item.name}" belum Anda miliki! Silakan beli terlebih dahulu.`);
+      return;
+    }
+
     this.previewConfig[item.category] = itemId;
-    AvatarEngine.saveConfig(this.previewConfig);
+    const saved = AvatarEngine.saveConfig(this.previewConfig);
+    this.savedConfig = { ...saved };
     this.updatePreview();
     this.renderItemGrid();
   }
@@ -353,7 +411,8 @@ export class AvatarLab {
     if (res.success) {
       CubicWallet.ownItem(itemId);
       this.previewConfig[item.category] = itemId;
-      AvatarEngine.saveConfig(this.previewConfig);
+      const saved = AvatarEngine.saveConfig(this.previewConfig);
+      this.savedConfig = { ...saved };
       this.updateHeaderBalance();
       this.updatePreview();
       this.renderItemGrid();
