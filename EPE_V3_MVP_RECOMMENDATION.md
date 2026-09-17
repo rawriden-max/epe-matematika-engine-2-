@@ -141,23 +141,30 @@ Berdasarkan audit teknis:
 
 ## 4. Rencana Implementasi Bertahap (Phased Execution Plan)
 
-### Fase 1: Fondasi Personalisasi & Sinkronisasi Riset Cloud (Selesai/Prioritas Segera)
+### Fase 1: Fondasi Personalisasi & Sinkronisasi Riset Cloud (Selesai ✓)
 - [x] Manajemen Profil & Nickname Siswa (`profileManager.js`).
-- [ ] Tombol batch sync Pre-Test & Post-Test ke Supabase di Mode Riset (`btn-sync-assessments-supabase`).
-- [ ] Ekspor CSV dengan metadata multimodal.
+- [x] Tombol batch sync Pre-Test & Post-Test ke Supabase di Mode Riset (`btn-sync-assessments-supabase`).
+- [x] Ekspor CSV dengan metadata multimodal (`historyManager.js` & `researchExport.js`).
+- [x] Integrasi impor CSV dataset riset 24 butir soal (`data_riwayat_epe_excel_rapi.csv`).
 
-### Fase 2: Prapemrosesan Citra & Normalisasi Matematika Universal
-- [ ] Modul HTML5 Canvas Preprocessor (`imagePreprocessor.js`) dengan contrast enhancement & binarization.
-- [ ] Modul Abstraksi Matematika (`mathRepresentation.js`) dengan dukungan persamaan linear, kuadrat, matriks, dan kalkulus dasar.
+### Fase 2: Prapemrosesan Citra & Normalisasi Matematika Universal (Selesai ✓)
+- [x] Modul HTML5 Canvas Preprocessor (`imagePreprocessor.js`) dengan contrast enhancement & binarization.
+- [x] Modul Abstraksi Matematika (`mathRepresentation.js`) dengan dukungan persamaan linear, kuadrat, matriks, dan kalkulus dasar.
+- [x] Pengecekan kualitas gambar pra-pemrosesan (`imageQualityChecker.js`).
 
-### Fase 3: Rekonstruksi Langkah & Verifikasi Deterministik
-- [ ] Rekonstruksi langkah aljabar multi-baris (`handwritingStepReconstructor.js`).
-- [ ] Mesin verifikasi simbolik deterministik untuk substitusi akar & aljabar matriks (`mathVerifier.js`).
+### Fase 3: Rekonstruksi Langkah & Verifikasi Deterministik (Selesai ✓)
+- [x] Rekonstruksi langkah aljabar multi-baris (`handwritingStepReconstructor.js`).
+- [x] Mesin verifikasi simbolik deterministik untuk substitusi akar & aljabar matriks (`mathVerifier.js`).
 
-### Fase 4: Antarmuka Multimodal & Integrasi EPE
-- [ ] Komponen UI Multimodal (`multimodalInputUI.js`) di Diagnostik Baku dan Bank Latihan.
-- [ ] Banner pratinjau KaTeX dan konfirmasi siswa sebelum analisis.
-- [ ] Penyaluran bukti langkah ke kartu diagnosis EPE.
+### Fase 4: Antarmuka Multimodal & Integrasi EPE (Selesai ✓)
+- [x] Komponen UI Multimodal (`multimodalInputUI.js`) di Diagnostik Baku dan Bank Latihan.
+- [x] Banner pratinjau KaTeX dan konfirmasi siswa sebelum analisis (*Student Confirmation Guard*).
+- [x] Penyaluran bukti langkah ke kartu diagnosis EPE dan 3D Tornado Engine.
 
-### Fase 5: Normalisasi Suara Lisan Matematika
-- [ ] Parser ucapan matematika bahasa Indonesia (`speechMathParser.js`).
+### Fase 5: Normalisasi Suara Lisan Matematika (Selesai ✓)
+- [x] Parser ucapan matematika bahasa Indonesia (`speechMathParser.js`).
+
+---
+
+## 5. Status Realisasi Terkini (17 September 2026)
+Seluruh 5 fase utama MVP telah diimplementasikan penuh dan divalidasi. Sistem telah dilengkapi dengan integrasi dataset riset 24 soal, perataan penyimpanan riwayat (`epe_history_v2`), dukungan ekspor-impor CSV cerdas, dan sinkronisasi reaktif 3D Tornado Engine.

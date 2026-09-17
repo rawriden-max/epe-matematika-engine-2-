@@ -61,46 +61,90 @@ try {
                     }
                 }
 
-                if ($apiKey -and $apiKey -ne "AIzaSy_YOUR_GEMINI_API_KEY_HERE" -and $apiKey.Length -gt 15) {
-                    try {
-                        $reader = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
-                        $reqBody = $reader.ReadToEnd()
-                        $reqObj = $reqBody | ConvertFrom-Json
-                        $prompt = $reqObj.prompt
+                $reader = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
+                $reqBody = $reader.ReadToEnd()
+                $reqObj = $null
+                try {
+                    $reqObj = $reqBody | ConvertFrom-Json
+                } catch {}
 
+                # If client provided API key in body, use it if env key is missing
+                if ((-not $apiKey -or $apiKey.Length -lt 15) -and $reqObj -and $reqObj.apiKey -and $reqObj.apiKey.Trim().Length -gt 15) {
+                    $apiKey = $reqObj.apiKey.Trim()
+                }
+
+                if ($apiKey -and $apiKey -ne "AIzaSy_YOUR_GEMINI_API_KEY_HERE" -and $apiKey.Length -gt 15 -and $reqObj) {
+                    try {
                         $prompt = $reqObj.prompt
+                        $attachedImage = $reqObj.image
+                        $history = $reqObj.history
                         $activeQ = $reqObj.activeQuestion
                         $sAnswer = $reqObj.studentAnswer
 
                         $systemInstruction = "Kamu adalah Matrix, Asisten AI Cerdas di platform Error Pattern Engine (EPE). Berikan penjelasan edukatif, akurat, santun, dan lengkap. Format rumus matematika dengan KaTeX LaTeX `$..$`."
-                        $systemInstruction += "`n`nPRINSIP UTAMA CONTEXT ROUTING:`nMatrix memiliki dua konteks simultan:`n1. CONVERSATIONAL CONTEXT: Percakapan bebas, sains umum, astronomi, transportasi publik (MRT), rumus umum, atau pertanyaan sehari-hari.`n2. APPLICATION / LEARNING CONTEXT: Latihan soal aktif di aplikasi."
-                        $systemInstruction += "`n`nATURAN CONTEXT ROUTING (CONTEXT AWARENESS != CONTEXT FORCING):`n- JANGAN OTOMATIS MEMAKSAKAN atau mengarahkan siswa kembali ke soal aktif jika siswa bertanya tentang topik umum, sains, astronomi, transportasi, atau rumus umum!`n- Contoh: 'sekarang kita hidup di planet apa?', 'MRT rutenya darimana ke mana', 'rumus avogadro' -> Jawab topik tersebut secara tuntas dan edukatif TANPA menyelipkan ajakan kembali ke soal aktif.`n- Gunakan konteks Soal Aktif HANYA JIKA siswa menanyakan jawaban mereka ('kenapa jawaban saya salah?', 'kenapa B?'), meminta petunjuk soal aktif, atau berkata 'balik ke soal tadi'."
-                        $systemInstruction += "`n`nATURAN SAPAAN (PERCAKAPAN BERJALAN):`nIni adalah percakapan chat yang SEDANG BERLANGSUNG. JANGAN mengulang kata sapaan ('Halo!', 'Halo Siswa!', 'Hai!') atau memperkenalkan diri ('Saya Matrix...') di awal jawaban setiap respon baru! Langsung jawab ke inti pertanyaan atau topik secara natural dan mengalir."
+                        $systemInstruction += "`n`nPRINSIP UTAMA CONTEXT ROUTING & HISTORY:`nMatrix mengingat seluruh alur percakapan sebelumnya bersama siswa.`n1. CONVERSATIONAL CONTEXT: Percakapan bebas, sains umum, astronomi, video game, pop culture, transportasi publik (MRT), rumus umum, atau pertanyaan sehari-hari.`n2. APPLICATION / LEARNING CONTEXT: Latihan soal aktif di aplikasi."
+                        $systemInstruction += "`n`nATURAN CONTEXT ROUTING (CONTEXT AWARENESS != CONTEXT FORCING):`n- Sambungkan jawabanmu secara logis dengan pertanyaan atau topik di riwayat percakapan sebelumnya!`n- JANGAN OTOMATIS MEMAKSAKAN atau mengarahkan siswa kembali ke soal aktif jika siswa bertanya tentang topik umum, sains, game, astronomi, transportasi, atau rumus umum!`n- Gunakan konteks Soal Aktif HANYA JIKA siswa menanyakan jawaban mereka ('kenapa jawaban saya salah?', 'kenapa B?'), meminta petunjuk soal aktif, atau berkata 'balik ke soal tadi'."
+                        $systemInstruction += "`n`nATURAN SAPAAN (PERCAKAPAN BERJALAN):`nIni adalah percakapan chat yang SEDANG BERLANGSUNG. JANGAN mengulang kata sapaan ('Halo!', 'Halo Siswa!') atau memperkenalkan diri ('Saya Matrix...') di awal jawaban setiap respon baru! Langsung jawab ke inti pertanyaan atau topik secara natural dan mengalir."
                         
-                        if ($activeQ) {
+                        $geminiContents = @()
+
+                        # Injeksi riwayat percakapan multi-turn
+                        if ($history -and $history.Count -gt 0) {
+                            $firstTurn = $true
+                            $lastRole = ""
+                            foreach ($hItem in $history) {
+                                $hRole = if ($hItem.role -eq "model" -or $hItem.role -eq "assistant") { "model" } else { "user" }
+                                if ($hRole -eq $lastRole) { continue }
+                                $hText = $hItem.text
+                                if (-not $hText) { continue }
+                                if ($firstTurn) {
+                                    $hText = "$systemInstruction`n`n[Pesan Siswa Sebelumnya]:`n$hText"
+                                    $firstTurn = $false
+                                }
+                                $geminiContents += @{
+                                    role = $hRole
+                                    parts = @( @{ text = $hText } )
+                                }
+                                $lastRole = $hRole
+                            }
+                        }
+
+                        # Giliran pengguna saat ini (current user turn)
+                        $currentUserParts = @()
+
+                        if ($attachedImage -and $attachedImage -match '^data:(image/\w+);base64,(.+)$') {
+                            $mimeType = $Matches[1]
+                            $base64Data = $Matches[2]
+                            $currentUserParts += @{
+                                inlineData = @{
+                                    mimeType = $mimeType
+                                    data = $base64Data
+                                }
+                            }
+                            $systemInstruction += "`n`n[PENTING - ANALISIS GAMBAR TERLAMPIR]:`nPengguna melampirkan sebuah gambar visual (bisa screenshot video game seperti Hogwarts Legacy, foto alam, hewan/makhluk, objek sehari-hari, maupun soal matematika). Analisis gambar tersebut secara visual, kenali objek/game/elemennya secara akurat, dan jawab pertanyaan pengguna dengan FOKUS PENUH PADA GAMBAR TERSEBUT. JANGAN mengasumsikan gambar ini terkait dengan soal latihan aljabar/matematika di aplikasi jika gambar yang ditampilkan bukan soal matematika!"
+                        } elseif ($activeQ -and (-not $history -or $history.Count -eq 0)) {
                             $systemInstruction += "`n`n[Konteks Soal Aktif di Aplikasi - Hanya rujuk jika siswa menanyakannya]:`n- Soal: " + $activeQ.id + " (" + $activeQ.title + "): " + $activeQ.promptText
                             if ($sAnswer) {
                                 $systemInstruction += "`n- Jawaban Siswa: $sAnswer"
                             }
                         }
 
-                        $fullPrompt = "$systemInstruction`n`nPertanyaan Pengguna: $prompt"
+                        $curPromptText = if ($geminiContents.Count -eq 0) { "$systemInstruction`n`nPertanyaan Pengguna: $prompt" } else { "Pertanyaan Pengguna: $prompt" }
+                        $currentUserParts += @{ text = $curPromptText }
 
-                        $modelsToTry = @("gemini-3.6-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest")
+                        $geminiContents += @{
+                            role = "user"
+                            parts = $currentUserParts
+                        }
+
+                        $modelsToTry = @("gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro")
                         $geminiRes = $null
                         $usedModel = ""
 
                         foreach ($mName in $modelsToTry) {
                             $geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/${mName}:generateContent?key=$apiKey"
                             $payloadObj = @{
-                                contents = @(
-                                    @{
-                                        role = "user"
-                                        parts = @(
-                                            @{ text = $fullPrompt }
-                                        )
-                                    }
-                                )
+                                contents = $geminiContents
                                 generationConfig = @{
                                     maxOutputTokens = 4096
                                     temperature = 0.7
@@ -135,7 +179,7 @@ try {
                         $body = '{"success":false,"message":"' + $errMsg + '"}'
                     }
                 } else {
-                    $body = '{"success":false,"hasKey":false,"message":"GEMINI_API_KEY belum dikonfigurasi di .env. Menggunakan AI kognitif lokal & pencarian web."}'
+                    $body = '{"success":false,"hasKey":false,"message":"GEMINI_API_KEY belum dikonfigurasi di .env atau pengaturan. Menggunakan AI kognitif lokal & pencarian web."}'
                 }
 
                 $bytes = [System.Text.Encoding]::UTF8.GetBytes($body)
