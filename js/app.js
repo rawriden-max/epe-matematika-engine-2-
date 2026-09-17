@@ -41,6 +41,8 @@ import { ProfileManager } from "./data/profileManager.js";
 import { syncAllAssessmentsToSupabase } from "./data/supabaseClient.js";
 import { MultimodalInputUI } from "./multimodal/multimodalInputUI.js";
 import { HandwritingStepReconstructor } from "./multimodal/handwritingStepReconstructor.js";
+import { VisionProvider } from "./multimodal/visionProvider.js";
+import { QuestionDocument } from "./multimodal/questionDocument.js";
 
 
 class EpeAppV2 {
@@ -267,6 +269,14 @@ class EpeAppV2 {
       btnOpenCreateModal: document.getElementById("btn-open-create-question-modal"),
       btnExportBankJson: document.getElementById("btn-export-bank-json"),
       inputImportBankJson: document.getElementById("input-import-bank-json"),
+      inputImportWorksheetImage: document.getElementById("input-import-worksheet-image"),
+      worksheetImportModal: document.getElementById("worksheet-import-modal"),
+      btnCloseWorksheetModal: document.getElementById("btn-close-worksheet-modal"),
+      worksheetImportLoading: document.getElementById("worksheet-import-loading"),
+      worksheetImportContent: document.getElementById("worksheet-import-content"),
+      worksheetQuestionsContainer: document.getElementById("worksheet-questions-container"),
+      worksheetDetectedCount: document.getElementById("worksheet-detected-count"),
+      btnPublishWorksheetQuestions: document.getElementById("btn-publish-worksheet-questions"),
       practiceActiveIdBadge: document.getElementById("practice-active-id-badge"),
       practiceActiveCategoryBadge: document.getElementById("practice-active-category-badge"),
       practiceActiveTopicText: document.getElementById("practice-active-topic-text"),
@@ -699,7 +709,14 @@ class EpeAppV2 {
       studentAnswer,
       studentSteps,
       media: multimodal,
-      stepReconstruction: stepRecon
+      stepReconstruction: stepRecon,
+      inputModality: multimodal?.source || "typed",
+      multimodalEvidence: multimodal ? {
+        multiSignal: multimodal.multiSignal || null,
+        confidence: multimodal.confidence || null,
+        manifest: multimodal.manifest || null,
+        questionDoc: multimodal.questionDoc || null
+      } : null
     });
 
     if (stepRecon) {
@@ -774,12 +791,14 @@ class EpeAppV2 {
       this.diagnosticMultimodal = new MultimodalInputUI({
         containerId: "diagnostic-multimodal-container",
         targetStepsInputId: "student-steps-input",
+        targetAnswerInputId: "student-answer-input",
         contextMode: "diagnostic"
       });
 
       this.practiceMultimodal = new MultimodalInputUI({
         containerId: "practice-multimodal-container",
         targetStepsInputId: "practice-steps-input",
+        targetAnswerInputId: "practice-answer-input",
         contextMode: "practice"
       });
     } catch (e) {
@@ -1227,7 +1246,14 @@ class EpeAppV2 {
       media: multimodal || {
         image: this.studentPhotoData,
         audio: this.studentVoiceData
-      }
+      },
+      inputModality: multimodal?.source || (this.studentPhotoData ? "image" : this.studentVoiceData ? "audio" : "typed"),
+      multimodalEvidence: multimodal ? {
+        multiSignal: multimodal.multiSignal || null,
+        confidence: multimodal.confidence || null,
+        manifest: multimodal.manifest || null,
+        questionDoc: multimodal.questionDoc || null
+      } : null
     });
 
     this.historyManager.addEntry(result);
@@ -1801,6 +1827,9 @@ class EpeAppV2 {
       });
     }
 
+    // Worksheet Multi-Question Import (Phase 7)
+    this.initWorksheetImport();
+
     // Tab 4 Events (Supabase, CSV, Clear)
     if (this.elements.btnSyncSupabase) {
       this.elements.btnSyncSupabase.addEventListener("click", async () => {
@@ -1911,6 +1940,130 @@ class EpeAppV2 {
           this.historyManager.clear();
           this.updateStatsAndHistory();
           NotificationToast.show("Riwayat diagnostik berhasil dikosongkan.", "info");
+        }
+      });
+    }
+  }
+
+  initWorksheetImport() {
+    if (!this.elements.inputImportWorksheetImage) return;
+
+    this.elements.btnCloseWorksheetModal?.addEventListener("click", () => {
+      this.elements.worksheetImportModal?.classList.add("hidden");
+    });
+
+    this.elements.inputImportWorksheetImage.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      this.elements.worksheetImportModal?.classList.remove("hidden");
+      this.elements.worksheetImportLoading?.classList.remove("hidden");
+      this.elements.worksheetImportContent?.classList.add("hidden");
+
+      try {
+        const dataUrl = await MediaManager.readFileAsDataURL(file);
+        const manifest = await VisionProvider.analyzeImage(dataUrl);
+
+        this.elements.worksheetImportLoading?.classList.add("hidden");
+        this.elements.worksheetImportContent?.classList.remove("hidden");
+
+        const questionDoc = QuestionDocument.fromManifest(manifest);
+        const questions = questionDoc.questions;
+
+        this._pendingWorksheetQuestions = questions;
+
+        if (this.elements.worksheetDetectedCount) {
+          this.elements.worksheetDetectedCount.textContent = `${questions.length} Butir Soal Terdeteksi dari Worksheet`;
+        }
+
+        if (this.elements.worksheetQuestionsContainer) {
+          if (questions.length === 0) {
+            this.elements.worksheetQuestionsContainer.innerHTML = `
+              <div class="p-6 text-center text-slate-400 text-xs">
+                Tidak ada butir soal terpisah yang terdeteksi dalam gambar ini. Pastikan teks soal dan angka terlihat jelas dan tidak terlalu buram.
+              </div>
+            `;
+            return;
+          }
+
+          this.elements.worksheetQuestionsContainer.innerHTML = questions.map((q, idx) => `
+            <div class="card-subtle p-3.5 space-y-2 border border-slate-800 rounded-lg bg-slate-950/60 worksheet-q-item" data-idx="${idx}">
+              <div class="flex items-center justify-between pb-1.5 border-b border-slate-800 text-xs">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" class="w-4 h-4 rounded border-slate-700 text-cyan-500 focus:ring-cyan-500 worksheet-q-check" checked data-idx="${idx}" />
+                  <span class="font-bold text-white">Soal ${q.questionNumber || (idx + 1)}</span>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                  Keyakinan: ${Math.round((q.confidence?.overall || 0.85) * 100)}%
+                </span>
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-0.5">Teks Soal:</label>
+                <textarea class="input-clean w-full p-2 text-xs font-medium worksheet-q-text" rows="2" data-idx="${idx}">${q.questionText || ""}</textarea>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-0.5">Persamaan / Formula (LaTeX):</label>
+                  <input type="text" class="input-clean w-full px-2.5 py-1.5 text-xs font-mono text-cyan-300 worksheet-q-latex" value="${q.mathematicalExpressions?.[0] || ""}" data-idx="${idx}" />
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-0.5">Kunci Jawaban Standar (Jika Ada):</label>
+                  <input type="text" class="input-clean w-full px-2.5 py-1.5 text-xs font-medium text-emerald-400 worksheet-q-ans" value="${q.studentResponse?.selectedOption ? 'Opsi ' + q.studentResponse.selectedOption : (q.studentResponse?.writtenAnswer || '')}" data-idx="${idx}" />
+                </div>
+              </div>
+            </div>
+          `).join("");
+        }
+
+      } catch (err) {
+        console.error("Worksheet import error:", err);
+        this.elements.worksheetImportLoading?.classList.add("hidden");
+        this.elements.worksheetImportContent?.classList.remove("hidden");
+        if (this.elements.worksheetQuestionsContainer) {
+          this.elements.worksheetQuestionsContainer.innerHTML = `
+            <div class="p-6 text-center text-rose-400 text-xs">
+              Gagal memproses gambar lembar kerja: ${err.message}. Pastikan API key terpasang di pengaturan AI Matrix.
+            </div>
+          `;
+        }
+      } finally {
+        this.elements.inputImportWorksheetImage.value = "";
+      }
+    });
+
+    if (this.elements.btnPublishWorksheetQuestions) {
+      this.elements.btnPublishWorksheetQuestions.addEventListener("click", () => {
+        const items = this.elements.worksheetQuestionsContainer?.querySelectorAll(".worksheet-q-item");
+        if (!items || items.length === 0) return;
+
+        let publishedCount = 0;
+        items.forEach(item => {
+          const check = item.querySelector(".worksheet-q-check");
+          if (check && check.checked) {
+            const idx = parseInt(check.getAttribute("data-idx"), 10);
+            const promptText = item.querySelector(".worksheet-q-text")?.value || "";
+            const latexEquation = item.querySelector(".worksheet-q-latex")?.value || "";
+            const standardAnswer = item.querySelector(".worksheet-q-ans")?.value || "";
+
+            this.customStore.addQuestion({
+              title: `Soal Lembar Kerja ${idx + 1}`,
+              topic: "Latihan Lembar Kerja (Worksheet)",
+              category: "Worksheet AI",
+              promptText,
+              latexEquation,
+              standardAnswer,
+              explanation: "Soal diekstrak secara otomatis dari foto lembar kerja menggunakan AI Vision EPE."
+            });
+            publishedCount++;
+          }
+        });
+
+        if (publishedCount > 0) {
+          NotificationToast.show(`Berhasil menerbitkan ${publishedCount} butir soal baru ke Bank Soal!`, "success");
+          this.renderPracticeQuestionList();
+          this.elements.worksheetImportModal?.classList.add("hidden");
+        } else {
+          NotificationToast.show("Pilih minimal satu butir soal untuk diterbitkan.", "warning");
         }
       });
     }

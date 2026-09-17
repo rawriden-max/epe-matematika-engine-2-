@@ -125,24 +125,44 @@ export class ResearchExport {
         "evidence",
         "remediation",
         "input_type",
+        "recognition_confidence",
+        "structural_confidence",
+        "mathematical_confidence",
+        "verification_status",
+        "evidence_trace",
         "steps_count"
       ];
 
-      const rows = history.map((h) => [
-        this.escapeCsv(h.id),
-        this.escapeCsv(h.timestamp),
-        this.escapeCsv(h.studentId),
-        this.escapeCsv(h.questionId),
-        this.escapeCsv(h.questionTitle || "-"),
-        this.escapeCsv(h.domain),
-        this.escapeCsv(h.primaryError),
-        this.escapeCsv(h.secondaryError || "-"),
-        this.escapeCsv(h.confidence),
-        this.escapeCsv(h.evidence),
-        this.escapeCsv(h.remediation),
-        this.escapeCsv(h.media?.source || (h.media?.image ? "image" : (h.media?.audio ? "audio" : "typed"))),
-        this.escapeCsv(h.stepReconstruction?.steps?.length || 1)
-      ]);
+      const rows = history.map((h) => {
+        const multi = h.multimodalEvidence?.multiSignal || h.media?.multiSignal || null;
+        const inputModality = h.inputModality || h.media?.source || (h.media?.image ? "image" : (h.media?.audio ? "audio" : "typed"));
+        const recogConf = multi ? `${multi.recognition}%` : (inputModality === "typed" ? "100%" : "-");
+        const structConf = multi ? `${multi.structural}%` : "100%";
+        const mathConf = multi ? `${multi.mathematical}%` : "100%";
+        const verifStatus = multi ? multi.status : (h.stepReconstruction?.hasAnomalies ? "INVALID_TRANSFORMATION" : "VERIFIED");
+        const evidenceTrace = h.stepReconstruction?.primaryAnomaly?.evidence || h.evidence || "-";
+
+        return [
+          this.escapeCsv(h.id),
+          this.escapeCsv(h.timestamp),
+          this.escapeCsv(h.studentId),
+          this.escapeCsv(h.questionId),
+          this.escapeCsv(h.questionTitle || "-"),
+          this.escapeCsv(h.domain),
+          this.escapeCsv(h.primaryError),
+          this.escapeCsv(h.secondaryError || "-"),
+          this.escapeCsv(h.confidence),
+          this.escapeCsv(h.evidence),
+          this.escapeCsv(h.remediation),
+          this.escapeCsv(inputModality),
+          this.escapeCsv(recogConf),
+          this.escapeCsv(structConf),
+          this.escapeCsv(mathConf),
+          this.escapeCsv(verifStatus),
+          this.escapeCsv(evidenceTrace),
+          this.escapeCsv(h.stepReconstruction?.steps?.length || 1)
+        ];
+      });
 
       const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
       const filename = `epe_research_diagnostic_${new Date().toISOString().slice(0, 10)}.csv`;

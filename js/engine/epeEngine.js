@@ -20,7 +20,7 @@ export class ErrorPatternEngine {
    * @param {Object} [input.media] - Objek media lampiran pengerjaan siswa (foto/audio)
    * @returns {Object} Hasil analisis berstruktur dan format teks baku
    */
-  static analyze({ studentId = "Siswa_01", questionId = "Q1", question = null, studentAnswer = "", studentSteps = "", media = null, stepReconstruction = null }) {
+  static analyze({ studentId = "Siswa_01", questionId = "Q1", question = null, studentAnswer = "", studentSteps = "", media = null, stepReconstruction = null, inputModality = "typed", multimodalEvidence = null }) {
     let resolvedQuestion = question;
     if (!resolvedQuestion) {
       resolvedQuestion = QUESTIONS.find((q) => q.id === questionId) || QUESTIONS[0];
@@ -57,7 +57,9 @@ export class ErrorPatternEngine {
         media,
         studentSteps: trimmedSteps,
         studentAnswer: trimmedAnswer,
-        stepReconstruction
+        stepReconstruction,
+        inputModality,
+        multimodalEvidence
       });
     }
 
@@ -100,14 +102,16 @@ export class ErrorPatternEngine {
       media,
       studentSteps: trimmedSteps,
       studentAnswer: trimmedAnswer,
-      stepReconstruction
+      stepReconstruction,
+      inputModality,
+      multimodalEvidence
     });
   }
 
   /**
    * Menyusun paket hasil analisis baik dalam format objek maupun teks baku
    */
-  static _buildResultPackage({ studentId, questionId, domainCode, primaryError, secondaryError, evidence, confidence, remediation, question, media = null, studentSteps = "", studentAnswer = "" }) {
+  static _buildResultPackage({ studentId, questionId, domainCode, primaryError, secondaryError, evidence, confidence, remediation, question, media = null, studentSteps = "", studentAnswer = "", stepReconstruction = null, inputModality = "typed", multimodalEvidence = null }) {
     const primaryErrorFormatted = formatErrorLabel(primaryError);
     const secondaryErrorFormatted = formatErrorLabel(secondaryError);
     const confidenceFormatted = `${confidence}%`;
@@ -149,7 +153,10 @@ export class ErrorPatternEngine {
       isCorrect: primaryError === "E0",
       media,
       studentSteps,
-      studentAnswer
+      studentAnswer,
+      stepReconstruction,
+      inputModality,
+      multimodalEvidence
     };
   }
 

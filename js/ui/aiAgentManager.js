@@ -11,6 +11,9 @@
  */
 
 import { MathSolver } from "../engine/mathSolver.js";
+import { VisionProvider } from "../multimodal/visionProvider.js";
+import { SpeechMathParser } from "../multimodal/speechMathParser.js";
+import { WebSearchService } from "../services/webSearchService.js";
 
 export class AiAgentManager {
   constructor({ orbEngine = null, onOpenDrawer = null, onCloseDrawer = null }) {
@@ -35,6 +38,8 @@ export class AiAgentManager {
     };
 
     // Chat History
+    this.responseDepth = "standard"; // "quick" | "standard" | "detailed"
+    this.pendingImageAttachment = null;
     this.messages = [
       {
         sender: "assistant",
@@ -141,6 +146,56 @@ export class AiAgentManager {
     }
 
     // Quick Action Chips
+    this.imageBtn = document.getElementById("btn-ai-image");
+    this.imageFileInput = document.getElementById("ai-image-file-input");
+    this.imagePreviewContainer = document.getElementById("ai-chat-image-preview-container");
+    this.imagePreviewThumb = document.getElementById("ai-chat-image-preview-thumb");
+    this.imageNameEl = document.getElementById("ai-chat-image-name");
+    this.removeImageBtn = document.getElementById("btn-remove-ai-chat-image");
+
+    // Depth Mode Switcher
+    const depthBtns = document.querySelectorAll(".ai-depth-btn");
+    depthBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const depth = btn.getAttribute("data-depth");
+        this.responseDepth = depth;
+        depthBtns.forEach(b => {
+          b.className = "ai-depth-btn px-1.5 py-0.5 rounded transition-all text-slate-400 hover:text-white";
+        });
+        btn.className = "ai-depth-btn px-1.5 py-0.5 rounded transition-all bg-cyan-500 text-slate-950 font-bold";
+      });
+    });
+
+    // Multimodal Image Attachment
+    if (this.imageBtn && this.imageFileInput) {
+      this.imageBtn.addEventListener("click", () => this.imageFileInput.click());
+      this.imageFileInput.addEventListener("change", (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            this.pendingImageAttachment = {
+              name: file.name,
+              dataUrl: ev.target.result,
+              size: file.size
+            };
+            if (this.imagePreviewThumb) this.imagePreviewThumb.src = ev.target.result;
+            if (this.imageNameEl) this.imageNameEl.textContent = file.name;
+            if (this.imagePreviewContainer) this.imagePreviewContainer.classList.remove("hidden");
+            this.imageFileInput.value = "";
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    if (this.removeImageBtn) {
+      this.removeImageBtn.addEventListener("click", () => {
+        this.pendingImageAttachment = null;
+        if (this.imagePreviewContainer) this.imagePreviewContainer.classList.add("hidden");
+      });
+    }
+
     const chipsContainer = document.getElementById("ai-quick-chips-container");
     if (chipsContainer) {
       chipsContainer.addEventListener("click", (e) => {
@@ -163,9 +218,11 @@ export class AiAgentManager {
         this.recognition.interimResults = false;
 
         this.recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
+          const rawTranscript = event.results[0][0].transcript;
+          const parsed = SpeechMathParser.parseSpokenMath(rawTranscript);
+          const finalPrompt = parsed.normalizedText || rawTranscript;
           if (this.chatInput) {
-            this.chatInput.value = transcript;
+            this.chatInput.value = finalPrompt;
             this.handleSendMessage();
           }
           this.stopVoiceInput();
@@ -258,10 +315,18 @@ export class AiAgentManager {
     if (!this.chatBody) return;
     const bubble = document.createElement("div");
     bubble.className = `ai-msg-bubble ${msg.sender === "user" ? "ai-msg-user" : "ai-msg-assistant"}`;
-    bubble.innerHTML = this.formatMarkdown(msg.text);
 
-    // Render KaTeX inside this bubble safely
-    this.renderKaTeXInBubble(bubble);
+    if (msg.image) {
+      const imgEl = document.createElement("img");
+      imgEl.src = msg.image;
+      imgEl.alt = "Foto Terlampir";
+      imgEl.className = "max-w-full max-h-48 rounded-lg mb-2 border border-slate-700 object-contain shadow-sm";
+      bubble.appendChild(imgEl);
+    }
+
+    const textEl = document.createElement("div");
+    textEl.innerHTML = this.renderSafeMarkdownAndMath(msg.text);
+    bubble.appendChild(textEl);
 
     if (msg.sender === "assistant") {
       const speakBtn = document.createElement("button");
@@ -316,14 +381,19 @@ export class AiAgentManager {
   async handleSendMessage() {
     if (!this.chatInput) return;
     const text = this.chatInput.value.trim();
-    if (!text) return;
+    const attachedImage = this.pendingImageAttachment;
 
-    // Clear input immediately
+    if (!text && !attachedImage) return;
+
+    // Clear input immediately & reset image preview
     this.chatInput.value = "";
+    if (this.imagePreviewContainer) this.imagePreviewContainer.classList.add("hidden");
+    this.pendingImageAttachment = null;
 
     const userMsg = {
       sender: "user",
-      text,
+      text: text || (attachedImage ? "Tolong analisis foto matematika terlampir ini." : ""),
+      image: attachedImage ? attachedImage.dataUrl : null,
       timestamp: new Date()
     };
     this.messages.push(userMsg);
@@ -331,19 +401,21 @@ export class AiAgentManager {
     this.showTypingIndicator();
 
     try {
-      const responseText = await this.generateResponse(text);
+      const responseText = await this.generateResponse(userMsg.text, attachedImage);
       this.hideTypingIndicator();
+
+      const finalResponse = this.cleanLeadingGreeting(responseText);
 
       const aiMsg = {
         sender: "assistant",
-        text: responseText,
+        text: finalResponse,
         timestamp: new Date()
       };
       this.messages.push(aiMsg);
       this.appendMessageBubble(aiMsg);
 
       if (this.voiceEnabled) {
-        this.speakText(responseText);
+        this.speakText(finalResponse);
       }
       if (this.orbEngine) {
         this.orbEngine.setState("speaking");
@@ -405,8 +477,573 @@ export class AiAgentManager {
     }
   }
 
-  async generateResponse(userPrompt) {
-    const cleanQuery = userPrompt.trim();
+  /**
+   * Deteksi dan tangani pertanyaan lanjutan (multi-turn follow-up)
+   */
+  resolveFollowUp(query, rawInput) {
+    const lower = (query || "").toLowerCase();
+    
+    // Pola pertanyaan metode alternatif
+    const isMethodInquiry = 
+      lower.includes("cara lain") ||
+      lower.includes("metode lain") ||
+      lower.includes("rumus lain") ||
+      lower.includes("alternatif") ||
+      lower.includes("jalan lain") ||
+      lower.includes("selain cara itu") ||
+      lower.includes("selain itu ada apa lagi") ||
+      lower.includes("ada cara berbeda") ||
+      lower.includes("cara lainnya") ||
+      lower.includes("bisa pakai cara lain") ||
+      lower.includes("ada opsi lain") ||
+      lower.includes("cara berbeda");
+
+    // Pola pertanyaan alasan kognitif
+    const isWhyInquiry =
+      lower.startsWith("kenapa") ||
+      lower.startsWith("mengapa") ||
+      lower.includes("kenapa begitu") ||
+      lower.includes("mengapa demikian") ||
+      lower.includes("alasannya apa") ||
+      lower.includes("kok bisa begitu") ||
+      lower.includes("dari mana asalnya");
+
+    // Pola permintaan contoh
+    const isExampleInquiry =
+      lower.startsWith("contoh") ||
+      lower.includes("beri contoh") ||
+      lower.includes("kasih contoh") ||
+      lower.includes("contoh soal") ||
+      lower.includes("contohnya gimana") ||
+      lower.includes("contoh penerapannya") ||
+      lower.includes("berikan contoh");
+
+    // Pola pendalaman penjelasan
+    const isDetailInquiry =
+      lower.includes("jelaskan lebih lanjut") ||
+      lower.includes("terangkan lebih detail") ||
+      lower.includes("kurang paham") ||
+      lower.includes("belum paham") ||
+      lower.includes("maksudnya gimana") ||
+      lower.includes("lebih rinci");
+
+    if (!isMethodInquiry && !isWhyInquiry && !isExampleInquiry && !isDetailInquiry) {
+      return null;
+    }
+
+    // Cari konteks topik dari riwayat percakapan
+    const context = this.detectContextFromHistory();
+    if (!context || !context.topic) {
+      return null;
+    }
+
+    if (isMethodInquiry) {
+      return this.generateAlternativeMethods(context);
+    }
+    if (isWhyInquiry) {
+      return this.generateWhyExplanation(context);
+    }
+    if (isExampleInquiry) {
+      return this.generateConcreteExamples(context);
+    }
+    if (isDetailInquiry) {
+      return this.generateDetailedExplanation(context);
+    }
+
+    return null;
+  }
+
+  /**
+   * Ekstraksi topik kontekstual dari pesan-pesan sebelumnya
+   */
+  detectContextFromHistory() {
+    if (!this.messages || this.messages.length < 2) {
+      if (this.context.activeQuestion) {
+        return {
+          topic: this.context.activeQuestion.title || this.context.activeQuestion.topic || "Persamaan Kuadrat",
+          category: "quadratic_factoring",
+          text: this.context.activeQuestion.promptText || ""
+        };
+      }
+      return null;
+    }
+
+    // Ambil pesan-pesan sebelum giliran pesan pengguna saat ini
+    const msgs = [...this.messages];
+    // Pesan terakhir di array biasanya adalah pertanyaan user yang baru masuk
+    const lastAssistantMsg = [...msgs].reverse().find(m => m.sender === "assistant");
+    const prevUserMsg = [...msgs].reverse().find((m, idx) => m.sender === "user" && idx > 0);
+
+    const combinedText = ((lastAssistantMsg?.text || "") + " " + (prevUserMsg?.text || "")).toLowerCase();
+
+    // 1. Luas Persegi Panjang
+    if (
+      combinedText.includes("persegi panjang") || 
+      (combinedText.includes("panjang") && combinedText.includes("lebar") && combinedText.includes("luas"))
+    ) {
+      return { topic: "Luas Persegi Panjang", category: "rectangle_area", text: combinedText };
+    }
+
+    // 2. Diskriminan Kuadrat
+    if (
+      combinedText.includes("diskriminan") || 
+      combinedText.includes("akar kembar") || 
+      combinedText.includes("b^2 - 4ac") || 
+      combinedText.includes("b² - 4ac") ||
+      combinedText.includes("jenis akar")
+    ) {
+      return { topic: "Diskriminan Persamaan Kuadrat", category: "discriminant", text: combinedText };
+    }
+
+    // 3. Persamaan Kuadrat & Pemfaktoran
+    if (
+      combinedText.includes("faktork") || 
+      combinedText.includes("persamaan kuadrat") || 
+      combinedText.includes("rumus abc") ||
+      combinedText.includes("akar-akar")
+    ) {
+      return { topic: "Persamaan Kuadrat & Pemfaktoran", category: "quadratic_factoring", text: combinedText };
+    }
+
+    // 4. Bunga Majemuk & Keuangan
+    if (
+      combinedText.includes("bunga majemuk") || 
+      combinedText.includes("bunga tunggal") || 
+      combinedText.includes("investasi")
+    ) {
+      return { topic: "Bunga Majemuk", category: "compound_interest", text: combinedText };
+    }
+
+    // 5. Teorema Pythagoras
+    if (
+      combinedText.includes("pythagoras") || 
+      combinedText.includes("pitagoras") || 
+      combinedText.includes("segitiga siku-siku")
+    ) {
+      return { topic: "Teorema Pythagoras", category: "pythagoras", text: combinedText };
+    }
+
+    // 6. Sistem Persamaan Linear (SPLDV)
+    if (
+      combinedText.includes("spldv") || 
+      combinedText.includes("persamaan linear") || 
+      combinedText.includes("eliminasi") ||
+      combinedText.includes("substitusi")
+    ) {
+      return { topic: "Sistem Persamaan Linear (SPLDV)", category: "spldv", text: combinedText };
+    }
+
+    // 7. Trigonometri
+    if (
+      combinedText.includes("trigonometri") || 
+      combinedText.includes("sin") || 
+      combinedText.includes("cos") || 
+      combinedText.includes("tan")
+    ) {
+      return { topic: "Trigonometri", category: "trigonometry", text: combinedText };
+    }
+
+    // 8. Kalkulus (Turunan & Integral)
+    if (
+      combinedText.includes("kalkulus") || 
+      combinedText.includes("turunan") || 
+      combinedText.includes("integral")
+    ) {
+      return { topic: "Kalkulus", category: "calculus", text: combinedText };
+    }
+
+    // Fallback: Ekstraksi baris judul dari pesan asisten terakhir
+    const lines = (lastAssistantMsg?.text || "").split("\n");
+    for (const line of lines) {
+      const cleanLine = line.replace(/^[#*>\s\-–—:]+/g, "").trim();
+      if (cleanLine.length > 3 && cleanLine.length < 50) {
+        return { topic: cleanLine, category: "general_math", text: combinedText };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Menghasilkan berbagai metode dan cara alternatif
+   */
+  generateAlternativeMethods(context) {
+    if (context.category === "rectangle_area") {
+      return `### 📐 Beragam Cara Lain Menghitung & Memahami Luas Persegi Panjang
+
+Selain rumus standar dasar **$L = p \\times l$**, terdapat beberapa cara dan perspektif matematis lain untuk mencari luas persegi panjang tergantung komponen data yang diketahui:
+
+---
+
+#### 1. Metode Panjang Diagonal ($d$) dan Salah Satu Sisi ($p$ atau $l$)
+Jika kamu mengetahui panjang salah satu sisi ($p$) dan panjang garis diagonal ($d$):
+Berdasarkan **Teorema Pythagoras**, hubungan sisi dan diagonal adalah $d^2 = p^2 + l^2 \\implies l = \\sqrt{d^2 - p^2}$.
+Maka rumus luasnya menjadi:
+$$L = p \\times \\sqrt{d^2 - p^2}$$
+*Contoh:* Jika diagonal $d = 10\\text{ cm}$ dan panjang $p = 8\\text{ cm}$:
+$$l = \\sqrt{10^2 - 8^2} = \\sqrt{100 - 64} = \\sqrt{36} = 6\\text{ cm}$$
+$$L = 8 \\times 6 = 48\\text{ cm}^2$$
+
+---
+
+#### 2. Metode Menggunakan Keliling ($K$) dan Panjang Sisi ($p$)
+Jika yang diketahui adalah keliling ($K$) dan panjang ($p$), tanpa tahu lebarnya secara langsung:
+Keliling persegi panjang adalah $K = 2(p + l) \\implies l = \\frac{K}{2} - p$.
+Maka rumus luasnya:
+$$L = p \\left(\\frac{K}{2} - p\\right)$$
+*Contoh:* Jika keliling $K = 26\\text{ cm}$ dan panjang $p = 8\\text{ cm}$:
+$$L = 8 \\times \\left(\\frac{26}{2} - 8\\right) = 8 \\times (13 - 8) = 8 \\times 5 = 40\\text{ cm}^2$$
+
+---
+
+#### 3. Metode Cacah Petak Satuan (Tesselation / Grid Method)
+Metode visual dasar yang sangat kuat untuk intuisi geometri:
+Membagi bidang persegi panjang menjadi petak-petak satuan $1 \\times 1$.
+Jumlah total petak dihitung dengan menjumlahkan baris sebanyak kolom:
+$$L = \\underbrace{l + l + \\dots + l}_{p\\text{ kali}} = p \\times l$$
+
+---
+
+#### 4. Metode Dekomposisi 2 Segitiga Siku-Siku Kongruen
+Garis diagonal membelah persegi panjang menjadi dua segitiga siku-siku yang sama persis (kongruen), masing-masing dengan alas $p$ dan tinggi $l$:
+$$L_{\\text{segitiga}} = \\frac{1}{2} \\times p \\times l$$
+$$L_{\\text{total}} = 2 \\times L_{\\text{segitiga}} = 2 \\times \\left(\\frac{1}{2} p \\times l\\right) = p \\times l$$
+
+---
+
+#### 5. Pendekatan Kalkulus (Integral Tentu)
+Dalam kalkulus, luas daerah persegi panjang dari $x = 0$ sampai $x = p$ di bawah fungsi konstan $f(x) = l$ adalah:
+$$L = \\int_{0}^{p} l \\, dx = \\left[ l \\cdot x \\right]_{0}^{p} = l(p) - l(0) = p \\times l$$
+
+---
+
+#### 6. Pendekatan Aljabar Vektor (Cross Product)
+Jika dua sisi persegi panjang dinyatakan sebagai vektor 2D $\\vec{u} = (p, 0)$ dan $\\vec{v} = (0, l)$ pada bidang Cartesius, luasnya adalah magnitudo perkalian silang (*cross product*):
+$$L = \\|\\vec{u} \\times \\vec{v}\\| = |p \\cdot l - 0 \\cdot 0| = p \\times l$$
+
+Apakah salah satu metode di atas berkaitan dengan soal atau variasi kasus yang sedang kamu pelajari?`;
+    }
+
+    if (context.category === "discriminant" || context.category === "quadratic_factoring") {
+      return `### 🧩 5 Cara & Metode Berbeda Menyelesaikan Persamaan Kuadrat $ax^2 + bx + c = 0$
+
+Selain melalui analisis diskriminan $D = b^2 - 4ac$, ada 5 metode standar yang dapat digunakan untuk menentukan akar-akar dan karakteristik persamaan kuadrat:
+
+---
+
+#### 1. Metode Pemfaktoran Aljabar $(x - p)(x - q) = 0$
+- **Kapan Digunakan**: Paling efisien jika nilai diskriminan $D$ merupakan bilangan kuadrat sempurna ($0, 1, 4, 9, 16, 25, 36, 49, \\dots$).
+- **Prinsip**: Cari dua angka yang jika dikalikan $= a \\cdot c$ dan jika dijumlahkan $= b$.
+- *Contoh:* $x^2 - 5x + 6 = 0 \\implies (x - 2)(x - 3) = 0 \\implies x_1 = 2, x_2 = 3$.
+
+---
+
+#### 2. Metode Melengkapkan Kuadrat Sempurna
+- **Prinsip**: Mengubah bentuk $ax^2 + bx + c = 0$ menjadi bentuk kuadrat murni $(x + p)^2 = q$.
+- **Langkah**: Pindahkan konstanta ke kanan, bagi dengan $a$, lalu tambahkan kedua ruas dengan $\\left(\\frac{b}{2a}\\right)^2$:
+  $$\\left(x + \\frac{b}{2a}\\right)^2 = \\frac{b^2 - 4ac}{4a^2} = \\frac{D}{4a^2}$$
+  *(Perhatikan bahwa rumus ini adalah asal mula lahirnya rumus diskriminan $D$!)*
+
+---
+
+#### 3. Metode Rumus ABC (Rumus Kuadratik)
+- **Kapan Digunakan**: Metode pamungkas yang selalu berhasil untuk angka berapa pun (termasuk pecahan atau akar irasional).
+- **Rumus**:
+  $$x_{1,2} = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a} = \\frac{-b \\pm \\sqrt{D}}{2a}$$
+
+---
+
+#### 4. Metode Grafik Fungsi Parabola
+- **Prinsip**: Gambarkan grafik $y = ax^2 + bx + c$ pada koordinat Cartesius.
+- Akar-akar persamaan adalah titik potong kurva parabola dengan sumbu-$X$ ($y = 0$).
+- Jika parabola memotong di 2 titik $\\implies D > 0$.
+- Jika puncak parabola menyinggung sumbu-$X$ di 1 titik $\\implies D = 0$.
+- Jika parabola melayang tidak menyentuh sumbu-$X$ $\\implies D < 0$.
+
+---
+
+#### 5. Metode Teorema Vieta (Relasi Akar & Koefisien)
+Jika yang dicari adalah operasi antar-akar (seperti $x_1 + x_2$ atau $x_1 \\cdot x_2$), kita tidak perlu mencari masing-masing akar:
+$$x_1 + x_2 = -\\frac{b}{a}$$
+$$x_1 \\cdot x_2 = \\frac{c}{a}$$
+$$x_1^2 + x_2^2 = (x_1 + x_2)^2 - 2x_1 x_2$$
+
+Mau mencoba menerapkan salah satu metode ini pada soal kuadrat yang sedang kamu kerjakan?`;
+    }
+
+    if (context.category === "compound_interest") {
+      return `### 💰 Beragam Metode Menghitung Pertumbuhan Nilai Bunga Majemuk
+
+Tergantung pada periode pemajemukan dan kebutuhan analisis keuangan, terdapat beberapa cara menghitung bunga majemuk:
+
+1. **Metode Diskrit Standar (Periode Tahunan / Bulanan)**:
+   $$M_n = M_0 \\left(1 + \\frac{i}{m}\\right)^{m \\cdot n}$$
+   Di mana $m$ adalah frekuensi pemajemukan dalam setahun (misal $m = 12$ untuk bulanan).
+
+2. **Metode Pemajemukan Kontinu (Kalkulus & Eksponensial)**:
+   Jika bunga dimajemukkan secara kontinu tanpa henti setiap detik ($m \\to \\infty$), rumusnya menggunakan bilangan Euler $e \\approx 2{,}718$:
+   $$M(t) = M_0 \\cdot e^{r \\cdot t}$$
+
+3. **Aturan 72 (Rule of 72 - Estimasi Kilat)**:
+   Untuk mengetahui berapa tahun uangmu akan berlipat ganda menjadi $2\\times$ lipat:
+   $$T_{\\text{lipat ganda}} \\approx \\frac{72}{\\text{Suku Bunga (\\%)}}$$
+   *Contoh:* Jika bunga majemuk $6\\%$ per tahun, modalmu akan berlipat ganda dalam $\\frac{72}{6} = 12\\text{ tahun}$.
+
+4. **Tabel Amortisasi / Iterasi Periode per Periode**:
+   Menghitung bunga di setiap akhir periode dan menjumlahkannya ke pokok untuk menjadi dasar perhitungan periode berikutnya.`;
+    }
+
+    if (context.category === "pythagoras") {
+      return `### 📐 Beragam Cara Membuktikan & Menghitung Teorema Pythagoras ($a^2 + b^2 = c^2$)
+
+Teorema Pythagoras adalah salah satu teorema dengan pembuktian terbanyak dalam sejarah matematika (lebih dari 370 pembuktian!). Berikut cara-cara terbaiknya:
+
+1. **Pembuktian Visual Geometris Persegi Bhaskara**:
+   Menyusun 4 segitiga siku-siku berukuran $(a, b, c)$ di dalam sebuah persegi besar bersisi $(a + b)$. Luas persegi besar sama dengan luas 4 segitiga ditambah luas persegi dalam bersisi $c$:
+   $$(a + b)^2 = 4 \\left(\\frac{1}{2} ab\\right) + c^2 \\implies a^2 + 2ab + b^2 = 2ab + c^2 \\implies a^2 + b^2 = c^2$$
+
+2. **Pembuktian Kesebangunan Segitiga Siku-Siku (Einstein)**:
+   Menarik garis tinggi dari sudut siku-siku ke sisi miring membagi segitiga asal menjadi dua segitiga kecil yang sebangun dengan segitiga awal.
+
+3. **Pendekatan Trigonometri**:
+   Berdasarkan definisi perbandingan trigonometri: $\\sin(\\theta) = \\frac{a}{c}$ dan $\\cos(\\theta) = \\frac{b}{c}$.
+   Menggunakan identitas dasar Pythagoras:
+   $$\\sin^2(\\theta) + \\cos^2(\\theta) = 1 \\implies \\left(\\frac{a}{c}\\right)^2 + \\left(\\frac{b}{c}\\right)^2 = 1 \\implies \\frac{a^2 + b^2}{c^2} = 1 \\implies a^2 + b^2 = c^2$$
+
+4. **Rumus Jarak Euclidean dalam Bidang Cartesius**:
+   Menghitung jarak antara dua koordinat $(x_1, y_1)$ dan $(x_2, y_2)$ sebagai sisi miring:
+   $$d = \\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$$`;
+    }
+
+    // Default alternative response for general topics
+    return `### 💡 Alternatif Pendekatan untuk: **"${context.topic}"**
+
+Dalam matematika dan pemecahan masalah ilmiah, selalu ada lebih dari satu sudut pandang untuk mendekati suatu persoalan:
+
+1. **Pendekatan Aljabar & Analitis**: Menggunakan manipulasi simbolik, substitusi persamaan, atau formulasi baku.
+2. **Pendekatan Geometris & Visual**: Menggambarkan model dalam bentuk grafik, diagram bidang, atau koordinat ruang.
+3. **Pendekatan Numerik & Algoritmik**: Menguji dengan nilai-nilai sampel, iterasi teratur, atau aproksimasi komputasi.
+4. **Pendekatan Sederhana (*Heuristik*)**: Menyederhanakan angka menjadi bilangan bulat kecil terlebih dahulu untuk menangkap polanya.
+
+Apakah kamu ingin kita bedah topik **"${context.topic}"** menggunakan pendekatan visual, aljabar, atau ada soal konkret yang mau dipecahkan bersama?`;
+  }
+
+  /**
+   * Menghasilkan penjelasan mengapa konsep tersebut berlaku (Why Explanation)
+   */
+  generateWhyExplanation(context) {
+    if (context.category === "rectangle_area") {
+      return `### 💡 Mengapa Rumus Luas Persegi Panjang adalah $L = p \\times l$?
+
+Pertanyaan kritis yang sangat bagus! Mengapa kita mengalikan panjang dan lebar?
+
+---
+
+#### 1. Hakikat Dasar Konsep "Luas"
+Dalam geometri, **luas** didefinisikan sebagai **jumlah bidang bujur sangkar berukuran $1 \\times 1$ satuan (satuan luas)** yang tepat menutupi seluruh permukaan bangun datar tersebut tanpa celah dan tanpa tumpang-tindih.
+
+#### 2. Logika Pengelompokan Baris dan Kolom
+Bayangkan kamu menyusun lantai keramik berbentuk persegi panjang:
+- Di sepanjang alas, terdapat baris keramik sebanyak **$p$ kotak**.
+- Di sepanjang tinggi, terdapat susunan baris sebanyak **$l$ tingkat**.
+
+Karena setiap tingkat memiliki tepat $p$ kotak, maka total kotak yang menutupi seluruh lantai adalah:
+$$p + p + p + \\dots + p \\quad (\\text{sebanyak } l \\text{ kali})$$
+Secara definisi aritmatika dasar, penjumlahan berulang ini adalah **perkalian**:
+$$L = p \\times l$$
+
+Itulah sebabnya perkalian panjang dan lebar adalah ukuran alami dari ruang dua dimensi!`;
+    }
+
+    if (context.category === "discriminant") {
+      return `### 💡 Mengapa Rumus Diskriminan $D = b^2 - 4ac$ Menentukan Jenis Akar?
+
+Diskriminan dinamakan dari kata bahasa Latin *"discriminare"* yang berarti **membedakan**. Mengapa rumusnya $b^2 - 4ac$?
+
+---
+
+#### 1. Berasal dari Dalam Tanda Akar Rumus ABC
+Perhatikan kembali rumus kuadratik (Rumus ABC):
+$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
+Perhatikan bagian di dalam tanda akar: **$\\sqrt{b^2 - 4ac}$**.
+Nilai di bawah akar inilah yang kita beri simbol **$D = b^2 - 4ac$**.
+
+#### 2. Konsekuensi Hukum Bilangan Real:
+1. **Jika $D > 0$ (Positif)**:
+   Akar $\\sqrt{D}$ menghasilkan bilangan real nyata positif, sehingga $\\pm \\sqrt{D}$ menghasilkan dua nilai berbeda (satu ditambah, satu dikurang). Akibatnya ada **2 akar real berbeda**.
+2. **Jika $D = 0$ (Nol)**:
+   Maka $\\sqrt{0} = 0$. Operasi $\\pm 0$ tidak mengubah nilai: $x = \\frac{-b \\pm 0}{2a} = -\\frac{b}{2a}$. Akibatnya hanya ada **1 akar tunggal (akar kembar)**.
+3. **Jika $D < 0$ (Negatif)**:
+   Dalam himpunan bilangan real, kita **tidak dapat menarik akar dari bilangan negatif** (misal $\\sqrt{-9}$ tidak ada di bilangan real). Oleh karena itu, persamaan **tidak memiliki akar real** (akarnya imajiner).
+
+Itulah mengapa hanya dengan melihat nilai $b^2 - 4ac$, kita langsung tahu sifat akarnya tanpa perlu repot menghitung nilai $x$!`;
+    }
+
+    return `### 💡 Menelusuri Logika Fundamental: **"${context.topic}"**
+
+Konsep ini bekerja berdasarkan prinsip keteraturan dan sebab-akibat matematis:
+1. Setiap formula yang kita gunakan lahir dari proses deduktif—bermula dari aksioma dasar yang dibuktikan secara logis langkah demi langkah.
+2. Aturan ini memastikan bahwa relasi antar variabel selalu konsisten di mana pun dan kapan pun diterapkan.
+
+Ada bagian dari langkah penurunan logisnya yang ingin kamu bedah lebih dalam?`;
+  }
+
+  /**
+   * Menghasilkan contoh konkret
+   */
+  generateConcreteExamples(context) {
+    if (context.category === "rectangle_area") {
+      return `### 📝 Contoh Soal & Penerapan Nyata: Luas Persegi Panjang
+
+Mari kita telaah dua variasi contoh soal berikut:
+
+---
+
+#### Contoh 1: Kasus Standar (Panjang & Lebar)
+Sebuah lapangan futsal memiliki panjang $25\\text{ m}$ dan lebar $15\\text{ m}$. Berapa luas lapangan tersebut?
+- **Diketahui**: $p = 25\\text{ m}$, $l = 15\\text{ m}$
+- **Rumus**: $L = p \\times l$
+- **Penyelesaian**:
+  $$L = 25 \\times 15 = 375\\text{ m}^2$$
+- Jadi, luas lapangan futsal adalah **$375\\text{ m}^2$**.
+
+---
+
+#### Contoh 2: Kasus Balikan (Mencari Sisi dari Luas & Keliling)
+Sebuah taman persegi panjang memiliki luas $60\\text{ m}^2$ dan panjang $12\\text{ m}$. Berapa lebar dan keliling taman tersebut?
+1. **Mencari Lebar ($l$)**:
+   $$l = \\frac{L}{p} = \\frac{60}{12} = 5\\text{ m}$$
+2. **Mencari Keliling ($K$)**:
+   $$K = 2(p + l) = 2(12 + 5) = 2(17) = 34\\text{ m}$$
+
+Mau mencoba menyelesaikan satu soal latihan dengan angka lain?`;
+    }
+
+    if (context.category === "discriminant") {
+      return `### 📝 Contoh Soal Menghitung & Menginterpretasikan Nilai Diskriminan
+
+Mari kita selesaikan dua contoh soal yang sering muncul di ujian:
+
+---
+
+#### Contoh 1: Menentukan Jenis Akar
+Tentukan nilai diskriminan dan sifat akar dari persamaan $x^2 - 6x + 9 = 0$!
+- **Koefisien**: $a = 1, b = -6, c = 9$
+- **Perhitungan**:
+  $$D = b^2 - 4ac = (-6)^2 - 4(1)(9) = 36 - 36 = 0$$
+- **Kesimpulan**: Karena $D = 0$, persamaan ini memiliki **1 akar kembar / real sama** ($x = 3$).
+
+---
+
+#### Contoh 2: Menemukan Batasan Nilai Parameter
+Tentukan nilai $k$ agar persamaan $x^2 + kx + 16 = 0$ memiliki akar kembar!
+- **Syarat Akar Kembar**: $D = 0$
+  $$b^2 - 4ac = 0 \\implies k^2 - 4(1)(16) = 0 \\implies k^2 - 64 = 0$$
+  $$k^2 = 64 \\implies k = \\pm 8$$
+- Jadi, nilai $k$ yang memenuhi adalah **$k = 8$** atau **$k = -8$**.`;
+    }
+
+    return `### 📝 Contoh Penerapan: **"${context.topic}"**
+
+Mari kita lihat bagaimana konsep ini diterapkan dalam skenario nyata:
+- Menghitung parameter input yang diketahui.
+- Menggunakan formula atau aturan keteraturan untuk menentukan hasil akhir.
+- Memeriksa konsistensi satuan dan nilai hasil.
+
+Ketikkan angka atau soal spesifik jika kamu ingin kita kerjakan bersama!`;
+  }
+
+  /**
+   * Menghasilkan penjelasan lebih mendalam
+   */
+  generateDetailedExplanation(context) {
+    if (context.category === "rectangle_area") {
+      return this.generateAlternativeMethods(context);
+    }
+    return `### 🔍 Penjelasan Lebih Mendalam: **"${context.topic}"**
+
+Mari kita telaah konsep ini secara lebih terstruktur dan komprehensif:
+
+1. **Definisi & Batasan Masalah**:
+   Konsep ini digunakan untuk mendeskripsikan hubungan fungsional antara komponen-komponen penyusunnya.
+2. **Kaitan dengan Konsep Lain**:
+   Konsep ini menjadi jembatan menuju topik yang lebih lanjut, seperti aljabar, geometri analitik, maupun pemodelan matematika nyata.
+3. **Tips Menghindari Kesalahan Umum**:
+   - Selalu perhatikan tanda positif/negatif pada perhitungan aljabar.
+   - Pastikan satuan dimensi yang digunakan seragam (misal meter dengan meter).
+   - Lakukan uji akal sehat (*sanity check*) terhadap hasil akhir.
+
+Ada bagian tertentu yang ingin kamu tanyakan lebih spesifik?`;
+  }
+
+  async generateResponse(userPrompt, attachedImage = null) {
+    const rawInput = userPrompt || "";
+    // Normalisasi ejaan dan typo umum matematika siswa Indonesia (e.g. deskriminan -> diskriminan)
+    const normalizedInput = WebSearchService.normalizeQuery(rawInput);
+    const cleanQuery = normalizedInput.trim();
+
+    // 0a. Conversational Context & Multi-turn Follow-up Resolution
+    // Menjawab pertanyaan lanjutan seperti "apa ada cara lain?", "kenapa begitu?", "beri contoh", dll.
+    const followUpResult = this.resolveFollowUp(cleanQuery, rawInput);
+    if (followUpResult) {
+      return followUpResult;
+    }
+
+    // 0b. Cek Serverless Proxy (/api/gemini) terlebih dahulu (Online Terpusat)
+    try {
+      const serverlessResult = await this.callServerlessProxy(cleanQuery, attachedImage);
+      if (serverlessResult) return serverlessResult;
+    } catch (e) {
+      // Lanjut ke pipeline klien
+    }
+
+    // Multimodal Image Analysis Flow (Phase 6)
+    if (attachedImage) {
+      try {
+        // If Cloud LLM is available, invoke multimodal Gemini Vision
+        if (this.apiKey && this.apiKey.trim() && this.apiProvider === "gemini") {
+          return await this.callCloudLLMMultimodal(cleanQuery, attachedImage);
+        }
+
+        // Offline / Manifest Vision Extraction
+        const manifest = await VisionProvider.analyzeImage(attachedImage.dataUrl);
+        if (manifest && manifest.hasContent()) {
+          const norm = manifest.toNormalizedText();
+          const firstQ = manifest.questions?.[0];
+          const detectedLatex = norm.latex || firstQ?.mathematicalObjects?.[0] || "";
+
+          let analysis = `### 📷 Analisis Konten Gambar oleh Matrix AI 🔍✨\n\n`;
+          analysis += `Saya berhasil memindai visual gambar matematika yang kamu lampirkan:\n\n`;
+
+          if (detectedLatex) {
+            analysis += `- **Notasi / Persamaan Terdeteksi**: $${detectedLatex}$\n`;
+          }
+          if (firstQ?.questionText) {
+            analysis += `- **Teks Soal**: "${firstQ.questionText}"\n`;
+          }
+          if (firstQ?.studentResponse?.selectedOption) {
+            analysis += `- **Pilihan / Jawaban Terdeteksi**: Opsi **${firstQ.studentResponse.selectedOption}**\n`;
+          }
+
+          if (detectedLatex) {
+            const solved = MathSolver.solve(detectedLatex);
+            if (solved) {
+              analysis += `\n---\n#### 📐 Penyelesaian Komputasi Deterministik:\n${solved}\n`;
+            }
+          }
+
+          if (this.responseDepth === "quick") {
+            analysis += `\n**Ringkasan Cepat**: Tinjau persamaan utama di atas dan pastikan tanda aljabar tidak tertukar.`;
+          } else if (this.responseDepth === "detailed") {
+            analysis += `\n**Bimbingan Sokratik Rinci**: \n1. Tentukan apa yang diketahui dan ditanyakan pada visual.\n2. Perhatikan apakah ini melibatkan pemfaktoran, perpindahan ruas, atau rumus kuadratik.\n3. Coba tuliskan langkah pertamamu, dan tanyakan bagian mana yang masih membingungkan!`;
+          }
+
+          return analysis;
+        }
+      } catch (err) {
+        console.warn("Multimodal image analysis error:", err);
+      }
+    }
 
     // 1. High-Precision Symbolic & Numerical Math Solver (Quadratics, Linear, BigInt, Calculus, Trig)
     try {
@@ -420,20 +1057,38 @@ export class AiAgentManager {
     const mathResult = this.tryEvaluateMathExpression(cleanQuery);
     if (mathResult) return mathResult;
 
-    // 3. Live Cloud LLM if user provided key (Gemini or OpenAI)
+    // 3. Live Cloud LLM if user provided key (Gemini with Google Search Grounding or OpenAI)
     if (this.apiKey && this.apiKey.trim()) {
       try {
         return await this.callCloudLLM(cleanQuery);
       } catch (err) {
-        console.warn("Gagal memanggil API Cloud LLM, beralih ke engine pintar:", err);
+        console.warn("Gagal memanggil API Cloud LLM, beralih ke pencarian internet langsung:", err);
       }
     }
 
-    // 4. Curated Scientific & Encyclopedic Knowledge Base (Avogadro, Menkeu, Rumus, Fisika, dll.)
+    // 4. Live Internet Knowledge Search (Wikipedia & DuckDuckGo Real-Time Web API)
+    try {
+      const webResult = await WebSearchService.searchInternet(cleanQuery);
+      if (webResult && webResult.hasResults) {
+        const searchPrompt = `${cleanQuery}\n\nKonteks Web Terbaru:\n${webResult.fullContext}`;
+        try {
+          const liveAiResult = await this.callFreeWebAI(searchPrompt);
+          if (liveAiResult && liveAiResult.trim()) {
+            return `${liveAiResult}\n\n---\n🌐 *Sumber Referensi Web: [${webResult.title}](${webResult.sourceUrl})*`;
+          }
+        } catch (e) {}
+
+        return `### 🌐 Informasi Terkini dari Web: **${webResult.title}**\n\n${webResult.summary}\n\n---\n🔗 *Baca selengkapnya di: [${webResult.title}](${webResult.sourceUrl})*`;
+      }
+    } catch (err) {
+      console.warn("Web search lookup notice:", err);
+    }
+
+    // 5. Curated Scientific & Encyclopedic Knowledge Base (Avogadro, Menkeu, Rumus, Fisika, dll.)
     const kbResult = this.searchKnowledgeBase(cleanQuery);
     if (kbResult) return kbResult;
 
-    // 5. Live Free Web AI Engine (Pollinations text AI with 3.8s timeout)
+    // 6. Live Free Web AI Engine (Pollinations text AI with 3.8s timeout)
     try {
       const liveAiResult = await this.callFreeWebAI(cleanQuery);
       if (liveAiResult && liveAiResult.trim()) {
@@ -443,47 +1098,191 @@ export class AiAgentManager {
       // Fallback seamlessly to offline smart synthesizer
     }
 
-    // 6. Intelligent NLP Educational Reasoner (Tailored response, ZERO repetitive template)
+    // 7. Intelligent NLP Educational Reasoner (Tailored response, ZERO repetitive template)
     return this.synthesizeSmartResponse(cleanQuery);
+  }
+
+  async callServerlessProxy(prompt, attachedImage = null) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+      const activeQ = this.context.activeQuestion;
+      const res = await fetch("/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt,
+          image: attachedImage?.dataUrl || null,
+          depthMode: this.responseDepth || "standard",
+          studentName: this.context.studentName || "Siswa",
+          activeQuestion: activeQ ? {
+            id: activeQ.id,
+            title: activeQ.title,
+            promptText: activeQ.promptText || activeQ.topic || activeQ.title,
+            options: activeQ.options || null
+          } : null,
+          studentAnswer: this.context.studentAnswer || null,
+          studentSteps: this.context.studentSteps || null
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.text) {
+          let output = data.text;
+          if (data.grounding?.webSearchQueries) {
+            output += `\n\n---\n🔍 *Pencarian Google: ${data.grounding.webSearchQueries.join(", ")}*`;
+          }
+          return output;
+        }
+      }
+    } catch (e) {
+      // Serverless proxy not active in local static file mode, continue silently
+    }
+    return null;
+  }
+
+  async callCloudLLMMultimodal(prompt, attachedImage) {
+    const depthInstructions = {
+      quick: "Berikan jawaban sangat ringkas, to-the-point, fokus pada nilai akhir dan rumus kunci.",
+      detailed: "Gunakan pendekatan Sokratik mendalam: jelaskan pemahaman konsep, bedah setiap langkah pengerjaan secara komprehensif, dan ajukan pertanyaan pemancing refleksi.",
+      standard: "Jelaskan konsep dan langkah penyelesaian secara ramah, seimbang, dan jelas."
+    };
+
+    const contextPrompt = `Kamu adalah Matrix, AI Multimodal Math Cognitive Companion di platform Error Pattern Engine (EPE).
+Tugasmu: Menganalisis gambar matematika (soal, diagram, grafik, atau tulisan tangan coretan siswa).
+Instruksi Gaya: ${depthInstructions[this.responseDepth] || depthInstructions.standard}
+Gunakan format LaTeX KaTeX (misal $x^2 - 5x + 6 = 0$). Bahasa Indonesia edukatif dan cerdas.`;
+
+    const match = attachedImage.dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (!match) throw new Error("Format gambar base64 tidak valid.");
+
+    const mimeType = match[1];
+    const base64Data = match[2];
+
+    const modelsToTry = ["gemini-3.6-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"];
+    let lastError = null;
+
+    for (const model of modelsToTry) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey.trim()}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    inlineData: {
+                      mimeType,
+                      data: base64Data
+                    }
+                  },
+                  {
+                    text: `${contextPrompt}\n\nPertanyaan / Permintaan Siswa Terhadap Gambar: ${prompt || "Analisis dan jelaskan matematika dalam gambar ini."}`
+                  }
+                ]
+              }
+            ],
+            generationConfig: { temperature: 0.6, maxOutputTokens: 4096 }
+          })
+        });
+
+        const data = await res.json();
+        if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+          return data.candidates[0].content.parts[0].text;
+        }
+        if (data.error) lastError = data.error.message;
+      } catch (e) {
+        lastError = e.message;
+      }
+    }
+    throw new Error(lastError || "Gagal memproses multimodal Gemini.");
   }
 
   async callCloudLLM(prompt) {
     const activeQ = this.context.activeQuestion;
+    const depthInstructions = {
+      quick: "Mode Kedalaman: RINGKAS. Berikan kesimpulan langsung, langkah inti, dan jawaban akhir secara padat.",
+      detailed: "Mode Kedalaman: RINCI. Berikan penjelasan Sokratik langkah-demi-langkah, eksplorasi konsep dasar, dan telaah kemungkinan salah kaprah.",
+      standard: "Mode Kedalaman: STANDAR. Jelaskan secara berimbang antara konsep dan aplikasi."
+    };
+
     const contextPrompt = `Kamu adalah Matrix, AI Math Companion & Cognitive Tutor tingkat lanjut di platform Error Pattern Engine (EPE) V2.
 Kamu memiliki wawasan tak terbatas tentang seluruh bidang matematika (aljabar, geometri, kalkulus, trigonometri, statistika, logika) dan sains umum layaknya ChatGPT.
 Gunakan bahasa Indonesia yang ramah, santun, cerdas, edukatif, dan menarik.
-Bila membahas soal matematika, gunakan gaya Socratic Tutoring: bimbing konsep dan langkahnya, ajukan pertanyaan reflektif, jangan langsung membeberkan jawaban final kecuali diminta.
-Format rumus matematika menggunakan notasi LaTeX KaTeX yang rapi (misal: $x^2 - 5x + 6 = 0$).
+${depthInstructions[this.responseDepth] || depthInstructions.standard}
+Format seluruh rumus matematika menggunakan notasi LaTeX KaTeX yang rapi (misal: $x^2 - 5x + 6 = 0$).
 
-Konteks pengguna saat ini:
+==================================================
+PRINSIP PERILAKU AI MATRIX (CONTEXT ROUTING):
+Matrix memiliki DUA KONTEKS SIMULTAN:
+1. CONVERSATIONAL CONTEXT: Percakapan bebas, sains umum, astronomi, transportasi publik (MRT dll.), rumus umum, atau pertanyaan sehari-hari.
+2. APPLICATION / LEARNING CONTEXT: Latihan soal aktif di aplikasi (${activeQ ? `${activeQ.id} - ${activeQ.title}` : "Tidak ada soal aktif"}).
+
+ATURAN CONTEXT ROUTING (CONTEXT AWARENESS != CONTEXT FORCING):
+- Tentukan konteks yang relevan dengan pesan terbaru siswa:
+- JANGAN OTOMATIS MEMAKSAKAN atau MENGHUBUNGKAN soal aktif matematika ke setiap respon!
+  Contoh Nyata:
+  * Siswa: "sekarang kita hidup di planet apa?" -> Jawab pertanyaan astronomi tentang Bumi dengan jelas dan ramah. JANGAN menambahkan ajakan "Sekarang mari kembali ke Soal Q1...".
+  * Siswa: "jelasin black hole dong" atau "MRT rutenya darimana ke mana" -> Jawab topik tersebut secara tuntas dan informatif tanpa memaksa kembali ke soal matematika.
+  * Siswa: "rumus avogadro" atau "rumus luas lingkaran dan keliling lingkaran" -> Jelaskan rumus tersebut secara lengkap dan edukatif dengan notasi LaTeX KaTeX tanpa menyuruh kembali ke soal aktif.
+- GUNAKAN konteks Soal Aktif HANYA JIKA siswa:
+  1. Menanyakan status jawaban atau pilihannya ("kenapa jawaban saya salah?", "kenapa B?", "kenapa opsi A salah?").
+  2. Meminta petunjuk atau bimbingan soal aktif ("bagaimana cara mengerjakan soal ini?", "beri petunjuk").
+  3. Menyatakan eksplisit ingin kembali ke soal ("oke balik ke soal tadi", "lanjut ke soal aktif").
+- Bila siswa memang membahas soal aktif matematika, gunakan gaya Socratic Tutoring: bimbing konsep dan langkahnya, ajukan pertanyaan reflektif, jangan langsung membeberkan jawaban final kecuali diminta.
+
+ATURAN SAPAAN (PERCAKAPAN BERKELANJUTAN):
+Chat ini adalah obrolan yang SEDANG BERJALAN. JANGAN mengulang sapaan pembuka (seperti "Halo!", "Halo Siswa!", "Hai!") atau memperkenalkan diri ("Saya Matrix...", "Senang sekali...") di awal setiap respon baru! Langsung jawab ke inti pertanyaan atau topik secara akrab, cerdas, dan mengalir alami layaknya percakapan chat.
+==================================================
+
+Konteks Pembelajaran di Aplikasi (HANYA rujuk jika ditanya oleh siswa terkait latihan soal):
 - Nama Siswa: ${this.context.studentName || "Siswa"}
-- Soal Aktif: ${activeQ ? `${activeQ.id} (${activeQ.title}): ${activeQ.promptText || activeQ.topic || activeQ.title}` : "Umum / Luar Soal"}
-- Langkah Coretan Siswa: ${this.context.studentSteps || "Belum ada"}
+- Soal Aktif: ${activeQ ? `${activeQ.id} (${activeQ.title}): ${activeQ.promptText || activeQ.topic || activeQ.title}` : "Tidak ada"}
+- Pilihan Jawaban Soal: ${activeQ?.options ? JSON.stringify(activeQ.options) : "Tidak ada"}
 - Jawaban Akhir Siswa: ${this.context.studentAnswer || "Belum ada"}
+- Langkah Coretan Siswa: ${this.context.studentSteps || "Belum ada"}
 - Hasil Diagnostik Terakhir: ${this.context.latestDiagnosis ? JSON.stringify(this.context.latestDiagnosis) : "Belum diuji"}
 `;
 
     if (this.apiProvider === "gemini") {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey.trim()}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: `${contextPrompt}\n\nPertanyaan Pengguna: ${prompt}` }]
-            }
-          ],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
-        })
-      });
+      const modelsToTry = ["gemini-3.6-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"];
+      let lastError = null;
 
-      const data = await res.json();
-      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-        return data.candidates[0].content.parts[0].text;
+      for (const model of modelsToTry) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey.trim()}`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: "user",
+                  parts: [{ text: `${contextPrompt}\n\nPertanyaan Pengguna: ${prompt}` }]
+                }
+              ],
+              generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
+            })
+          });
+
+          const data = await res.json();
+          if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+            return data.candidates[0].content.parts[0].text;
+          }
+          if (data.error) lastError = data.error.message;
+        } catch (e) {
+          lastError = e.message;
+        }
       }
-      throw new Error(data.error?.message || "Gagal memproses respons Gemini.");
+      throw new Error(lastError || "Gagal memproses respons Gemini.");
     } else {
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -1083,8 +1882,51 @@ Big Bang bukanlah ledakan di dalam ruang kosong yang sudah ada, melainkan **peme
    Komposisi gas alam semesta purba yang tepat terdiri dari $\\approx 75\\%$ Hidrogen dan $\\approx 25\\%$ Helium, persis seperti yang diramalkan oleh perhitungan fusi nuklir Big Bang.`;
     }
 
-    // 8. Diskriminan Kuadrat ($D$)
+    // 8. Diskriminan Kuadrat ($D$) & Cara Mengerjakannya
     if (q.includes("diskriminan") || q.includes("d = b^2") || q.includes("akar kembar")) {
+      if (q.includes("cara") || q.includes("bagaimana") || q.includes("mengerjakan") || q.includes("hitung") || q.includes("langkah") || q.includes("rumus")) {
+        return `### 📐 Panduan Lengkap: Cara Mengerjakan & Menghitung Diskriminan ($D$)
+
+Diskriminan adalah pembeda utama dalam persamaan kuadrat $ax^2 + bx + c = 0$ untuk mengetahui jumlah dan karakteristik akar tanpa perlu memfaktorkan atau menyelesaikan persamaannya.
+
+**Rumus Pokok Diskriminan:**
+$$D = b^2 - 4ac$$
+
+---
+
+#### 4 Langkah Praktis Mengerjakan Soal Diskriminan:
+
+1. **Langkah 1: Susun Persamaan ke Bentuk Standar ($ax^2 + bx + c = 0$)**
+   Pastikan seluruh suku berkumpul di ruas kiri dan ruas kanan bernilai nol.
+   *Contoh:* Jika soalnya $2x^2 = 5x + 3$, pindahkan suku ke ruas kiri menjadi $2x^2 - 5x - 3 = 0$.
+
+2. **Langkah 2: Tentukan Koefisien $a$, $b$, dan $c$ dengan Tanda yang Tepat**
+   Sangat penting untuk menyertakan tanda minus $(-)$ pada setiap angka:
+   - $a = 2$ (koefisien di depan $x^2$)
+   - $b = -5$ (koefisien di depan $x$)
+   - $c = -3$ (angka konstanta)
+
+3. **Langkah 3: Masukkan ke Rumus $D = b^2 - 4ac$**
+   ⚠️ *Tips Kritis:* Pengkuadratan bilangan negatif $(-b)^2$ selalu menghasilkan nilai **positif**!
+   $$D = (-5)^2 - 4(2)(-3)$$
+   $$D = 25 - (-24) = 25 + 24 = 49$$
+
+4. **Langkah 4: Tafsirkan Karakteristik Akarnya Berdasarkan Nilai $D$**
+   - **Jika $D > 0$**: Memiliki **2 akar real berbeda** (kurva parabola memotong sumbu-$X$ di dua titik). Karena $D = 49 = 7^2$ (kuadrat sempurna), kedua akarnya rasional nyata.
+   - **Jika $D = 0$**: Memiliki **1 akar kembar / real sama** (puncak parabola menyinggung sumbu-$X$).
+   - **Jika $D < 0$**: **Tidak memiliki akar real** (akar imajiner / bilangan kompleks, kurva parabola melayang tidak menyentuh sumbu-$X$).
+
+---
+
+#### Contoh Soal Kasus $D < 0$ (Akar Imajiner):
+Tentukan diskriminan dari $2x^2 - 4x + 5 = 0$:
+- $a = 2, b = -4, c = 5$
+- $D = (-4)^2 - 4(2)(5) = 16 - 40 = -24$
+- **Kesimpulan**: Karena $D = -24 < 0$, persamaan ini tidak memiliki penyelesaian di himpunan bilangan real.
+
+Ada persamaan kuadrat tertentu yang ingin kamu hitung nilai diskriminannya sekarang? Ketikkan saja persamaannya di sini!`;
+      }
+
       return `### 📐 Membedah Rahasia Diskriminan ($D$)
 
 Rumus diskriminan pada persamaan kuadrat $ax^2 + bx + c = 0$ didefinisikan sebagai:
@@ -1317,6 +2159,120 @@ Aku siap membantumu:
 - Membimbing langkah pengerjaan soal dan mendeteksi letak kesalahan aljabar.
 
 Ada yang ingin kamu tanyakan atau diskusikan hari ini?`;
+    }
+
+    // 16. Bunga Majemuk (Compound Interest)
+    if (q.includes("bunga majemuk") || q.includes("compound interest") || q.includes("bunga berbunga") || q.includes("bunga bertingkat")) {
+      return `### 💰 Bunga Majemuk (Compound Interest)
+
+**Bunga Majemuk** adalah sistem perhitungan bunga di mana bunga yang terkumpul pada setiap periode **ditambahkan ke pokok**, sehingga pada periode berikutnya bunga dihitung dari **pokok + bunga sebelumnya**. Inilah yang membedakannya dari bunga tunggal (*simple interest*) di mana bunga hanya dihitung dari pokok awal.
+
+---
+
+#### 📊 Rumus Bunga Majemuk:
+$$A = P \\left(1 + \\frac{r}{n}\\right)^{n \\cdot t}$$
+
+*Di mana:*
+- $A$ = Nilai akhir setelah $t$ tahun (jumlah pokok + bunga)
+- $P$ = Modal pokok awal (*Principal*)
+- $r$ = Suku bunga tahunan (dalam desimal, misal 5% = 0,05)
+- $n$ = Frekuensi penggandaan bunga per tahun (1 = tahunan, 4 = kuartalan, 12 = bulanan, 365 = harian)
+- $t$ = Lama waktu investasi (dalam tahun)
+
+---
+
+#### 🔢 Contoh Perhitungan:
+Modal awal $P = \\text{Rp}10.000.000$, suku bunga $r = 6\\%$ per tahun, digandakan bulanan ($n = 12$), selama $t = 5$ tahun:
+
+$$A = 10.000.000 \\left(1 + \\frac{0{,}06}{12}\\right)^{12 \\times 5}$$
+$$= 10.000.000 \\left(1 + 0{,}005\\right)^{60}$$
+$$= 10.000.000 \\times 1{,}005^{60}$$
+$$= 10.000.000 \\times 1{,}34885$$
+$$\\approx \\text{Rp}13.488.502$$
+
+**Bunga yang diperoleh:** $A - P = \\text{Rp}13.488.502 - \\text{Rp}10.000.000 = \\text{Rp}3.488.502$
+
+---
+
+#### 🆚 Perbandingan dengan Bunga Tunggal:
+| | Bunga Tunggal | Bunga Majemuk |
+|:---|:---|:---|
+| Rumus | $A = P(1 + r \\cdot t)$ | $A = P(1 + r/n)^{nt}$ |
+| Contoh (5 tahun) | Rp 13.000.000 | Rp 13.488.502 |
+| Bunga dihitung dari | Pokok awal saja | Pokok + bunga sebelumnya |
+
+---
+
+#### 💡 Mengapa Bunga Majemuk Disebut *"Keajaiban Kedelapan Dunia"*?
+Albert Einstein konon berkata: *"Bunga majemuk adalah keajaiban kedelapan dunia. Mereka yang memahaminya, akan mendapatkannya; mereka yang tidak, akan membayarnya."*
+
+Efek **eksponensial** dari bunga berbunga membuat pertumbuhan semakin cepat seiring waktu, terutama untuk investasi jangka panjang!`;
+    }
+
+    // 17. Probabilitas & Peluang
+    if (q.includes("probabilitas") || q.includes("peluang") || q.includes("probability") || q.includes("rumus peluang")) {
+      return `### 🎲 Probabilitas (Peluang)
+
+**Probabilitas** adalah ukuran kemungkinan terjadinya suatu kejadian, bernilai antara $0$ (mustahil) dan $1$ (pasti terjadi).
+
+$$P(A) = \\frac{\\text{Jumlah kejadian yang diinginkan (}n(A)\\text{)}}{\\text{Jumlah seluruh kejadian mungkin (}n(S)\\text{)}}$$
+
+---
+
+#### Rumus-Rumus Kunci:
+1. **Kejadian Komplemen:** $P(A') = 1 - P(A)$
+2. **Gabungan Dua Kejadian:** $P(A \\cup B) = P(A) + P(B) - P(A \\cap B)$
+3. **Kejadian Independen:** $P(A \\cap B) = P(A) \\times P(B)$
+4. **Peluang Bersyarat:** $P(A | B) = \\frac{P(A \\cap B)}{P(B)}$
+5. **Permutasi (urutan penting):** $P(n, r) = \\frac{n!}{(n-r)!}$
+6. **Kombinasi (urutan tidak penting):** $C(n, r) = \\frac{n!}{r!(n-r)!}$
+
+Ada soal probabilitas yang ingin kita selesaikan bersama?`;
+    }
+
+    // 18. Statistika Dasar
+    if (q.includes("statistik") || q.includes("rata-rata") || q.includes("mean") || q.includes("median") || q.includes("modus") || q.includes("standar deviasi")) {
+      return `### 📊 Statistika Dasar
+
+Statistika mempelajari pengumpulan, penyajian, pengolahan, dan analisis data untuk menarik kesimpulan.
+
+#### Ukuran Pemusatan Data:
+1. **Rata-rata (Mean):** $\\bar{x} = \\frac{\\sum_{i=1}^{n} x_i}{n}$
+2. **Median:** Nilai tengah data setelah diurutkan.
+3. **Modus:** Nilai yang paling sering muncul.
+
+#### Ukuran Penyebaran Data:
+1. **Jangkauan (Range):** $R = x_{\\text{max}} - x_{\\text{min}}$
+2. **Varians:** $s^2 = \\frac{\\sum (x_i - \\bar{x})^2}{n - 1}$
+3. **Standar Deviasi:** $s = \\sqrt{s^2}$
+4. **Kuartil:** $Q_1, Q_2, Q_3$ membagi data menjadi 4 bagian sama besar.
+
+Apakah ada data yang ingin kamu analisis bersama Matrix?`;
+    }
+
+    // 19. Geometri Bangun Datar & Ruang
+    if (q.includes("luas lingkaran") || q.includes("keliling lingkaran") || q.includes("volume bola") || q.includes("volume tabung") || q.includes("volume kerucut") || q.includes("volume kubus") || q.includes("volume balok") || q.includes("rumus geometri") || q.includes("rumus bangun")) {
+      return `### 📐 Rumus Geometri Bangun Datar & Ruang
+
+#### Bangun Datar:
+| Bangun | Luas | Keliling |
+|:---|:---|:---|
+| Persegi | $s^2$ | $4s$ |
+| Persegi Panjang | $p \\times l$ | $2(p + l)$ |
+| Segitiga | $\\frac{1}{2} \\times a \\times t$ | $a + b + c$ |
+| Lingkaran | $\\pi r^2$ | $2\\pi r$ |
+| Trapesium | $\\frac{1}{2}(a + b) \\times t$ | Jumlah sisi |
+
+#### Bangun Ruang:
+| Bangun | Volume | Luas Permukaan |
+|:---|:---|:---|
+| Kubus | $s^3$ | $6s^2$ |
+| Balok | $p \\times l \\times t$ | $2(pl + pt + lt)$ |
+| Tabung | $\\pi r^2 t$ | $2\\pi r(r + t)$ |
+| Kerucut | $\\frac{1}{3}\\pi r^2 t$ | $\\pi r(r + s)$ |
+| Bola | $\\frac{4}{3}\\pi r^3$ | $4\\pi r^2$ |
+
+Ada soal geometri yang ingin kita hitung bersama?`;
     }
 
     return null;
@@ -1605,16 +2561,35 @@ Apakah kamu sedang mempelajari topik ini di buku pelajaran atau tugas tertentu? 
 Ada soal atau studi kasus spesifik yang mau kita selesaikan bersama dengan cara ini? Tuliskan saja di sini!`;
     }
 
-    // 8. Default Intelligent Cognitive Companion
-    return `Mengenai gagasan menarikmu tentang **"${q}"**:
+    // 8. Intelligent Educational Cognitive Synthesizer
+    // Decompose the concept, extract principles, and provide reflective Socratic guidance.
+    const topic = q
+      .replace(/^(?:apa itu|apa yang dimaksud dengan|apa yang dimaksud|definisi|definisi dari|jelaskan|jelaskan tentang|ceritakan tentang|bagaimana|gimana|tolong jelaskan|cara|cara mengerjakan)\s*/gi, "")
+      .replace(/\?+$/, "")
+      .trim();
 
-Topik ini membuka ruang eksplorasi pemikiran yang sangat kaya! Dalam kacamata sains, logika, dan pemikiran rasional, setiap pertanyaan selalu bertumpu pada hukum keteraturan, pola relasi, dan konsekuensi sebab-akibat.
+    return `### 💡 Eksplorasi Konseptual: **"${topic || "Pertanyaan Matematika & Logika"}"**
 
-💡 **Sudut Pandang Matrix:**
-- Kita bisa memandang hal ini dari prinsip fundamental yang mendasarinya: bagaimana variabel-variabel di dalamnya saling memengaruhi dalam sistem yang lebih luas.
-- Logika sains mengajarkan kita untuk selalu menguji asumsi dasar, memecah masalah menjadi elemen-elemen yang terukur, dan menarik kesimpulan berdasarkan penalaran yang objektif.
+Pertanyaan yang sangat bagus untuk dibedah secara mendalam! 🔍✨
 
-Apakah kamu ingin membedah hal ini dari sisi teori sains, analogi praktis, atau ada sudut pandang khusus yang ingin kita telaah bersama? Ceritakan saja, Matrix siap berdiskusi bersamamu! 🌐✨`;
+Dalam pemikiran matematika, sains, dan penalaran logis, kita dapat meninjau **"${topic}"** melalui kerangka kerja berikut:
+
+---
+
+#### 1. 🏛️ Hakikat Fundamental & Keteraturan
+Setiap konsep atau model matematika lahir untuk merepresentasikan pola keteraturan:
+- **Relasi Antar Variabel**: Memetakan bagaimana perubahan pada satu komponen akan memengaruhi komponen lainnya secara terukur.
+- **Kondisi Batas**: Menentukan parameter apa saja yang harus diketahui terlebih dahulu sebelum penarikan kesimpulan dapat dilakukan.
+
+#### 2. ⚙️ Kerangka Pemecahan Masalah
+Bila topik ini berkaitan dengan penyelesaian suatu kasus atau soal:
+1. **Identifikasi Besaran**: Tuliskan dengan jelas apa saja nilai yang diketahui dan apa tepatnya target yang dicari.
+2. **Pilih Aturan / Formula**: Tentukan dalil, teorema, atau algoritma yang paling efisien.
+3. **Eksekusi Aljabar & Verifikasi**: Kerjakan perhitungan dengan cermat, lalu uji konsistensi hasil akhir (*sanity check*).
+
+---
+
+Apakah kamu memiliki contoh soal spesifik, angka tertentu, atau sudut pandang yang ingin kita telaah bersama? Matrix siap membantu memecahkannya langkah demi langkah! 🌐✨`;
   }
 
   speakText(text) {
@@ -1657,6 +2632,82 @@ Apakah kamu ingin membedah hal ini dari sisi teori sains, analogi praktis, atau 
     window.speechSynthesis.speak(utterance);
   }
 
+  cleanLeadingGreeting(text) {
+    if (!text) return "";
+    // Only strip greeting if conversation has already started (user sent at least 1 message before)
+    if (this.messages.length <= 1) return text;
+
+    let res = text.trim();
+
+    // 1. Remove greeting salutations at the very beginning:
+    // e.g. "Halo!", "Halo Siswa!", "Halo Siswa_01!", "Hai!", "Hello!", "Halo [Nama],"
+    res = res.replace(/^(?:Halo|Hai|Hello)(?:\s+[A-Za-z0-9_]+)?\s*[\!,\.]\s*/i, "");
+
+    // 2. Remove repetitive self-introductions:
+    // e.g. "Saya Matrix.", "Saya adalah Matrix, asisten AI...", "Aku Matrix...", "Saya **Matrix**..."
+    res = res.replace(/^(?:(?:Saya|Aku)\s+(?:adalah\s+)?(?:\*\*)?Matrix(?:\*\*)?[^.\n]*[\.\!\?]\s*)/i, "");
+
+    // 3. Remove repetitive canned pleasantries:
+    // e.g. "Senang sekali bisa membahas...", "Senang melihat kamu...", "Senang bisa membantu..."
+    res = res.replace(/^(?:Senang(?:\s+sekali)?\s+(?:bisa|melihat|dapat)\s+[^.\n]*[\.\!\?]\s*)/i, "");
+
+    // Capitalize first letter of remainder
+    if (res && res.length > 0) {
+      res = res.charAt(0).toUpperCase() + res.slice(1);
+    }
+    return res.trim() || text;
+  }
+
+  renderSafeMarkdownAndMath(rawText) {
+    if (!rawText) return "";
+
+    const mathPlaceholders = [];
+
+    const stashMath = (expr, isDisplay) => {
+      const placeholder = `___EPEMATHTOKEN${mathPlaceholders.length}___`;
+      let rendered = "";
+      if (typeof window !== "undefined" && window.katex) {
+        try {
+          rendered = window.katex.renderToString(expr.trim(), {
+            displayMode: isDisplay,
+            throwOnError: false
+          });
+        } catch (e) {
+          rendered = isDisplay ? `$$${expr}$$` : `$${expr}$`;
+        }
+      } else {
+        rendered = isDisplay ? `$$${expr}$$` : `$${expr}$`;
+      }
+      mathPlaceholders.push(rendered);
+      return placeholder;
+    };
+
+    // 1. Extract Display Math: $$...$$
+    let text = rawText.replace(/\$\$([\s\S]*?)\$\$/g, (match, expr) => {
+      if (!expr.trim()) return "";
+      return stashMath(expr, true);
+    });
+
+    // 2. Extract Inline Math: $...$
+    // STRICT: Cannot cross newlines or HTML brackets, preventing multiline text corruption
+    text = text.replace(/\$([^\$\r\n<]+?)\$/g, (match, expr) => {
+      const trimmed = expr.trim();
+      if (!trimmed) return match;
+      return stashMath(trimmed, false);
+    });
+
+    // 3. Format standard markdown
+    let html = this.formatMarkdown(text);
+
+    // 4. Re-inject safely pre-rendered KaTeX HTML back into placeholders
+    html = html.replace(/___EPEMATHTOKEN(\d+)___/g, (match, idx) => {
+      const index = parseInt(idx, 10);
+      return mathPlaceholders[index] !== undefined ? mathPlaceholders[index] : match;
+    });
+
+    return html;
+  }
+
   formatMarkdown(raw) {
     if (!raw) return "";
 
@@ -1686,29 +2737,7 @@ Apakah kamu ingin membedah hal ini dari sisi teori sains, analogi praktis, atau 
   }
 
   renderKaTeXInBubble(bubbleEl) {
-    if (typeof window.katex === "undefined" || !bubbleEl) return;
-
-    try {
-      // Display math $$...$$
-      bubbleEl.innerHTML = bubbleEl.innerHTML.replace(/\$\$([\s\S]*?)\$\$/g, (match, expr) => {
-        try {
-          return window.katex.renderToString(expr.trim(), { displayMode: true, throwOnError: false });
-        } catch (e) {
-          return match;
-        }
-      });
-
-      // Inline math $...$
-      bubbleEl.innerHTML = bubbleEl.innerHTML.replace(/\$([^\$\n]+?)\$/g, (match, expr) => {
-        try {
-          return window.katex.renderToString(expr.trim(), { displayMode: false, throwOnError: false });
-        } catch (e) {
-          return match;
-        }
-      });
-    } catch (e) {
-      console.warn("KaTeX render error:", e);
-    }
+    // Retained for backward-compatibility; math is now safely pre-rendered during renderSafeMarkdownAndMath
   }
 
   openSettingsModal() {
@@ -1726,9 +2755,18 @@ Apakah kamu ingin membedah hal ini dari sisi teori sains, analogi praktis, atau 
             <button id="btn-close-ai-settings" class="text-slate-400 hover:text-white p-1">✕</button>
           </div>
 
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Matrix memiliki otak kognitif cerdas bawaan yang siap menjawab tanpa API key. Namun, jika Anda ingin kemampuan <strong>Generative AI tanpa batas layaknya ChatGPT</strong>, Anda dapat memasukkan API Key Google Gemini (Gratis) atau OpenAI Anda di bawah ini:
-          </p>
+          <div class="p-3 rounded-lg bg-cyan-950/40 border border-cyan-800/50 text-xs text-cyan-200 space-y-1.5">
+            <div class="font-bold flex items-center gap-1.5 text-cyan-300">
+              <span>✨</span> Dapatkan Gemini API Key Gratis:
+            </div>
+            <p class="text-[11px] text-slate-300">
+              Google menyediakan kuota gratis hingga 1.500 request/hari tanpa perlu kartu kredit.
+            </p>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs text-cyan-400 font-bold underline hover:text-cyan-300 mt-1">
+              <span>👉 Buat API Key di Google AI Studio (30 Detik)</span>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            </a>
+          </div>
 
           <div class="space-y-3 text-xs">
             <div>
@@ -1744,11 +2782,18 @@ Apakah kamu ingin membedah hal ini dari sisi teori sains, analogi praktis, atau 
               <input type="password" id="ai-api-key-input" value="${this.apiKey}" placeholder="AIzaSy... atau sk-..." class="input-clean w-full p-2 font-mono text-xs" />
               <span class="text-[10px] text-slate-400 mt-1 block">API Key disimpan secara aman di browser lokal Anda (localStorage).</span>
             </div>
+
+            <div id="ai-key-test-status" class="hidden p-2 rounded text-xs font-mono"></div>
           </div>
 
-          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-700">
-            <button id="btn-clear-ai-key" class="btn-secondary text-xs py-1.5 px-3">Hapus Key</button>
-            <button id="btn-save-ai-settings" class="btn-primary text-xs py-1.5 px-4 font-bold">Simpan Pengaturan</button>
+          <div class="flex items-center justify-between gap-2 pt-3 border-t border-slate-700">
+            <button id="btn-test-ai-key" class="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1 text-cyan-400 hover:text-cyan-300">
+              <span>⚡</span> Uji Koneksi
+            </button>
+            <div class="flex items-center gap-2">
+              <button id="btn-clear-ai-key" class="btn-secondary text-xs py-1.5 px-3">Hapus</button>
+              <button id="btn-save-ai-settings" class="btn-primary text-xs py-1.5 px-4 font-bold">Simpan</button>
+            </div>
           </div>
         </div>
       `;
@@ -1762,7 +2807,70 @@ Apakah kamu ingin membedah hal ini dari sisi teori sains, analogi praktis, atau 
         localStorage.removeItem("epe_ai_api_key");
         this.apiKey = "";
         modal.querySelector("#ai-api-key-input").value = "";
+        const statusEl = modal.querySelector("#ai-key-test-status");
+        statusEl.className = "hidden";
         alert("API Key berhasil dihapus. Matrix kembali menggunakan Cognitive Brain bawaan.");
+      });
+
+      // Uji Koneksi API Key secara live
+      modal.querySelector("#btn-test-ai-key").addEventListener("click", async () => {
+        const testKey = modal.querySelector("#ai-api-key-input").value.trim();
+        const testProv = modal.querySelector("#ai-provider-select").value;
+        const statusEl = modal.querySelector("#ai-key-test-status");
+        statusEl.classList.remove("hidden");
+        statusEl.className = "p-2 rounded text-xs font-sans bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-2";
+        statusEl.innerHTML = `<span>⏳</span> Menguji koneksi ke server ${testProv === "gemini" ? "Google Gemini" : "OpenAI"}...`;
+
+        if (!testKey) {
+          statusEl.className = "p-2 rounded text-xs font-sans bg-amber-950/40 text-amber-300 border border-amber-700";
+          statusEl.textContent = "⚠️ Masukkan API Key terlebih dahulu.";
+          return;
+        }
+
+        try {
+          if (testProv === "gemini") {
+            const modelsToTry = ["gemini-3.6-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"];
+            let connected = false;
+            let connectedModel = "";
+            let errMsg = "";
+
+            for (const m of modelsToTry) {
+              try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${testKey}`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    contents: [{ role: "user", parts: [{ text: "Ketik 'OK' jika kamu terhubung." }] }]
+                  })
+                });
+                const data = await res.json();
+                if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+                  connected = true;
+                  connectedModel = m;
+                  break;
+                } else if (data.error) {
+                  errMsg = data.error.message;
+                }
+              } catch (err) {
+                errMsg = err.message;
+              }
+            }
+
+            if (connected) {
+              statusEl.className = "p-2 rounded text-xs font-sans bg-emerald-950/50 text-emerald-300 border border-emerald-700";
+              statusEl.innerHTML = `✅ <strong>Koneksi Sukses!</strong> Google Gemini (${connectedModel}) aktif dan siap digunakan secara online.`;
+            } else {
+              statusEl.className = "p-2 rounded text-xs font-sans bg-rose-950/50 text-rose-300 border border-rose-700";
+              statusEl.textContent = `❌ Gagal: ${errMsg || "Kunci API tidak valid."}`;
+            }
+          } else {
+            statusEl.className = "p-2 rounded text-xs font-sans bg-blue-950/50 text-blue-300 border border-blue-700";
+            statusEl.textContent = "ℹ️ Provider OpenAI siap dikonfigurasi.";
+          }
+        } catch (e) {
+          statusEl.className = "p-2 rounded text-xs font-sans bg-rose-950/50 text-rose-300 border border-rose-700";
+          statusEl.textContent = `❌ Kendala jaringan: ${e.message}`;
+        }
       });
 
       modal.querySelector("#btn-save-ai-settings").addEventListener("click", () => {
