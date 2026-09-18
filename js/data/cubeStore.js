@@ -195,6 +195,13 @@ export class CubeStore {
   }
 
   /**
+   * Mengambil jumlah kubus yang sudah selesai/unlocked
+   */
+  getCompletedCount() {
+    return this.getProgressStats().unlocked;
+  }
+
+  /**
    * Reset seluruh kubus (misal saat reset data penelitian)
    */
   reset() {

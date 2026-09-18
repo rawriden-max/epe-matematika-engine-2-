@@ -1,0 +1,474 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <Title>Hasil Diagnosis EPE Matematika</Title>
+  <Author>Error Pattern Engine</Author>
+ </DocumentProperties>
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Top"/>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
+  </Style>
+  <Style ss:ID="Header">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#2563EB" ss:Pattern="Solid"/>
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#1D4ED8"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#1D4ED8"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="DataCell">
+   <Alignment ss:Vertical="Top" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="CenterCell">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Top" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="BoldCell">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#0F172A"/>
+   <Alignment ss:Vertical="Top" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+   </Borders>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Riwayat Diagnosis">
+  <Table>
+   <Column ss:Width="40"/>   <!-- No -->
+   <Column ss:Width="130"/>  <!-- Waktu Submit -->
+   <Column ss:Width="160"/>  <!-- Nama Siswa -->
+   <Column ss:Width="80"/>   <!-- Kode Soal -->
+   <Column ss:Width="140"/>  <!-- Domain -->
+   <Column ss:Width="180"/>  <!-- Kesalahan Utama -->
+   <Column ss:Width="110"/>  <!-- Kesalahan Kedua -->
+   <Column ss:Width="80"/>   <!-- Keyakinan -->
+   <Column ss:Width="300"/>  <!-- Bukti Coretan Siswa -->
+   <Column ss:Width="300"/>  <!-- Rekomendasi Remediasi -->
+   <Column ss:Width="180"/>  <!-- Jawaban Siswa -->
+   <Column ss:Width="260"/>  <!-- Langkah Pengerjaan -->
+   <Row ss:Height="28">
+    <Cell ss:StyleID="Header"><Data ss:Type="String">No</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Waktu Submit</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Nama Siswa</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Kode Soal</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Domain Kompetensi</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Kesalahan Utama</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Kesalahan Kedua</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Keyakinan</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Bukti Coretan Siswa</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Rekomendasi Remediasi</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Jawaban Siswa</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Langkah Pengerjaan</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 11:27</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Budi Santoso</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q1</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D1</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E1] Miskonsepsi Bentuk Baku</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Tidak ada</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">85%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Koefisien b tertukar dengan c</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Pelajari kembali bentuk umum ax^2 + bx + c = 0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">b = 6, c = -5</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Persamaan: x^2 - 5x + 6 = 0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">2</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 11:33</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Ahmad Siswa</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q1</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D1 - Bentuk Baku</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E1] Miskonsepsi Identifikasi Koefisien</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">90%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa menulis koefisien b = 6 padahal persamaan x^2 - 5x + 6 = 0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tinjau kembali bentuk baku ax^2 + bx + c = 0 dan perhatikan tanda minus pada koefisien b.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">b = 6, c = -5</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Persamaan: x^2 - 5x + 6 = 0
+b = 6, c = -5</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">3</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Aisyah Putri (Siswa_01)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q1</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D1 - Konsep Dasar</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E0] Akurat / Solusi Tepat</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">95%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa mengubah persamaan ke bentuk baku 2x^2 - 5x - 7 = 0 dan menentukan a=2, b=-5, c=-7 secara benar.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Pemahaman bentuk baku sudah sangat baik. Pertahankan ketelitian aljabar.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">a = 2, b = -5, c = -7</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">2x^2 - 5x = 7
+2x^2 - 5x - 7 = 0
+Bentuk baku: ax^2 + bx + c = 0
+Maka a = 2, b = -5, c = -7</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">4</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Budi Santoso (Siswa_02)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q2</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D1 - Konsep Dasar</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E1] Konseptual: Miskonsepsi Tanda Koefisien</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">88%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa mengabaikan tanda negatif pada koefisien b dan konstanta c.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tinjau kembali bahwa tanda negatif di depan angka merupakan bagian integral dari koefisien.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">a = 3, b = 4, c = 8</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">3x^2 - 4x - 8 = 0
+a = 3, b = 4, c = 8</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">5</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Cahyo Wibowo (Siswa_03)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q3</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D1 - Konsep Dasar</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E1] Konseptual: Koefisien Dianggap Akar Persamaan</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">90%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa langsung menyimpulkan akar persamaan adalah angka koefisien b dan c.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Akar persamaan kuadrat adalah nilai pengganti variabel x yang membuat persamaan bernilai nol, bukan koefisiennya.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x1 = 5 dan x2 = 6</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x^2 - 5x + 6 = 0
+Karena ada angka 5 dan 6 maka akar-akarnya x = 5 dan x = 6.</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">6</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Dewi Sartika (Siswa_04)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q4</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D1 - Konsep Dasar</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E3] Komputasi: Kekeliruan Operasi Kuadrat Negatif</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">82%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa menghitung (-3)^2 = -9 saat menguji diskriminan dasar.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bilangan negatif berpangkat genap selalu menghasilkan bilangan positif: (-a)^2 = +a^2.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D = -25</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D = b^2 - 4ac = (-3)^2 - 4(1)(4) = -9 - 16 = -25</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">7</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Eko Prasetyo (Siswa_05)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q5</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D2 - Faktorisasi</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E0] Akurat / Solusi Tepat</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">96%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa memfaktorkan (x - 3)(x - 4) = 0 dan mencari pembuat nol secara benar.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Langkah pemfaktoran sempurna. Lanjutkan ke pemfaktoran a &gt; 1.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x = 3 atau x = 4</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x^2 - 7x + 12 = 0
+Cari p+q=-7 dan p*q=12 -&gt; p=-3, q=-4
+(x - 3)(x - 4) = 0
+x = 3 atau x = 4</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">8</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Fajar Ramadhan (Siswa_06)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q6</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D2 - Faktorisasi</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E2] Prosedural: Tanda Faktor Terbalik</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">85%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa menuliskan (x + 3)(x - 4) padahal seharusnya (x - 3)(x + 4).</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Uji kembali hasil perkalian suku tengah: (x+p)(x+q) = x^2 + (p+q)x + pq.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x = -3 atau x = 4</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x^2 + x - 12 = 0
+(x + 3)(x - 4) = 0
+x = -3 atau x = 4</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">9</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Gita Gutawa (Siswa_07)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q7</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D2 - Faktorisasi</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E2] Prosedural: Salah Pemfaktoran Koefisien a &gt; 1</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">[E3] Komputasi</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">80%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa tidak membagi hasil penguraian dengan koefisien a pada metode pemfaktoran silang.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Gunakan metode pengelompokan suku tengah untuk pemfaktoran ax^2 + bx + c dengan a &gt; 1.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x = 2 atau x = 5</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">2x^2 + 7x + 3 = 0
+(2x + 1)(x + 3) = 0
+x = 2 atau x = 5</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">10</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Hadi Firmansyah (Siswa_08)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q8</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D2 - Faktorisasi</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E1] Konseptual: Pelanggaran Sifat Perkalian Nol</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">89%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa mencoret variabel x pada kedua ruas sehingga menghilangkan salah satu akar x = 0.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Jangan membagi kedua ruas dengan variabel x karena x bisa bernilai nol. Gunakan pemfaktoran x(ax + b) = 0.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x = 5 (hanya 1 akar)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x^2 - 5x = 0
+x^2 = 5x
+Bagi x kedua ruas -&gt; x = 5</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">11</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Intan Permata (Siswa_09)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q9</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D3 - Rumus ABC</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E0] Akurat / Solusi Tepat</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">94%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Substitusi rumus ABC tepat, evaluasi diskriminan dan pembagian 2a runtut.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Penguasaan rumus ABC sangat baik.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x = 1 atau x = -5</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x = (-b +- sqrt(b^2 - 4ac)) / (2a)
+x = (-4 +- sqrt(16 - 4(1)(-5))) / 2
+x = (-4 +- sqrt(36)) / 2
+x1 = 1, x2 = -5</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">12</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Joko Widodo (Siswa_10)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q10</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D3 - Rumus ABC</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E3] Komputasi: Kesalahan Tanda pada Operasi -4ac</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">87%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa menghitung -4(2)(-3) = -24 padahal seharusnya +24.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Perkalian dua bilangan bertanda negatif menghasilkan bilangan positif: (-4) * (-c) = +4c.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x = (5 +- sqrt(-23)) / 4</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D = b^2 - 4ac = 25 - 4(2)(-3) = 25 - 24 = 1 tapi siswa menulis 25 - 48 = -23</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">13</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Kartika Sari (Siswa_11)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q11</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D3 - Rumus ABC</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E2] Prosedural: Lupa Membagi dengan 2a</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">84%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa hanya membagi bagian akar kuadrat atau lupa membagi seluruh pembilang dengan 2a.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Garis pembagi rumus kuadratik membentang sepanjang seluruh pembilang: (-b +- sqrt(D)) / (2a).</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x = 6 +- 4</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x = -b +- sqrt(D) = 6 +- 4 = 10 atau 2 (lupa bagi 2a)</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">14</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Lukman Hakim (Siswa_12)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q12</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D3 - Rumus ABC</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E1] Konseptual: Substitusi Nilai -b Keliru</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">86%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa mensubstitusikan -b menjadi negatif padahal b sudah negatif (-(-b) = +b).</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Jika koefisien b bernilai negatif (-6), maka suku pertama rumus ABC menjadi -(-6) = +6.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x = (-6 +- 8) / 2</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">b = -6 -&gt; rumus -b ditulis -6 bukannya +6</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">15</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Maya Indah (Siswa_13)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q13</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D4 - Diskriminan</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E0] Akurat / Solusi Tepat</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">95%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Menghitung D = 0 secara tepat dan menyimpulkan persamaan memiliki dua akar real kembar.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Analisis karakteristik diskriminan sangat baik.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D = 0, mempunyai dua akar real kembar (sama)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x^2 - 6x + 9 = 0
+D = (-6)^2 - 4(1)(9) = 36 - 36 = 0
+Karena D = 0 maka akar kembar real.</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">16</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Naufal Rizky (Siswa_14)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q14</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D4 - Diskriminan</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E1] Konseptual: Miskonsepsi Makna D &lt; 0</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">91%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa menganggap D &lt; 0 berarti akar-akarnya bernilai negatif real.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D &lt; 0 mengindikasikan akar tidak real / imajiner (grafik tidak memotong sumbu X), bukan akar bernilai negatif.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Akar-akarnya bernilai negatif</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D = -16 &lt; 0 maka nilai x yang dihasilkan negatif semua.</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">17</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Olivia Zalianty (Siswa_15)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q15</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D4 - Diskriminan</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E2] Prosedural: Keliru Menentukan Syarat Parameter k</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">[E3] Komputasi</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">79%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa salah dalam membalik tanda pertidaksamaan saat membagi dengan koefisien negatif.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Ketika kedua ruas pertidaksamaan dibagi bilangan negatif, arah tanda pertidaksamaan harus dibalik.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">k &gt; 4 (seharusnya k &lt; 4)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D &gt; 0 -&gt; 16 - 4k &gt; 0 -&gt; -4k &gt; -16 -&gt; k &gt; 4</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">18</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Putri Ayu (Siswa_16)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q16</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D4 - Diskriminan</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E3] Komputasi: Salah Hitung Kuadrat Variabel Parameter</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">83%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa menghitung (2k)^2 menjadi 2k^2 bukan 4k^2.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Pangkat dua berlaku untuk koefisien dan variabel: (ck)^2 = c^2 * k^2.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">k = +- 6</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">b = 2k -&gt; b^2 ditulis 2k^2 bukannya 4k^2</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">19</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Qori Salsabila (Siswa_17)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q17</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D5 - Hubungan Akar</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E0] Akurat / Solusi Tepat</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">97%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa menerapkan Teorema Vieta x1 + x2 = -b/a dan x1 * x2 = c/a secara sempurna.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Penguasaan Teorema Vieta sangat komprehensif.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x1 + x2 = 5, x1 * x2 = 6</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x^2 - 5x + 6 = 0
+x1 + x2 = -(-5)/1 = 5
+x1 * x2 = 6/1 = 6</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Rizky Pratama (Siswa_18)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q18</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D5 - Hubungan Akar</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E1] Konseptual: Tertukar Rumus Vieta Jumlah dan Kali</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">88%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa menggunakan c/a untuk jumlah akar dan -b/a untuk perkalian akar.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Ingat jembatan keledai Vieta: Jumlah bertanda minus (-b/a), Hasil kali positif (c/a).</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Jumlah = 6, Kali = 5</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x1 + x2 = c/a = 6, x1 * x2 = -b/a = 5</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">21</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Siti Rahma (Siswa_19)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q19</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D5 - Hubungan Akar</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E2] Prosedural: Keliru Menyusun Persamaan Kuadrat Baru</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">85%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa menulis rumus persamaan baru dengan tanda positif pada suku tengah: x^2 + (alfa + beta)x + alfa*beta = 0.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Rumus baku penyusunan persamaan kuadrat baru adalah x^2 - (x1 + x2)x + (x1 * x2) = 0.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x^2 + 8x + 15 = 0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Rumus persamaan baru: x^2 + (alfa+beta)x + alfa*beta = 0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">22</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Taufik Hidayat (Siswa_20)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q20</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D5 - Hubungan Akar</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E1] Konseptual: Miskonsepsi Identitas Aljabar x1^2 + x2^2</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">92%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa menganggap x1^2 + x2^2 sama persis dengan (x1 + x2)^2 tanpa dikurangi 2*x1*x2.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Gunakan identitas aljabar kuadrat binomial: x1^2 + x2^2 = (x1 + x2)^2 - 2(x1 * x2).</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x1^2 + x2^2 = 25</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">x1 + x2 = 5
+x1^2 + x2^2 = (5)^2 = 25 (tidak dikurangi 2x1x2)</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">23</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Utami Ningsih (Siswa_21)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q21</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D6 - Penerapan</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E0] Akurat / Solusi Tepat</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">94%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Pemodelan persegi panjang p*(p-3)=40, faktorisasi, dan seleksi nilai positif p=8 tepat.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Penalaran pemecahan masalah kontekstual sangat baik.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Panjang = 8 cm, Lebar = 5 cm</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lebar l = p - 3
+Luas = p * (p - 3) = 40
+p^2 - 3p - 40 = 0
+(p - 8)(p + 5) = 0
+Karena panjang besaran fisis positif, p = 8 cm, l = 5 cm</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">24</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Vina Panduwinata (Siswa_22)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q22</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D6 - Penerapan</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E4] Interpretasi: Tidak Membuang Solusi Negatif pada Konteks Nyata</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">87%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa menyertakan panjang sisi = -5 cm sebagai jawaban akhir.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Ukuran panjang, waktu, dan jarak dalam konteks fisika/geometri tidak boleh negatif; abaikan nilai negatif.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Panjang = 8 cm atau -5 cm</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">p1 = 8, p2 = -5
+Keduanya ditulis sebagai ukuran panjang persegi panjang.</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">25</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Wahyu Setiawan (Siswa_23)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q23</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D6 - Penerapan</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E4] Interpretasi: Menentukan Waktu Sentuh Tanah Parabola</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">[E2] Prosedural</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">83%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa memilih t = 0 sebagai waktu peluru menyentuh tanah kembali bukannya t = 4.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nilai t = 0 adalah saat peluru ditembakkan, sedangkan saat menyentuh tanah kembali adalah akar t positif kedua.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">t = 0 detik</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">h(t) = 40t - 5t^2 = 0
+5t(8 - t) = 0
+t = 0 atau t = 8
+Siswa memilih t = 0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="Number">26</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">2026-09-14 14:10</Data></Cell>
+    <Cell ss:StyleID="BoldCell"><Data ss:Type="String">Yusuf Mansur (Siswa_24)</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">Q24</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D6 - Penerapan</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">[E1] Konseptual: Reflektif Karakteristik Parabola D &lt; 0</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">none</Data></Cell>
+    <Cell ss:StyleID="CenterCell"><Data ss:Type="String">89%</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Siswa setuju dengan miskonsepsi bahwa roket tidak meluncur jika diskriminan negatif.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">D &lt; 0 pada fungsi ketinggian parabola berarti lintasan roket tidak pernah memotong sumbu waktu h=0.</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Pernyataan benar</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Jika D &lt; 0 maka roket tidak dapat terbang ke atas.</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+</Workbook>

@@ -105,7 +105,7 @@ export class ResearchExport {
    */
   static exportDiagnosticCSV() {
     try {
-      const rawHist = localStorage.getItem("epe_history_v2");
+      const rawHist = localStorage.getItem("epe_history_v2") || localStorage.getItem("epe_diagnosis_history");
       const history = rawHist ? JSON.parse(rawHist) : [];
       if (!Array.isArray(history) || history.length === 0) {
         alert("Belum ada data diagnostik baku yang tersimpan.");
@@ -305,7 +305,7 @@ export class ResearchExport {
     let diagCount = 0;
     let dominantError = "-";
     try {
-      const rawHist = localStorage.getItem("epe_history_v2");
+      const rawHist = localStorage.getItem("epe_history_v2") || localStorage.getItem("epe_diagnosis_history");
       if (rawHist) {
         const hist = JSON.parse(rawHist);
         const uniqueQ = new Set(hist.map((h) => h.questionId));

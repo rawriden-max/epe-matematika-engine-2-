@@ -103,14 +103,32 @@ export class MotivationManager {
     this.renderMilestoneBadges(stats.unlocked);
   }
 
+  static getMilestoneSvgIcon(id, sizeClass = "w-3.5 h-3.5") {
+    switch (id) {
+      case "foundation": // Tunas / Sprout
+        return `<svg class="${sizeClass} text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-9"/><path d="M12 13c0-4.5 4.5-5 8-5-1 4.5-3.5 9-8 9Z"/><path d="M12 17c-3-2-5-5-5-8 3.5 0 6 2 6 5Z"/></svg>`;
+      case "momentum": // Rocket
+        return `<svg class="${sizeClass} text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 9V4s3.03.55 4 2c1.08 1.62 0 5 0 5"/></svg>`;
+      case "halfway": // Star
+        return `<svg class="${sizeClass} text-amber-400" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+      case "advanced": // Diamond / Crystal
+        return `<svg class="${sizeClass} text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>`;
+      case "mastery": // Crown
+        return `<svg class="${sizeClass} text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>`;
+      default:
+        return `<svg class="${sizeClass} text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`;
+    }
+  }
+
   renderMilestoneBadges(unlockedCount) {
     if (!this.elements.milestoneBadgeContainer) return;
     let html = "";
     MILESTONES.forEach((m) => {
       const isReached = unlockedCount >= m.count;
+      const iconSvg = MotivationManager.getMilestoneSvgIcon(m.id, "w-3.5 h-3.5");
       html += `
         <div class="milestone-badge-pill ${isReached ? "milestone-active" : "milestone-locked"}" title="${m.title}: ${m.desc}">
-          <span class="text-xs">${m.icon}</span>
+          <span class="flex items-center justify-center shrink-0">${iconSvg}</span>
           <span class="text-[11px] font-bold">${m.count}</span>
         </div>
       `;
@@ -214,10 +232,13 @@ export class MotivationManager {
       let html = "";
       MILESTONES.forEach((m) => {
         const achieved = stats.unlocked >= m.count;
+        const iconSvg = MotivationManager.getMilestoneSvgIcon(m.id, "w-5 h-5");
         html += `
           <div class="p-3 rounded-xl border ${achieved ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-slate-800 bg-slate-900/50 text-slate-500"} flex items-center justify-between gap-3">
             <div class="flex items-center gap-2.5">
-              <span class="text-xl">${m.icon}</span>
+              <div class="w-8 h-8 rounded-lg ${achieved ? "bg-emerald-950/60 border border-emerald-500/40" : "bg-slate-950 border border-slate-800"} flex items-center justify-center shrink-0 shadow-sm">
+                ${iconSvg}
+              </div>
               <div>
                 <h5 class="text-xs font-bold text-white">${m.title} (${m.count} Kubus)</h5>
                 <p class="text-[11px] text-slate-400">${m.desc}</p>

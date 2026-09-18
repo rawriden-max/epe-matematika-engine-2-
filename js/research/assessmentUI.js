@@ -444,8 +444,8 @@ export class AssessmentUI {
               ${
                 q.latex
                   ? `
-                <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-center font-serif text-blue-300 text-sm overflow-x-auto assessment-latex-box" data-latex="${q.latex}">
-                  $$${q.latex}$$
+                <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-center font-serif text-blue-300 text-sm sm:text-base overflow-x-auto assessment-latex-box" data-latex="${q.latex}" data-display="true">
+                  ${this.formatFormulaHTML(q.latex, true)}
                 </div>
               `
                   : ""
@@ -470,24 +470,17 @@ export class AssessmentUI {
                         ${isSelected ? "checked" : ""} 
                         class="mt-0.5 text-blue-500 focus:ring-0 bg-slate-800 border-slate-700 cursor-pointer" 
                       />
-                      <div class="flex-1 text-xs space-y-1">
-                        <div class="flex items-center gap-2">
-                          <span class="w-5 h-5 rounded-md ${
+                      <div class="flex-1 text-xs sm:text-sm">
+                        <div class="flex items-center gap-2.5">
+                          <span class="w-6 h-6 rounded-md ${
                             isSelected ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300"
-                          } flex items-center justify-center font-bold text-[11px] font-mono flex-shrink-0">
+                          } flex items-center justify-center font-bold text-xs font-mono flex-shrink-0">
                             ${opt.key}
                           </span>
-                          <span class="text-slate-200 group-hover:text-white font-medium">${opt.text}</span>
-                        </div>
-                        ${
-                          opt.latex && opt.latex !== opt.text
-                            ? `
-                          <div class="text-[11px] text-blue-300 pl-7 font-serif assessment-latex-box" data-latex="${opt.latex}">
-                            $${opt.latex}$
+                          <div class="text-slate-200 group-hover:text-white font-medium assessment-opt-display" data-latex="${opt.latex || ""}" data-text="${opt.text}">
+                            ${this.renderOptionContent(opt)}
                           </div>
-                        `
-                            : ""
-                        }
+                        </div>
                       </div>
                     </label>
                   `;
@@ -593,21 +586,167 @@ export class AssessmentUI {
   }
 
   /**
-   * Rendering Rumus KaTeX
+   * Helper pengecekan apakah opsi butir soal murni berupa persamaan matematika
    */
-  renderMathEquations(container) {
-    if (typeof renderMathInElement === "function") {
+  shouldRenderDirectFormula(text, latex) {
+    if (!latex) return false;
+    if (!text) return true;
+    const lower = text.toLowerCase();
+    // Jika mengandung kata-kata penjelas deskriptif Bahasa Indonesia, gunakan penanganan terpadu
+    if (lower.includes("akar") || lower.includes("memiliki") || lower.includes("tidak") || lower.includes("hanya")) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Render konten opsi jawaban secara rapi (KaTeX terpadu tanpa duplikasi script mentah)
+   */
+  renderOptionContent(opt) {
+    if (!opt) return "";
+    const text = opt.text || "";
+    const latex = opt.latex || "";
+
+    if (latex && this.shouldRenderDirectFormula(text, latex)) {
+      return this.formatFormulaHTML(latex, false, text);
+    }
+
+    // Jika teks deskriptif memiliki rumus matematika seperti (D > 0)
+    if (text.includes("(D > 0)") || text.includes("(D = 0)") || text.includes("(D < 0)") || text.includes("(h = 0)")) {
+      return text.replace(/\((D\s*[>=<]\s*0)\)/g, (match, formula) => {
+        return `(${this.formatFormulaHTML(formula, false, formula)})`;
+      });
+    }
+
+    return text;
+  }
+
+  /**
+   * Format Formula LaTeX ke KaTeX HTML atau Fallback Human-Readable Bersih
+   */
+  formatFormulaHTML(latexString, isDisplay = false, fallbackText = "") {
+    if (!latexString && !fallbackText) return "";
+    const raw = latexString || fallbackText;
+
+    // 1. Jika window.katex telah siap, render langsung secara sinkron
+    if (typeof window !== "undefined" && window.katex && typeof window.katex.renderToString === "function") {
       try {
-        renderMathInElement(container, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "$", right: "$", display: false }
-          ],
+        let clean = raw.trim();
+        if (clean.startsWith("$$") && clean.endsWith("$$")) clean = clean.slice(2, -2).trim();
+        if (clean.startsWith("$") && clean.endsWith("$")) clean = clean.slice(1, -1).trim();
+
+        return window.katex.renderToString(clean, {
+          displayMode: isDisplay,
           throwOnError: false
         });
       } catch (e) {
-        console.warn("Gagal render KaTeX auto:", e);
+        console.warn("KaTeX renderToString error:", e);
       }
+    }
+
+    // 2. Fallback Elegan: Tampilkan notasi matematika manusiawi tanpa syntax LaTeX mentah
+    return this.cleanMathFallback(fallbackText || latexString);
+  }
+
+  /**
+   * Menghilangkan sintaks mentah LaTeX jika KaTeX offline/belum termuat
+   */
+  cleanMathFallback(str) {
+    if (!str) return "";
+    let s = str.trim();
+    if (s.startsWith("$$") && s.endsWith("$$")) s = s.slice(2, -2).trim();
+    if (s.startsWith("$") && s.endsWith("$")) s = s.slice(1, -1).trim();
+
+    return s
+      .replace(/\\cdot/g, " · ")
+      .replace(/\\times/g, " × ")
+      .replace(/\\pm/g, " ± ")
+      .replace(/\\implies/g, " ⇒ ")
+      .replace(/\\iff/g, " ⇔ ")
+      .replace(/\\quad/g, "  ")
+      .replace(/\\,/g, " ")
+      .replace(/\\;/g, " ")
+      .replace(/\\text\{([^}]+)\}/g, "$1")
+      .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1)/($2)")
+      .replace(/\\sqrt\{([^}]+)\}/g, "√($1)")
+      .replace(/_1/g, "₁")
+      .replace(/_2/g, "₂")
+      .replace(/_3/g, "₃")
+      .replace(/_n/g, "ₙ")
+      .replace(/\^2/g, "²")
+      .replace(/\^3/g, "³")
+      .replace(/\^t/g, "ᵗ")
+      .replace(/\^/g, "");
+  }
+
+  /**
+   * Rendering Rumus KaTeX Otomatis & Reaktif
+   */
+  renderMathEquations(container) {
+    if (!container) return;
+
+    const doRender = () => {
+      // 1. Ekstensi Auto-Render (untuk teks umum yang memuat delimiter $ atau $$)
+      if (typeof renderMathInElement === "function") {
+        try {
+          renderMathInElement(container, {
+            delimiters: [
+              { left: "$$", right: "$$", display: true },
+              { left: "$", right: "$", display: false },
+              { left: "\\[", right: "\\]", display: true },
+              { left: "\\(", right: "\\)", display: false }
+            ],
+            throwOnError: false
+          });
+        } catch (e) {
+          console.warn("Gagal render KaTeX auto:", e);
+        }
+      }
+
+      // 2. Direct Render untuk elemen formula spesifik jika belum ter-render
+      if (typeof window !== "undefined" && window.katex && typeof window.katex.render === "function") {
+        container.querySelectorAll(".assessment-latex-box").forEach((box) => {
+          if (!box.querySelector(".katex")) {
+            const latex = box.getAttribute("data-latex");
+            if (latex) {
+              const isDisplay = box.getAttribute("data-display") === "true";
+              try {
+                window.katex.render(latex, box, {
+                  displayMode: isDisplay,
+                  throwOnError: false
+                });
+              } catch (err) {
+                box.textContent = this.cleanMathFallback(latex);
+              }
+            }
+          }
+        });
+
+        container.querySelectorAll(".assessment-opt-display").forEach((box) => {
+          if (!box.querySelector(".katex")) {
+            const latex = box.getAttribute("data-latex");
+            const text = box.getAttribute("data-text");
+            if (latex && this.shouldRenderDirectFormula(text, latex)) {
+              try {
+                window.katex.render(latex, box, {
+                  displayMode: false,
+                  throwOnError: false
+                });
+              } catch (err) {
+                // Biarkan teks fallback yang sudah ada
+              }
+            }
+          }
+        });
+      }
+    };
+
+    doRender();
+
+    // Jika KaTeX script CDN masih dalam proses loading async/defer
+    if (typeof window === "undefined" || !window.katex) {
+      setTimeout(doRender, 150);
+      setTimeout(doRender, 500);
     }
   }
 

@@ -180,7 +180,7 @@ export class AssessmentStore {
     // Fallback riwayat diagnostik
     if (diagCompletedCount === 0) {
       try {
-        const rawHist = localStorage.getItem("epe_history_v2");
+        const rawHist = localStorage.getItem("epe_history_v2") || localStorage.getItem("epe_diagnosis_history");
         if (rawHist) {
           const hist = JSON.parse(rawHist);
           const uniqueQ = new Set(hist.map((h) => h.questionId));

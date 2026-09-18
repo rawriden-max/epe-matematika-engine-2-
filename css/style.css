@@ -259,52 +259,408 @@ body {
   font-weight: 700;
 }
 
-/* Compact Question Navigator (01 - 24) */
-.q-nav-grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 0.35rem;
-}
+/* ============================================================= */
+/* 🌪️  EPE TORNADO SOAL — 3D CSS Vortex Question Navigator       */
+/* ============================================================= */
 
-@media (max-width: 768px) {
-  .q-nav-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-}
-
-.q-nav-item {
+/* Tornado Scene — Perspective Container */
+.tornado-scene {
+  perspective: 900px;
+  perspective-origin: 50% 45%;
+  width: 100%;
+  height: 480px;
   position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+  border-radius: 1rem;
+  background: radial-gradient(ellipse at 50% 110%, rgba(6, 182, 212, 0.08) 0%, transparent 60%),
+              radial-gradient(ellipse at 50% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 50%),
+              var(--bg-surface);
+  border: 1px solid var(--border-color);
+}
+
+.tornado-scene:active {
+  cursor: grabbing;
+}
+
+/* Glow base effect at bottom of tornado */
+.tornado-scene::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 60px;
+  background: radial-gradient(ellipse, rgba(6, 182, 212, 0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  animation: tornadoBaseGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes tornadoBaseGlow {
+  0% { opacity: 0.5; width: 240px; }
+  100% { opacity: 1; width: 280px; }
+}
+
+/* Vortex Wrapper — Holds all rings, rotates on Y */
+.tornado-vortex {
+  position: relative;
+  width: 320px;
+  height: 420px;
+  transform-style: preserve-3d;
+  transition: transform 0.1s ease-out;
+  z-index: 1;
+}
+
+/* Auto-spin when not being dragged */
+.tornado-vortex.auto-spin {
+  animation: tornadoAutoSpin 35s linear infinite;
+}
+
+@keyframes tornadoAutoSpin {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+/* Each Ring — A horizontal orbit of soal items */
+.tornado-ring {
+  position: absolute;
+  left: 50%;
+  transform-style: preserve-3d;
+  transform: translateX(-50%);
+}
+
+/* Ring-specific spin speeds (top = faster, smaller) */
+.tornado-ring[data-ring="0"] { top: 10px;  animation: ringOrbit 12s linear infinite; }
+.tornado-ring[data-ring="1"] { top: 80px;  animation: ringOrbit 15s linear infinite reverse; }
+.tornado-ring[data-ring="2"] { top: 150px; animation: ringOrbit 18s linear infinite; }
+.tornado-ring[data-ring="3"] { top: 220px; animation: ringOrbit 21s linear infinite reverse; }
+.tornado-ring[data-ring="4"] { top: 290px; animation: ringOrbit 24s linear infinite; }
+.tornado-ring[data-ring="5"] { top: 355px; animation: ringOrbit 27s linear infinite reverse; }
+
+@keyframes ringOrbit {
+  0% { transform: translateX(-50%) rotateY(0deg); }
+  100% { transform: translateX(-50%) rotateY(360deg); }
+}
+
+/* Tornado Item — Individual question floating in the ring */
+.tornado-item {
+  position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0.45rem 0.25rem;
-  border-radius: 0.5rem;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  width: 68px;
+  height: 52px;
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  z-index: 2;
 }
 
-.q-nav-item:hover {
-  background-color: var(--bg-subtle);
+.tornado-item .t-domain {
+  font-size: 8px;
+  font-weight: 600;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tornado-item .t-qid {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.tornado-item .t-status {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+
+/* Domain-colored borders and glows */
+.tornado-item[data-domain="D1"] { border-color: rgba(59, 130, 246, 0.4); }
+.tornado-item[data-domain="D1"] .t-domain { color: #60a5fa; }
+.tornado-item[data-domain="D1"]:hover { border-color: #3b82f6; box-shadow: 0 0 18px rgba(59, 130, 246, 0.4); }
+
+.tornado-item[data-domain="D2"] { border-color: rgba(16, 185, 129, 0.4); }
+.tornado-item[data-domain="D2"] .t-domain { color: #34d399; }
+.tornado-item[data-domain="D2"]:hover { border-color: #10b981; box-shadow: 0 0 18px rgba(16, 185, 129, 0.4); }
+
+.tornado-item[data-domain="D3"] { border-color: rgba(139, 92, 246, 0.4); }
+.tornado-item[data-domain="D3"] .t-domain { color: #a78bfa; }
+.tornado-item[data-domain="D3"]:hover { border-color: #8b5cf6; box-shadow: 0 0 18px rgba(139, 92, 246, 0.4); }
+
+.tornado-item[data-domain="D4"] { border-color: rgba(245, 158, 11, 0.4); }
+.tornado-item[data-domain="D4"] .t-domain { color: #fbbf24; }
+.tornado-item[data-domain="D4"]:hover { border-color: #f59e0b; box-shadow: 0 0 18px rgba(245, 158, 11, 0.4); }
+
+.tornado-item[data-domain="D5"] { border-color: rgba(236, 72, 153, 0.4); }
+.tornado-item[data-domain="D5"] .t-domain { color: #f472b6; }
+.tornado-item[data-domain="D5"]:hover { border-color: #ec4899; box-shadow: 0 0 18px rgba(236, 72, 153, 0.4); }
+
+.tornado-item[data-domain="D6"] { border-color: rgba(6, 182, 212, 0.4); }
+.tornado-item[data-domain="D6"] .t-domain { color: #22d3ee; }
+.tornado-item[data-domain="D6"]:hover { border-color: #06b6d4; box-shadow: 0 0 18px rgba(6, 182, 212, 0.4); }
+
+/* Hover state */
+.tornado-item:hover {
+  transform: scale(1.18) translateZ(20px);
+  background: rgba(15, 23, 42, 0.95);
+  z-index: 10;
+}
+
+/* Active (selected) state */
+.tornado-item.active {
+  background: rgba(37, 99, 235, 0.2);
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), inset 0 0 10px rgba(59, 130, 246, 0.1) !important;
+  transform: scale(1.22) translateZ(25px);
+  z-index: 15;
+}
+.tornado-item.active .t-qid {
+  color: #60a5fa;
+}
+
+/* Filtered out (hidden by domain filter) */
+.tornado-item.filtered-out {
+  opacity: 0.08;
+  pointer-events: none;
+  transform: scale(0.6);
+  filter: blur(2px);
+}
+
+/* Search-highlighted */
+.tornado-item.search-match {
+  animation: searchPulse 1s ease-in-out 2;
+}
+@keyframes searchPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+  50% { box-shadow: 0 0 20px 6px rgba(6, 182, 212, 0.6); }
+}
+
+/* Status dots on tornado items */
+.t-status.q-status-unsolved { background-color: rgba(148, 163, 184, 0.4); }
+.t-status.q-status-e0 { background-color: #10b981; box-shadow: 0 0 4px #10b981; }
+.t-status.q-status-error { background-color: #f59e0b; box-shadow: 0 0 4px #f59e0b; }
+.t-status.q-status-remediated { background-color: #06b6d4; box-shadow: 0 0 4px #06b6d4; }
+
+/* Floating particles inside tornado */
+.tornado-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(6, 182, 212, 0.5);
+  pointer-events: none;
+  animation: particleFloat 4s ease-in-out infinite;
+}
+
+@keyframes particleFloat {
+  0% { opacity: 0; transform: translateY(0) rotate(0deg); }
+  30% { opacity: 0.8; }
+  70% { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-80px) rotate(720deg); }
+}
+
+/* Domain Filter Chips (Tornado version) */
+.tornado-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 2rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.tornado-filter-chip:hover {
+  background: var(--bg-subtle);
+  color: var(--text-main);
+  border-color: var(--border-hover);
+}
+
+.tornado-filter-chip.active {
+  color: #fff;
+  border-color: transparent;
+}
+
+.tornado-filter-chip .chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Chip active domain colors */
+.tornado-filter-chip[data-domain="ALL"].active { background: linear-gradient(135deg, #2563eb, #06b6d4); }
+.tornado-filter-chip[data-domain="D1"].active { background: #3b82f6; }
+.tornado-filter-chip[data-domain="D2"].active { background: #10b981; }
+.tornado-filter-chip[data-domain="D3"].active { background: #8b5cf6; }
+.tornado-filter-chip[data-domain="D4"].active { background: #f59e0b; }
+.tornado-filter-chip[data-domain="D5"].active { background: #ec4899; }
+.tornado-filter-chip[data-domain="D6"].active { background: #06b6d4; }
+
+/* Chip dot colors */
+.chip-dot[data-domain="D1"] { background: #3b82f6; }
+.chip-dot[data-domain="D2"] { background: #10b981; }
+.chip-dot[data-domain="D3"] { background: #8b5cf6; }
+.chip-dot[data-domain="D4"] { background: #f59e0b; }
+.chip-dot[data-domain="D5"] { background: #ec4899; }
+.chip-dot[data-domain="D6"] { background: #06b6d4; }
+
+/* Tornado Search Box */
+.tornado-search {
+  position: relative;
+}
+.tornado-search input {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2rem;
+  border-radius: 2rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 0.75rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.tornado-search input:focus {
+  outline: none;
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+.tornado-search .search-icon {
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--text-light);
+  pointer-events: none;
+}
+
+/* Recent Questions Horizontal Scroll */
+.tornado-recent {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.3) transparent;
+}
+.tornado-recent::-webkit-scrollbar { height: 3px; }
+.tornado-recent::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.3); border-radius: 3px; }
+
+.tornado-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.5rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.tornado-recent-item:hover {
+  background: var(--bg-subtle-hover);
   border-color: var(--border-hover);
   color: var(--text-main);
 }
-
-.q-nav-item.active {
-  border-color: var(--accent);
-  background-color: var(--accent-subtle);
-  color: var(--accent);
-  font-weight: 700;
-  box-shadow: 0 0 0 1px var(--accent);
+.tornado-recent-item .recent-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #fff;
+  flex-shrink: 0;
 }
 
-/* Status dots on question item */
+/* Detail Panel — Right column redesign */
+.detail-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Tornado Tooltip */
+.tornado-hint {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 2rem;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.65rem;
+  color: rgba(148, 163, 184, 0.8);
+  pointer-events: none;
+  z-index: 5;
+  animation: hintPulse 3s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Mobile: Flatten tornado to horizontal scroll */
+@media (max-width: 768px) {
+  .tornado-scene {
+    height: 320px;
+    perspective: 600px;
+  }
+  .tornado-vortex {
+    width: 240px;
+    height: 290px;
+  }
+  .tornado-item {
+    width: 56px;
+    height: 44px;
+  }
+  .tornado-item .t-qid { font-size: 11px; }
+  .tornado-item .t-domain { font-size: 7px; }
+}
+
+/* Legacy compat: keep old q-nav-grid hidden since we replaced it */
+.q-nav-grid { display: none; }
+
+/* Status dots (legacy compat) */
 .q-status-dot {
   width: 5px;
   height: 5px;
@@ -742,19 +1098,55 @@ body {
   flex-direction: column !important;
   transform: translateX(100%);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  overflow: hidden !important;
+}
+
+@media (max-width: 640px) {
+  .ai-chat-drawer {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    left: 0 !important;
+    right: 0 !important;
+    border-left: none !important;
+    box-shadow: none !important;
+  }
 }
 
 .ai-chat-drawer.open {
   transform: translateX(0) !important;
 }
 
-.ai-chat-header {
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(30, 41, 59, 0.6);
+/* AI History Slide-Over Panel (Gemini / ChatGPT / Claude Style) */
+#ai-history-panel {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(10, 15, 29, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  z-index: 50 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  transform: translateX(100%) !important;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, visibility 0.25s ease !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+#ai-history-panel.open {
+  transform: translateX(0) !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.ai-chat-header,
+.ai-chat-header-container {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.95);
   flex-shrink: 0;
 }
 
@@ -775,6 +1167,54 @@ body {
   font-size: 0.8125rem;
   line-height: 1.6;
   word-break: break-word;
+}
+
+/* Markdown Table Styling in Chat Bubbles */
+.ai-msg-bubble table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.76rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.ai-msg-bubble th {
+  background: rgba(30, 41, 59, 0.95);
+  color: #67e8f9;
+  font-weight: 700;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ai-msg-bubble th:last-child {
+  border-right: none;
+}
+
+.ai-msg-bubble td {
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  line-height: 1.5;
+  vertical-align: top;
+}
+
+.ai-msg-bubble td:last-child {
+  border-right: none;
+}
+
+.ai-msg-bubble tr:last-child td {
+  border-bottom: none;
+}
+
+.ai-msg-bubble tr:hover td {
+  background: rgba(51, 65, 85, 0.35);
 }
 
 .ai-msg-assistant {
@@ -1097,5 +1537,383 @@ main[id^="section-"] {
   }
 }
 
+/* ========================================================================= */
+/* 🌪️ EPE TORNADO 3D VISUALIZATION STYLES                                  */
+/* ========================================================================= */
+.tornado-scene {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: radial-gradient(ellipse at 50% 12%, rgba(13, 27, 42, 0.98), rgba(2, 6, 23, 0.99) 85%);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  box-shadow: inset 0 0 80px rgba(6, 182, 212, 0.12), 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  user-select: none;
+  cursor: grab;
+}
 
+.tornado-scene:active {
+  cursor: grabbing;
+}
 
+/* 3D Cyclone Vortex Canvas */
+.tornado-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Core Vortex Ambient Beam */
+.tornado-core-beam {
+  position: absolute;
+  top: 10%;
+  bottom: 12%;
+  left: 50%;
+  width: 8px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.8), rgba(6, 182, 212, 0.5) 45%, rgba(139, 92, 246, 0.85));
+  filter: blur(4px);
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.85), 0 0 70px rgba(6, 182, 212, 0.5);
+  pointer-events: none;
+  z-index: 2;
+  border-radius: 9999px;
+  opacity: 0.85;
+}
+
+/* Question Nodes Container */
+.tornado-vortex {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+/* Individual Question Card (Billboarded 3D) */
+.tornado-item {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.68rem;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
+  will-change: transform, left, top, opacity;
+  transform-origin: center center;
+}
+
+.tornado-item .t-domain {
+  font-size: 0.62rem;
+  padding: 0.08rem 0.32rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.tornado-item .t-qid {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.tornado-item .t-status {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.tornado-item .t-status.q-status-unsolved {
+  background: rgba(255, 255, 255, 0.4);
+}
+.tornado-item .t-status.q-status-e0 {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+.tornado-item .t-status.q-status-error {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+}
+.tornado-item .t-status.q-status-remediated {
+  background: #06b6d4;
+  box-shadow: 0 0 8px #06b6d4;
+}
+
+/* Domain specific colors for items */
+.tornado-item[data-domain="D1"], .domain-d1 { background: rgba(37, 99, 235, 0.45); border-color: rgba(96, 165, 250, 0.8); color: #dbeafe; }
+.tornado-item[data-domain="D2"], .domain-d2 { background: rgba(5, 150, 105, 0.45); border-color: rgba(52, 211, 153, 0.8); color: #d1fae5; }
+.tornado-item[data-domain="D3"], .domain-d3 { background: rgba(124, 58, 237, 0.45); border-color: rgba(167, 139, 250, 0.8); color: #ede9fe; }
+.tornado-item[data-domain="D4"], .domain-d4 { background: rgba(217, 119, 6, 0.45); border-color: rgba(251, 191, 36, 0.8); color: #fef3c7; }
+.tornado-item[data-domain="D5"], .domain-d5 { background: rgba(219, 39, 119, 0.45); border-color: rgba(244, 114, 182, 0.8); color: #fce7f3; }
+.tornado-item[data-domain="D6"], .domain-d6 { background: rgba(8, 145, 178, 0.45); border-color: rgba(34, 211, 238, 0.8); color: #cffafe; }
+
+.tornado-item:hover {
+  z-index: 999 !important;
+  filter: brightness(1.3);
+  box-shadow: 0 0 30px currentColor, 0 10px 30px rgba(0, 0, 0, 0.85) !important;
+  border-color: #fff !important;
+}
+
+.tornado-item.active {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 35px #38bdf8, 0 0 12px #fff !important;
+  filter: brightness(1.35);
+  z-index: 998 !important;
+}
+
+.tornado-item.filtered-out {
+  opacity: 0.1 !important;
+  filter: grayscale(90%) blur(0.8px);
+  pointer-events: none;
+}
+
+.tornado-item.search-match {
+  box-shadow: 0 0 30px #facc15, 0 0 10px #fef08a !important;
+  border-color: #facc15 !important;
+  z-index: 997 !important;
+  filter: brightness(1.3);
+}
+
+/* Tornado HUD Controls */
+.tornado-hud {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 30;
+  pointer-events: auto;
+}
+
+.tornado-hud-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #38bdf8;
+  backdrop-filter: blur(8px);
+}
+
+.tornado-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22d3ee;
+  box-shadow: 0 0 8px #22d3ee;
+  animation: pulse 1.5s infinite;
+}
+
+.tornado-hud-actions {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.tornado-hud-btn {
+  padding: 0.28rem 0.65rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+.tornado-hud-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+/* Tornado Search & Filters */
+.tornado-search {
+  position: relative;
+  width: 100%;
+}
+.tornado-search input {
+  width: 100%;
+  padding: 0.6rem 1rem 0.6rem 2.4rem;
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #f8fafc;
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.tornado-search input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+  background: rgba(15, 23, 42, 0.85);
+}
+.tornado-search .search-icon {
+  position: absolute;
+  left: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+/* Domain filter chips */
+.tornado-filter-chip,
+.tornado-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.tornado-filter-chip:hover,
+.tornado-chip:hover {
+  background: rgba(51, 65, 85, 0.8);
+  color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.tornado-filter-chip.active,
+.tornado-chip.active {
+  background: rgba(6, 182, 212, 0.25);
+  border-color: #06b6d4;
+  color: #67e8f9;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+}
+
+.chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.chip-dot[data-domain="D1"] { background: #3b82f6; }
+.chip-dot[data-domain="D2"] { background: #10b981; }
+.chip-dot[data-domain="D3"] { background: #8b5cf6; }
+.chip-dot[data-domain="D4"] { background: #f59e0b; }
+.chip-dot[data-domain="D5"] { background: #ec4899; }
+.chip-dot[data-domain="D6"] { background: #06b6d4; }
+
+.recent-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.72rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+/* Floating particles */
+.tornado-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #38bdf8;
+  opacity: 0.6;
+  filter: blur(1px);
+  animation: particleFloat 4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes particleFloat {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 0.3; }
+  100% { transform: translateY(-30px) translateX(15px) scale(1.6); opacity: 0.8; }
+}
+
+/* Tornado hint tooltip */
+.tornado-hint {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-size: 0.7rem;
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  animation: hintPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.6; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+}
+
+/* Recent questions scroll */
+.tornado-recent {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
+  scrollbar-width: thin;
+}
+.tornado-recent::-webkit-scrollbar {
+  height: 4px;
+}
+.tornado-recent::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.2);
+  border-radius: 4px;
+}
+.tornado-recent-item {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.tornado-recent-item:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}

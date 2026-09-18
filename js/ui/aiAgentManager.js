@@ -15,6 +15,10 @@ import { VisionProvider } from "../multimodal/visionProvider.js";
 import { SpeechMathParser } from "../multimodal/speechMathParser.js";
 import { WebSearchService } from "../services/webSearchService.js";
 
+const CHAT_HISTORY_STORAGE_KEY = "epe_matrix_chat_history_v1";
+const SESSIONS_STORAGE_KEY = "epe_matrix_chat_sessions_v2";
+const ACTIVE_SESSION_STORAGE_KEY = "epe_matrix_active_session_id_v2";
+
 export class AiAgentManager {
   constructor({ orbEngine = null, onOpenDrawer = null, onCloseDrawer = null }) {
     this.orbEngine = orbEngine;
@@ -37,21 +41,326 @@ export class AiAgentManager {
       latestDiagnosis: null
     };
 
-    // Chat History
+    // Chat History & Persistence (Multi-Session Architecture)
     this.responseDepth = "standard"; // "quick" | "standard" | "detailed"
     this.pendingImageAttachment = null;
-    this.messages = [
-      {
-        sender: "assistant",
-        text: "Halo! Aku **Matrix**, asisten AI kognitif matematikamu 🌐✨.\n\nAku siap mendampingimu menyelesaikan soal diagnostik, membedah langkah aljabar, atau berdiskusi topik matematika **apa saja** dari aljabar, trigonometri, hingga kalkulus lanjut. Ada yang ingin kamu tanyakan atau diskusikan?",
-        timestamp: new Date()
-      }
-    ];
+    this.sessions = this.loadSessions();
+    this.activeSessionId = this.loadActiveSessionId();
+    this.activeSession = this.sessions.find(s => s.id === this.activeSessionId) || this.sessions[0];
+    this.messages = this.activeSession ? this.activeSession.messages : [];
 
     this.recognition = null;
     this.isRecordingVoice = false;
 
     this.init();
+  }
+
+  loadSessions() {
+    try {
+      const saved = localStorage.getItem(SESSIONS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(s => ({
+            ...s,
+            messages: (s.messages || []).map(m => ({
+              ...m,
+              timestamp: m.timestamp ? new Date(m.timestamp) : new Date()
+            }))
+          }));
+        }
+      }
+
+      // Fallback migration from legacy single-session history
+      const legacy = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
+      if (legacy) {
+        const parsedLegacy = JSON.parse(legacy);
+        if (Array.isArray(parsedLegacy) && parsedLegacy.length > 0) {
+          const firstUserMsg = parsedLegacy.find(m => m.sender === "user");
+          const legacyTitle = firstUserMsg ? this.generateSessionTitle(firstUserMsg.text) : "Percakapan Sebelumnya";
+          return [
+            {
+              id: "session_legacy_" + Date.now(),
+              title: legacyTitle,
+              createdAt: Date.now() - 3600000,
+              updatedAt: Date.now(),
+              messages: parsedLegacy.map(m => ({
+                ...m,
+                timestamp: m.timestamp ? new Date(m.timestamp) : new Date()
+              }))
+            }
+          ];
+        }
+      }
+    } catch (e) {
+      console.warn("Gagal memuat sessions dari localStorage:", e);
+    }
+
+    return [this.createDefaultSession()];
+  }
+
+  createDefaultSession() {
+    return {
+      id: "session_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      title: "Obrolan Baru",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      messages: [
+        {
+          sender: "assistant",
+          text: "Halo! Aku **Matrix**, asisten AI kognitif matematikamu 🌐✨.\n\nAku siap mendampingimu menyelesaikan soal diagnostik, membedah langkah aljabar, atau berdiskusi topik sains dan matematika apa saja. Ada yang ingin kamu tanyakan atau diskusikan?",
+          timestamp: new Date()
+        }
+      ]
+    };
+  }
+
+  loadActiveSessionId() {
+    const saved = localStorage.getItem(ACTIVE_SESSION_STORAGE_KEY);
+    if (saved && this.sessions.some(s => s.id === saved)) {
+      return saved;
+    }
+    return this.sessions[0]?.id || "";
+  }
+
+  saveSessions() {
+    try {
+      localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(this.sessions));
+      localStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, this.activeSessionId);
+      if (this.messages) {
+        localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(this.messages.slice(-60)));
+      }
+    } catch (e) {
+      console.warn("Gagal menyimpan sessions ke localStorage:", e);
+    }
+  }
+
+  saveHistory() {
+    this.saveSessions();
+  }
+
+  generateSessionTitle(promptText) {
+    if (!promptText) return "Sesi Diskusi";
+    let clean = promptText.replace(/[*#_`$]/g, "").replace(/\s+/g, " ").trim();
+    if (clean.length > 32) {
+      clean = clean.slice(0, 32).trim() + "...";
+    }
+    return clean || "Sesi Diskusi";
+  }
+
+  createNewSession() {
+    const newSession = this.createDefaultSession();
+    this.sessions.unshift(newSession);
+    this.activeSessionId = newSession.id;
+    this.activeSession = newSession;
+    this.messages = newSession.messages;
+    this.saveSessions();
+    this.renderMessages();
+    this.closeHistoryPanel();
+    this.renderHistoryPanel();
+    if (this.chatInput) {
+      this.chatInput.value = "";
+      setTimeout(() => this.chatInput.focus(), 150);
+    }
+  }
+
+  switchSession(sessionId) {
+    const session = this.sessions.find(s => s.id === sessionId);
+    if (!session) return;
+    this.activeSessionId = sessionId;
+    this.activeSession = session;
+    this.messages = session.messages;
+    this.saveSessions();
+    this.renderMessages();
+    this.closeHistoryPanel();
+    this.renderHistoryPanel();
+  }
+
+  deleteSession(sessionId, event) {
+    if (event) event.stopPropagation();
+    if (!confirm("Hapus sesi percakapan ini secara permanen?")) return;
+
+    this.sessions = this.sessions.filter(s => s.id !== sessionId);
+    if (this.sessions.length === 0) {
+      const fresh = this.createDefaultSession();
+      this.sessions.push(fresh);
+      this.activeSessionId = fresh.id;
+      this.activeSession = fresh;
+      this.messages = fresh.messages;
+    } else if (this.activeSessionId === sessionId) {
+      this.activeSessionId = this.sessions[0].id;
+      this.activeSession = this.sessions[0];
+      this.messages = this.activeSession.messages;
+    }
+    this.saveSessions();
+    this.renderMessages();
+    this.renderHistoryPanel();
+  }
+
+  clearAllSessions() {
+    if (!confirm("Apakah kamu yakin ingin menghapus SEMUA riwayat percakapan?")) return;
+    this.sessions = [this.createDefaultSession()];
+    this.activeSessionId = this.sessions[0].id;
+    this.activeSession = this.sessions[0];
+    this.messages = this.activeSession.messages;
+    this.saveSessions();
+    this.renderMessages();
+    this.renderHistoryPanel();
+  }
+
+  clearHistory() {
+    if (!this.activeSession) return;
+    this.activeSession.messages = [
+      {
+        sender: "assistant",
+        text: "Sesi percakapan ini telah dibersihkan 🔄✨. Ada topik atau soal baru apa yang ingin kita bahas bersama?",
+        timestamp: new Date()
+      }
+    ];
+    this.activeSession.updatedAt = Date.now();
+    this.messages = this.activeSession.messages;
+    this.saveSessions();
+    this.renderMessages();
+    this.renderHistoryPanel();
+  }
+
+  toggleHistoryPanel() {
+    if (!this.historyPanel) return;
+    if (this.historyPanel.classList.contains("open")) {
+      this.closeHistoryPanel();
+    } else {
+      this.openHistoryPanel();
+    }
+  }
+
+  openHistoryPanel() {
+    if (!this.historyPanel) return;
+    this.renderHistoryPanel();
+    this.historyPanel.classList.add("open");
+    this.historyPanel.classList.remove("translate-x-full", "pointer-events-none", "invisible", "opacity-0");
+    this.historyPanel.style.transform = "translateX(0)";
+    this.historyPanel.style.visibility = "visible";
+    this.historyPanel.style.pointerEvents = "auto";
+    this.historyPanel.style.opacity = "1";
+  }
+
+  closeHistoryPanel() {
+    if (!this.historyPanel) return;
+    this.historyPanel.classList.remove("open");
+    this.historyPanel.classList.add("translate-x-full", "pointer-events-none", "invisible", "opacity-0");
+    this.historyPanel.style.transform = "translateX(100%)";
+    this.historyPanel.style.visibility = "hidden";
+    this.historyPanel.style.pointerEvents = "none";
+    this.historyPanel.style.opacity = "0";
+  }
+
+  renderHistoryPanel() {
+    if (!this.sessionsListEl) return;
+    if (this.sessionsCountEl) {
+      this.sessionsCountEl.textContent = `${this.sessions.length} sesi tersimpan`;
+    }
+
+    if (!this.sessions || this.sessions.length === 0) {
+      this.sessionsListEl.innerHTML = `
+        <div class="p-6 text-center text-slate-500 text-xs">
+          <p>Belum ada riwayat percakapan.</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = "";
+    this.sessions.forEach((sess) => {
+      const isActive = sess.id === this.activeSessionId;
+      const msgCount = sess.messages ? sess.messages.length : 0;
+      const lastMsg = sess.messages && sess.messages.length > 0 ? sess.messages[sess.messages.length - 1] : null;
+      const timeDate = sess.updatedAt ? new Date(sess.updatedAt) : (lastMsg?.timestamp ? new Date(lastMsg.timestamp) : new Date());
+      
+      const isToday = new Date().toDateString() === timeDate.toDateString();
+      const timeFormatted = isToday 
+        ? `Hari ini, ${timeDate.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}`
+        : timeDate.toLocaleDateString("id-ID", { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+      html += `
+        <div class="ai-session-item p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 group ${
+          isActive
+            ? "border-cyan-500/60 bg-gradient-to-r from-cyan-950/40 to-slate-900 shadow-md shadow-cyan-950/30"
+            : "border-slate-800/80 bg-slate-900/50 hover:bg-slate-800/60 hover:border-slate-700"
+        }" data-session-id="${sess.id}">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <svg class="w-3.5 h-3.5 ${isActive ? "text-cyan-400" : "text-slate-500 group-hover:text-cyan-400"} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+              </svg>
+              <h4 class="text-xs font-bold ${isActive ? "text-cyan-200" : "text-white"} truncate">${sess.title || "Obrolan"}</h4>
+              ${isActive ? '<span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shrink-0">Aktif</span>' : ''}
+            </div>
+            <div class="flex items-center gap-2 text-[10px] text-slate-400">
+              <span>${timeFormatted}</span>
+              <span>&bull;</span>
+              <span>${msgCount} pesan</span>
+            </div>
+          </div>
+
+          <button type="button" class="btn-delete-session p-1.5 rounded-lg hover:bg-rose-950/60 text-slate-500 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100 shrink-0" data-session-id="${sess.id}" title="Hapus Sesi Ini">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        </div>
+      `;
+    });
+
+    this.sessionsListEl.innerHTML = html;
+
+    // Attach click handlers
+    this.sessionsListEl.querySelectorAll(".ai-session-item").forEach(el => {
+      el.addEventListener("click", () => {
+        const id = el.getAttribute("data-session-id");
+        if (id) this.switchSession(id);
+      });
+    });
+
+    this.sessionsListEl.querySelectorAll(".btn-delete-session").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const id = btn.getAttribute("data-session-id");
+        if (id) this.deleteSession(id, e);
+      });
+    });
+  }
+
+  exportHistoryAsMarkdown() {
+    if (!this.messages || this.messages.length === 0) return;
+    const sessionTitle = this.activeSession?.title || "Sesi Matrix AI";
+    let md = `# Riwayat Percakapan Matrix AI - EPE Matematika\n\n`;
+    md += `### Sesi: ${sessionTitle}\n`;
+    md += `*Tanggal Ekspor: ${new Date().toLocaleString("id-ID")}*\n\n---\n\n`;
+    this.messages.forEach((m, idx) => {
+      const senderName = m.sender === "user" ? "👤 Siswa" : "🤖 Matrix AI";
+      const timeStr = m.timestamp ? new Date(m.timestamp).toLocaleTimeString("id-ID") : "";
+      md += `#### ${idx + 1}. ${senderName} (${timeStr})\n\n${m.text}\n\n`;
+      if (m.image) {
+        md += `*(Terlampir 1 berkas gambar visual)*\n\n`;
+      }
+      md += `---\n\n`;
+    });
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `riwayat_chat_matrix_${Date.now()}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  getRecentHistory(maxTurns = 8) {
+    if (!this.messages || this.messages.length <= 1) return [];
+    return this.messages.slice(1, -1).slice(-maxTurns).map(m => ({
+      role: m.sender === "user" ? "user" : "model",
+      text: m.text || ""
+    })).filter(t => t.text.trim().length > 0);
   }
 
   init() {
@@ -73,6 +382,48 @@ export class AiAgentManager {
     this.voiceToggleBtn = document.getElementById("btn-toggle-ai-voice");
     this.micBtn = document.getElementById("btn-ai-mic");
     this.settingsBtn = document.getElementById("btn-ai-settings");
+    this.clearBtn = document.getElementById("btn-clear-ai-chat");
+    this.exportBtn = document.getElementById("btn-export-ai-chat");
+
+    // History Panel Elements
+    this.historyToggleBtn = document.getElementById("btn-toggle-ai-history");
+    this.newChatTopBtn = document.getElementById("btn-new-chat-top");
+    this.historyPanel = document.getElementById("ai-history-panel");
+    this.closeHistoryBtn = document.getElementById("btn-close-ai-history");
+    this.newChatFromHistoryBtn = document.getElementById("btn-new-chat-from-history");
+    this.clearAllSessionsBtn = document.getElementById("btn-clear-all-sessions");
+    this.sessionsListEl = document.getElementById("ai-sessions-list");
+    this.sessionsCountEl = document.getElementById("ai-sessions-count");
+
+    if (this.historyToggleBtn) {
+      this.historyToggleBtn.addEventListener("click", () => this.toggleHistoryPanel());
+    }
+    if (this.newChatTopBtn) {
+      this.newChatTopBtn.addEventListener("click", () => this.createNewSession());
+    }
+    if (this.closeHistoryBtn) {
+      this.closeHistoryBtn.addEventListener("click", () => this.closeHistoryPanel());
+    }
+    if (this.newChatFromHistoryBtn) {
+      this.newChatFromHistoryBtn.addEventListener("click", () => this.createNewSession());
+    }
+    if (this.clearAllSessionsBtn) {
+      this.clearAllSessionsBtn.addEventListener("click", () => this.clearAllSessions());
+    }
+
+    if (this.clearBtn) {
+      this.clearBtn.addEventListener("click", () => {
+        if (confirm("Apakah kamu ingin membersihkan percakapan sesi ini?")) {
+          this.clearHistory();
+        }
+      });
+    }
+
+    if (this.exportBtn) {
+      this.exportBtn.addEventListener("click", () => {
+        this.exportHistoryAsMarkdown();
+      });
+    }
 
     // Hero trigger buttons
     const heroChatBtn = document.getElementById("hero-btn-chat-ai");
@@ -325,21 +676,72 @@ export class AiAgentManager {
     }
 
     const textEl = document.createElement("div");
-    textEl.innerHTML = this.renderSafeMarkdownAndMath(msg.text);
+    try {
+      textEl.innerHTML = this.renderSafeMarkdownAndMath(msg.text);
+    } catch (renderErr) {
+      console.warn("Gagal merender format markdown/math secara aman:", renderErr);
+      textEl.textContent = msg.text || "";
+    }
     bubble.appendChild(textEl);
 
     if (msg.sender === "assistant") {
+      const actionsContainer = document.createElement("div");
+      actionsContainer.className = "mt-2 pt-1 border-t border-slate-700/50 flex items-center gap-3 text-[10px] text-slate-400";
+
+      // 1. Dengarkan Suara (TTS)
       const speakBtn = document.createElement("button");
-      speakBtn.className = "mt-2 text-[10px] flex items-center gap-1 text-slate-400 hover:text-white transition-colors block";
+      speakBtn.className = "flex items-center gap-1 hover:text-white transition-colors";
       speakBtn.innerHTML = `
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+        <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
         <span>Dengarkan Suara</span>
       `;
       speakBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         this.speakText(msg.text);
       });
-      bubble.appendChild(speakBtn);
+      actionsContainer.appendChild(speakBtn);
+
+      // 2. Salin Teks (Clipboard)
+      const copyBtn = document.createElement("button");
+      copyBtn.className = "flex items-center gap-1 hover:text-cyan-300 transition-colors";
+      copyBtn.innerHTML = `
+        <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+        <span>Salin Teks</span>
+      `;
+      copyBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        try {
+          // Clean math brackets if any for raw clipboard copy
+          const textToCopy = msg.text || "";
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(textToCopy);
+          } else {
+            const ta = document.createElement("textarea");
+            ta.value = textToCopy;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+          }
+          copyBtn.innerHTML = `
+            <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <span class="text-emerald-400 font-semibold">Tersalin!</span>
+          `;
+          setTimeout(() => {
+            copyBtn.innerHTML = `
+              <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+              <span>Salin Teks</span>
+            `;
+          }, 2000);
+        } catch (err) {
+          console.warn("Copy to clipboard failed:", err);
+        }
+      });
+      actionsContainer.appendChild(copyBtn);
+
+      bubble.appendChild(actionsContainer);
     }
 
     this.chatBody.appendChild(bubble);
@@ -397,6 +799,17 @@ export class AiAgentManager {
       timestamp: new Date()
     };
     this.messages.push(userMsg);
+
+    // Auto-update session title from first prompt if default
+    if (this.activeSession) {
+      this.activeSession.messages = this.messages;
+      if (this.activeSession.title === "Obrolan Baru" || this.activeSession.title === "Sesi Baru" || !this.activeSession.title) {
+        this.activeSession.title = this.generateSessionTitle(userMsg.text);
+      }
+      this.activeSession.updatedAt = Date.now();
+    }
+
+    this.saveHistory();
     this.appendMessageBubble(userMsg);
     this.showTypingIndicator();
 
@@ -412,6 +825,11 @@ export class AiAgentManager {
         timestamp: new Date()
       };
       this.messages.push(aiMsg);
+      if (this.activeSession) {
+        this.activeSession.messages = this.messages;
+        this.activeSession.updatedAt = Date.now();
+      }
+      this.saveHistory();
       this.appendMessageBubble(aiMsg);
 
       if (this.voiceEnabled) {
@@ -430,6 +848,7 @@ export class AiAgentManager {
         timestamp: new Date()
       };
       this.messages.push(errorMsg);
+      this.saveHistory();
       this.appendMessageBubble(errorMsg);
     }
   }
@@ -1114,6 +1533,7 @@ Ada bagian tertentu yang ingin kamu tanyakan lebih spesifik?`;
         body: JSON.stringify({
           prompt,
           image: attachedImage?.dataUrl || null,
+          history: this.getRecentHistory(8),
           depthMode: this.responseDepth || "standard",
           studentName: this.context.studentName || "Siswa",
           activeQuestion: activeQ ? {
@@ -1123,7 +1543,8 @@ Ada bagian tertentu yang ingin kamu tanyakan lebih spesifik?`;
             options: activeQ.options || null
           } : null,
           studentAnswer: this.context.studentAnswer || null,
-          studentSteps: this.context.studentSteps || null
+          studentSteps: this.context.studentSteps || null,
+          apiKey: this.apiKey || localStorage.getItem("epe_ai_api_key") || ""
         }),
         signal: controller.signal
       });
@@ -1153,10 +1574,11 @@ Ada bagian tertentu yang ingin kamu tanyakan lebih spesifik?`;
       standard: "Jelaskan konsep dan langkah penyelesaian secara ramah, seimbang, dan jelas."
     };
 
-    const contextPrompt = `Kamu adalah Matrix, AI Multimodal Math Cognitive Companion di platform Error Pattern Engine (EPE).
-Tugasmu: Menganalisis gambar matematika (soal, diagram, grafik, atau tulisan tangan coretan siswa).
+    const contextPrompt = `Kamu adalah Matrix, AI Multimodal Cerdas di platform Error Pattern Engine (EPE).
+Tugasmu: Menganalisis gambar yang dilampirkan oleh pengguna secara cerdas, akurat, dan mendalam. Gambar bisa berupa screenshot video game (seperti Hogwarts Legacy, Minecraft, dll.), foto alam/makhluk/hewan, objek kehidupan nyata, maupun soal dan grafik matematika.
+Instruksi: Jawab pertanyaan pengguna dengan fokus penuh pada isi visual gambar yang dilampirkan. Jika gambar adalah screenshot video game atau objek umum, kenali elemennya (misalnya nama game, karakter, hewan/makhluk, lokasi) secara spesifik, menarik, dan ramah. JANGAN mengasumsikan pertanyaan merujuk ke soal latihan matematika aktif jika gambar bukan soal matematika!
 Instruksi Gaya: ${depthInstructions[this.responseDepth] || depthInstructions.standard}
-Gunakan format LaTeX KaTeX (misal $x^2 - 5x + 6 = 0$). Bahasa Indonesia edukatif dan cerdas.`;
+Gunakan format LaTeX KaTeX (misal $x^2 - 5x + 6 = 0$) hanya jika memuat rumus matematika. Bahasa Indonesia edukatif, cerdas, dan bersahabat.`;
 
     const match = attachedImage.dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
     if (!match) throw new Error("Format gambar base64 tidak valid.");
@@ -1164,8 +1586,48 @@ Gunakan format LaTeX KaTeX (misal $x^2 - 5x + 6 = 0$). Bahasa Indonesia edukatif
     const mimeType = match[1];
     const base64Data = match[2];
 
-    const modelsToTry = ["gemini-3.6-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"];
+    const modelsToTry = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
     let lastError = null;
+
+    const contents = [];
+    const pastTurns = this.getRecentHistory(6);
+    if (pastTurns.length > 0) {
+      let first = true;
+      let lastRole = "";
+      for (const turn of pastTurns) {
+        if (turn.role === lastRole) continue;
+        let text = turn.text;
+        if (!text || !text.trim()) continue;
+        if (first) {
+          text = `${contextPrompt}\n\n[Pesan Siswa Sebelumnya]:\n${text}`;
+          first = false;
+        }
+        contents.push({
+          role: turn.role,
+          parts: [{ text }]
+        });
+        lastRole = turn.role;
+      }
+    }
+
+    const curParts = [
+      {
+        inlineData: {
+          mimeType,
+          data: base64Data
+        }
+      },
+      {
+        text: contents.length === 0
+          ? `${contextPrompt}\n\nPertanyaan / Permintaan Siswa Terhadap Gambar: ${prompt || "Analisis dan jelaskan apa yang terlihat pada gambar ini."}`
+          : `Pertanyaan / Permintaan Siswa Terhadap Gambar: ${prompt || "Analisis dan jelaskan apa yang terlihat pada gambar ini."}`
+      }
+    ];
+
+    contents.push({
+      role: "user",
+      parts: curParts
+    });
 
     for (const model of modelsToTry) {
       try {
@@ -1174,22 +1636,7 @@ Gunakan format LaTeX KaTeX (misal $x^2 - 5x + 6 = 0$). Bahasa Indonesia edukatif
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [
-                  {
-                    inlineData: {
-                      mimeType,
-                      data: base64Data
-                    }
-                  },
-                  {
-                    text: `${contextPrompt}\n\nPertanyaan / Permintaan Siswa Terhadap Gambar: ${prompt || "Analisis dan jelaskan matematika dalam gambar ini."}`
-                  }
-                ]
-              }
-            ],
+            contents,
             generationConfig: { temperature: 0.6, maxOutputTokens: 4096 }
           })
         });
@@ -1253,8 +1700,38 @@ Konteks Pembelajaran di Aplikasi (HANYA rujuk jika ditanya oleh siswa terkait la
 `;
 
     if (this.apiProvider === "gemini") {
-      const modelsToTry = ["gemini-3.6-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"];
+      const modelsToTry = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
       let lastError = null;
+
+      const contents = [];
+      const pastTurns = this.getRecentHistory(8);
+      if (pastTurns.length > 0) {
+        let first = true;
+        let lastRole = "";
+        for (const turn of pastTurns) {
+          if (turn.role === lastRole) continue;
+          let text = turn.text;
+          if (!text || !text.trim()) continue;
+          if (first) {
+            text = `${contextPrompt}\n\n[Pesan Siswa Sebelumnya]:\n${text}`;
+            first = false;
+          }
+          contents.push({
+            role: turn.role,
+            parts: [{ text }]
+          });
+          lastRole = turn.role;
+        }
+      }
+
+      const curText = contents.length === 0
+        ? `${contextPrompt}\n\nPertanyaan Pengguna: ${prompt}`
+        : `Pertanyaan Pengguna: ${prompt}`;
+
+      contents.push({
+        role: "user",
+        parts: [{ text: curText }]
+      });
 
       for (const model of modelsToTry) {
         try {
@@ -1263,12 +1740,7 @@ Konteks Pembelajaran di Aplikasi (HANYA rujuk jika ditanya oleh siswa terkait la
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: [{ text: `${contextPrompt}\n\nPertanyaan Pengguna: ${prompt}` }]
-                }
-              ],
+              contents,
               generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
             })
           });
@@ -1309,10 +1781,17 @@ Konteks Pembelajaran di Aplikasi (HANYA rujuk jika ditanya oleh siswa terkait la
 
   async callFreeWebAI(prompt) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 6500);
 
-    const encodedPrompt = encodeURIComponent(prompt);
-    // Direct anonymous prompt endpoint
+    let enrichedPrompt = prompt;
+    if (this.messages && this.messages.length > 2) {
+      const recentContext = this.messages.slice(1, -1).slice(-4)
+        .map(m => `${m.sender === "user" ? "User" : "Matrix"}: ${m.text.slice(0, 180)}`)
+        .join("\n");
+      enrichedPrompt = `[Percakapan Sebelumnya]:\n${recentContext}\n\n[Pertanyaan Terbaru]:\n${prompt}\n\nJawab sebagai Matrix AI ramah dan cerdas dalam Bahasa Indonesia.`;
+    }
+
+    const encodedPrompt = encodeURIComponent(enrichedPrompt);
     const url = `https://text.pollinations.ai/${encodedPrompt}`;
 
     try {
@@ -2275,6 +2754,134 @@ Apakah ada data yang ingin kamu analisis bersama Matrix?`;
 Ada soal geometri yang ingin kita hitung bersama?`;
     }
 
+    // 20. Barisan & Deret (Aritmatika & Geometri)
+    if (
+      q.includes("barisan") ||
+      q.includes("deret") ||
+      q.includes("aritmatika") ||
+      q.includes("aritmetika") ||
+      q.includes("geometri tak hingga") ||
+      q.includes("suku ke-n") ||
+      q.includes("deret geometri")
+    ) {
+      return `### 📈 Barisan & Deret (Aritmatika & Geometri)
+
+Barisan adalah urutan bilangan dengan pola tertentu, sedangkan deret adalah jumlah dari suku-suku barisan tersebut.
+
+---
+
+#### 1. ➕ Barisan & Deret Aritmatika (Pola Selisih Tetap $b$)
+- **Suku ke-$n$ ($U_n$):**
+  $$U_n = a + (n - 1)b$$
+  *Di mana $a = U_1$ (suku pertama) dan $b = U_n - U_{n-1}$ (beda antar suku).*
+
+- **Jumlah $n$ Suku Pertama ($S_n$):**
+  $$S_n = \\frac{n}{2} (a + U_n) = \\frac{n}{2} \\Big(2a + (n - 1)b\\Big)$$
+
+- **Suku Tengah ($U_t$) jika $n$ ganjil:**
+  $$U_t = \\frac{a + U_n}{2}$$
+
+---
+
+#### 2. ✖️ Barisan & Deret Geometri (Pola Rasio Tetap $r$)
+- **Suku ke-$n$ ($U_n$):**
+  $$U_n = a \\cdot r^{n - 1}$$
+  *Di mana $r = \\frac{U_n}{U_{n-1}}$ (rasio pengali).*
+
+- **Jumlah $n$ Suku Pertama ($S_n$):**
+  $$S_n = \\frac{a(1 - r^n)}{1 - r} \\quad (r < 1) \\qquad \\text{atau} \\qquad S_n = \\frac{a(r^n - 1)}{r - 1} \\quad (r > 1)$$
+
+- **Deret Geometri Tak Hingga Konvergen ($-1 < r < 1$):**
+  $$S_\\infty = \\frac{a}{1 - r}$$
+  *Contoh:* Bola dijatuhkan dari ketinggian $h$ memantul dengan rasio $r$:
+  $$\\text{Total Jarak} = h \\left(\\frac{1 + r}{1 - r}\\right)$$
+
+Ada soal barisan/deret yang ingin kamu selesaikan bersama Matrix?`;
+    }
+
+    // 21. Logaritma & Sifat Operasi Logaritma
+    if (
+      q.includes("logaritma") ||
+      q.includes("sifat logaritma") ||
+      q.includes("rumus logaritma") ||
+      q.includes("persamaan logaritma") ||
+      q.includes("ln ") ||
+      q.includes("log ")
+    ) {
+      return `### 🪵 Logaritma & Sifat-Sifat Fundamentalnya
+
+**Logaritma** adalah operasi invers (kebalikan) dari eksponensial (pangkat):
+$$a^c = b \\iff \\,^a\\log b = c$$
+*(Dengan syarat basis $a > 0, a \\neq 1$, dan numerus $b > 0$)*
+
+---
+
+#### 📚 10 Sifat Pokok Logaritma:
+1. **$\\,^a\\log a = 1$** dan **$\\,^a\\log 1 = 0$**
+2. **Penjumlahan (Perkalian Numerus):**
+   $$\\,^a\\log(b \\cdot c) = \\,^a\\log b + \\,^a\\log c$$
+3. **Pengurangan (Pembagian Numerus):**
+   $$\\,^a\\log\\left(\\frac{b}{c}\\right) = \\,^a\\log b - \\,^a\\log c$$
+4. **Pangkat Numerus:**
+   $$\\,^a\\log(b^m) = m \\cdot \\,^a\\log b$$
+5. **Pangkat Basis & Numerus:**
+   $$\\,^{a^n}\\log(b^m) = \\frac{m}{n} \\cdot \\,^a\\log b$$
+6. **Pergantian Basis:**
+   $$\\,^a\\log b = \\frac{\\,^p\\log b}{\\,^p\\log a} = \\frac{1}{\\,^b\\log a}$$
+7. **Sifat Berantai (Perkalian Logaritma):**
+   $$\\,^a\\log b \\cdot \\,^b\\log c = \\,^a\\log c$$
+8. **Eksponensial Berpangkat Logaritma:**
+   $$a^{\\,^a\\log b} = b$$
+9. **Logaritma Natural (Basis $e \\approx 2{,}718$):**
+   $$\\ln x = \\,^e\\log x$$
+10. **Logaritma Umum (Basis 10):**
+    $$\\log x = \\,^{10}\\log x$$
+
+Ada persamaan atau soal logaritma yang ingin kamu diskusikan bersama Matrix?`;
+    }
+
+    // 22. Matriks & Operasi Aljabar Linier
+    if (
+      q.includes("matriks") ||
+      q.includes("determinan matriks") ||
+      q.includes("invers matriks") ||
+      q.includes("perkalian matriks") ||
+      q.includes("transpose") ||
+      q.includes("matrix")
+    ) {
+      return `### 🔲 Aljabar Linier: Matriks, Determinan, & Invers
+
+Matriks adalah susunan skalar dalam baris dan kolom yang merepresentasikan transformasi linear.
+
+---
+
+#### 1. Operasi Matriks Ordo $2 \\times 2$:
+Misalkan matriks $A = \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$:
+
+- **Determinan:**
+  $$\\det(A) = |A| = ad - bc$$
+
+- **Invers Matriks (Syarat $\\det(A) \\neq 0$):**
+  $$A^{-1} = \\frac{1}{\\det(A)} \\begin{pmatrix} d & -b \\\\ -c & a \\end{pmatrix} = \\frac{1}{ad - bc} \\begin{pmatrix} d & -b \\\\ -c & a \\end{pmatrix}$$
+
+- **Transpose ($A^T$):**
+  $$A^T = \\begin{pmatrix} a & c \\\\ b & d \\end{pmatrix}$$
+
+---
+
+#### 2. Perkalian Dua Matriks ($2 \\times 2$):
+$$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} \\begin{pmatrix} e & f \\\\ g & h \\end{pmatrix} = \\begin{pmatrix} ae + bg & af + bh \\\\ ce + dg & cf + dh \\end{pmatrix}$$
+*(Kaidah: Baris matriks pertama dikalikan kolom matriks kedua).*
+
+---
+
+#### 3. Determinan Matriks $3 \\times 3$ (Metode Sarrus):
+Untuk $M = \\begin{pmatrix} a & b & c \\\\ d & e & f \\\\ g & h & i \\end{pmatrix}$:
+$$\\det(M) = (aei + bfg + cdh) - (ceg + afh + bdi)$$
+
+Ada operasi matriks tertentu yang ingin kamu hitung bersama?`;
+    }
+
     return null;
   }
 
@@ -2561,35 +3168,38 @@ Apakah kamu sedang mempelajari topik ini di buku pelajaran atau tugas tertentu? 
 Ada soal atau studi kasus spesifik yang mau kita selesaikan bersama dengan cara ini? Tuliskan saja di sini!`;
     }
 
-    // 8. Intelligent Educational Cognitive Synthesizer
-    // Decompose the concept, extract principles, and provide reflective Socratic guidance.
-    const topic = q
-      .replace(/^(?:apa itu|apa yang dimaksud dengan|apa yang dimaksud|definisi|definisi dari|jelaskan|jelaskan tentang|ceritakan tentang|bagaimana|gimana|tolong jelaskan|cara|cara mengerjakan)\s*/gi, "")
-      .replace(/\?+$/, "")
-      .trim();
+    // 7b. Questions about Gemini API Key, Online status, & Internet access
+    if (
+      lower.includes("gemini") ||
+      lower.includes("api key") ||
+      lower.includes("apikey") ||
+      lower.includes("online") ||
+      lower.includes("on-line") ||
+      lower.includes("internet") ||
+      lower.includes("siapa pembuatmu") ||
+      lower.includes("siapa yang membuat")
+    ) {
+      return `Benar sekali! Pertanyaan yang sangat bagus 🌐✨.
 
-    return `### 💡 Eksplorasi Konseptual: **"${topic || "Pertanyaan Matematika & Logika"}"**
+Agar Matrix dapat mengakses pengetahuan luas di internet dan berdiskusi interaktif secara **online**, kamu bisa menyambungkannya dengan **Gemini API Key**:
 
-Pertanyaan yang sangat bagus untuk dibedah secara mendalam! 🔍✨
+1. **Gratis & Cepat**: Kamu bisa membuat API Key gratis langsung di [Google AI Studio](https://aistudio.google.com/app/apikey) tanpa kartu kredit.
+2. **Cara Pasang**: Klik tombol ⚙️ **Pengaturan** di pojok kanan atas chat ini, lalu tempelkan (*paste*) API Key kamu di kolom yang tersedia.
+3. **Dua Mode Kerja Matrix**:
+   - **Mode Online (dengan API Key)**: Matrix terhubung langsung ke model mutakhir Google Gemini 3.6 Flash untuk menjawab segala macam pertanyaan sains, fakta dunia, dan diskusi matematika bebas.
+   - **Mode Offline (tanpa API Key)**: Matrix tetap dapat menyelesaikan soal latihan, perhitungan aljabar, kalkulator simbolik, dan diagnostik EPE secara lokal.
 
-Dalam pemikiran matematika, sains, dan penalaran logis, kita dapat meninjau **"${topic}"** melalui kerangka kerja berikut:
+Ada yang ingin kamu tanyakan lagi seputar cara memasangnya?`;
+    }
 
----
+    // 8. Natural Conversational Fallback (Non-robotic, clean, and helpful)
+    return `Aku memahami pertanyaanmu mengenai hal ini 💡.
 
-#### 1. 🏛️ Hakikat Fundamental & Keteraturan
-Setiap konsep atau model matematika lahir untuk merepresentasikan pola keteraturan:
-- **Relasi Antar Variabel**: Memetakan bagaimana perubahan pada satu komponen akan memengaruhi komponen lainnya secara terukur.
-- **Kondisi Batas**: Menentukan parameter apa saja yang harus diketahui terlebih dahulu sebelum penarikan kesimpulan dapat dilakukan.
+Untuk memberikan bimbingan yang paling tepat:
+- Jika pertanyaan ini berkaitan dengan perhitungan angka atau rumus (misal: aljabar, geometri, atau persamaan kuadrat), kamu bisa langsung menuliskan persamaan atau variabelnya di sini.
+- Jika kamu ingin berdiskusi topik sains atau pengetahuan umum secara mendalam dan terhubung ke internet, pastikan **Live Cloud AI (Gemini)** sudah aktif melalui menu ⚙️ Pengaturan di kanan atas.
 
-#### 2. ⚙️ Kerangka Pemecahan Masalah
-Bila topik ini berkaitan dengan penyelesaian suatu kasus atau soal:
-1. **Identifikasi Besaran**: Tuliskan dengan jelas apa saja nilai yang diketahui dan apa tepatnya target yang dicari.
-2. **Pilih Aturan / Formula**: Tentukan dalil, teorema, atau algoritma yang paling efisien.
-3. **Eksekusi Aljabar & Verifikasi**: Kerjakan perhitungan dengan cermat, lalu uji konsistensi hasil akhir (*sanity check*).
-
----
-
-Apakah kamu memiliki contoh soal spesifik, angka tertentu, atau sudut pandang yang ingin kita telaah bersama? Matrix siap membantu memecahkannya langkah demi langkah! 🌐✨`;
+Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
   }
 
   speakText(text) {
@@ -2598,9 +3208,18 @@ Apakah kamu memiliki contoh soal spesifik, angka tertentu, atau sudut pandang ya
     window.speechSynthesis.cancel();
 
     const cleanText = text
+      .replace(/^[ \t]*(?:---|___|\*\*\*)[ \t]*$/gm, " ")
+      .replace(/[-*_]{3,}/g, " ")
       .replace(/\$\$[\s\S]*?\$\$/g, "rumus matematika")
       .replace(/\$([^\$]+)\$/g, "$1")
-      .replace(/[#*_`>~]/g, "")
+      .replace(/\\Delta\s*H/g, "delta H")
+      .replace(/\\approx/g, "kira-kira sama dengan")
+      .replace(/\\sum/g, "jumlah")
+      .replace(/\\cdot/g, " kali ")
+      .replace(/\\times/g, " kali ")
+      .replace(/</g, " kurang dari ")
+      .replace(/>/g, " lebih dari ")
+      .replace(/[#*_`~]/g, "")
       .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1 per $2")
       .replace(/\\pm/g, "plus minus")
       .replace(/\\sqrt/g, "akar dari")
@@ -2673,39 +3292,165 @@ Apakah kamu memiliki contoh soal spesifik, angka tertentu, atau sudut pandang ya
             throwOnError: false
           });
         } catch (e) {
-          rendered = isDisplay ? `$$${expr}$$` : `$${expr}$`;
+          const safeExpr = expr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          rendered = `<span class="${isDisplay ? "block my-2 text-center" : "inline"} font-mono text-cyan-300 font-semibold">${isDisplay ? "$$" : "$"}${safeExpr}${isDisplay ? "$$" : "$"}</span>`;
         }
       } else {
-        rendered = isDisplay ? `$$${expr}$$` : `$${expr}$`;
+        const safeExpr = expr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        rendered = `<span class="${isDisplay ? "block my-2 text-center" : "inline"} font-mono text-cyan-300 font-semibold">${isDisplay ? "$$" : "$"}${safeExpr}${isDisplay ? "$$" : "$"}</span>`;
       }
       mathPlaceholders.push(rendered);
       return placeholder;
     };
 
-    // 1. Extract Display Math: $$...$$
-    let text = rawText.replace(/\$\$([\s\S]*?)\$\$/g, (match, expr) => {
-      if (!expr.trim()) return "";
+    let text = rawText;
+
+    // 0. Autocomplete potential unclosed math if response was truncated (e.g. at end of stream/table)
+    if (/\\\(?[^\n)]+$/.test(text) && !text.endsWith("\\)") && !text.endsWith("$")) {
+      const openParenCount = (text.match(/\\\(/g) || []).length;
+      const closeParenCount = (text.match(/\\\)/g) || []).length;
+      if (openParenCount > closeParenCount) {
+        text += "\\)";
+      }
+    }
+
+    // 1. Math Environments: \begin{aligned}...\end{aligned}, \begin{matrix}...\end{matrix}, etc.
+    text = text.replace(/\\begin\{([a-zA-Z*]+)\}([\s\S]*?)\\end\{\1\}/g, (match, env, content) => {
+      return stashMath(`\\begin{${env}}${content}\\end{${env}}`, true);
+    });
+
+    // 2. Display Math: $$...$$ OR \[...\] OR \\\[...\\\]
+    text = text.replace(/(?:\$\$([\s\S]*?)\$\$|(?:\\\[|\\\\\[)([\s\S]*?)(?:\\\]|\\\\\]))/g, (match, expr1, expr2) => {
+      const expr = expr1 !== undefined ? expr1 : expr2;
+      if (!expr || !expr.trim()) return "";
       return stashMath(expr, true);
     });
 
-    // 2. Extract Inline Math: $...$
-    // STRICT: Cannot cross newlines or HTML brackets, preventing multiline text corruption
-    text = text.replace(/\$([^\$\r\n<]+?)\$/g, (match, expr) => {
+    // 3. Inline Math: $...$ OR \(...\) OR \\( ... \\)
+    // Supports formulas with inequalities like $\Delta H < 0$, $D > 0$, $r \le 1$
+    text = text.replace(/(?:\$([^\s\$\r\n](?:[^\$\r\n]*?[^\s\$\r\n])?)\$|(?:\\\(|\\\\\()([\s\S]*?)(?:\\\)|\\\\\)))/g, (match, expr1, expr2) => {
+      const expr = expr1 !== undefined ? expr1 : expr2;
+      if (!expr) return match;
       const trimmed = expr.trim();
       if (!trimmed) return match;
       return stashMath(trimmed, false);
     });
 
-    // 3. Format standard markdown
+    // 4. Format standard markdown (including our robust line-by-line table parser)
     let html = this.formatMarkdown(text);
 
-    // 4. Re-inject safely pre-rendered KaTeX HTML back into placeholders
+    // 5. Re-inject safely pre-rendered KaTeX HTML back into placeholders
     html = html.replace(/___EPEMATHTOKEN(\d+)___/g, (match, idx) => {
       const index = parseInt(idx, 10);
       return mathPlaceholders[index] !== undefined ? mathPlaceholders[index] : match;
     });
 
     return html;
+  }
+
+  parseMarkdownTables(rawHtml) {
+    const lines = rawHtml.split(/\r?\n/);
+    const resultLines = [];
+    let inTable = false;
+    let tableLines = [];
+
+    const isTableRow = (line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return false;
+      return trimmed.includes("|");
+    };
+
+    const isSeparatorRow = (line) => {
+      const trimmed = line.trim();
+      return /^\|?[\s:\-]+\|[\s:\-|]+$/.test(trimmed) && trimmed.includes("-");
+    };
+
+    const flushTable = () => {
+      if (tableLines.length < 2) {
+        resultLines.push(...tableLines);
+        tableLines = [];
+        inTable = false;
+        return;
+      }
+
+      let sepIdx = -1;
+      for (let i = 1; i < Math.min(tableLines.length, 3); i++) {
+        if (isSeparatorRow(tableLines[i])) {
+          sepIdx = i;
+          break;
+        }
+      }
+
+      if (sepIdx === -1) {
+        resultLines.push(...tableLines);
+        tableLines = [];
+        inTable = false;
+        return;
+      }
+
+      const headerRows = tableLines.slice(0, sepIdx);
+      const dataRows = tableLines.slice(sepIdx + 1);
+
+      const parseRow = (line) => {
+        let trimmed = line.trim();
+        if (trimmed.startsWith("|")) trimmed = trimmed.slice(1);
+        if (trimmed.endsWith("|")) trimmed = trimmed.slice(0, -1);
+        return trimmed.split("|").map(cell => {
+          let c = cell.trim();
+          // Unescape <br> inside cells so multi-formula items break lines beautifully
+          c = c.replace(/&lt;br\s*\/?&gt;/gi, "<br/>").replace(/<br\s*\/?>/gi, "<br/>");
+          return c;
+        });
+      };
+
+      let tableHtml = '<div class="overflow-x-auto my-3 rounded-xl border border-slate-700/70 bg-slate-900/60 shadow-md"><table class="w-full text-xs text-left border-collapse">';
+
+      tableHtml += '<thead class="bg-slate-800/90 text-cyan-300 font-bold border-b border-slate-700">';
+      for (const hRow of headerRows) {
+        const cells = parseRow(hRow);
+        tableHtml += '<tr>';
+        cells.forEach(c => {
+          tableHtml += `<th class="p-2.5 border-r border-slate-700/60 last:border-0 font-bold">${c}</th>`;
+        });
+        tableHtml += '</tr>';
+      }
+      tableHtml += '</thead>';
+
+      tableHtml += '<tbody class="divide-y divide-slate-800/80 bg-slate-900/40">';
+      for (const dRow of dataRows) {
+        if (!dRow.trim()) continue;
+        const cells = parseRow(dRow);
+        tableHtml += '<tr class="hover:bg-slate-800/40 transition-colors">';
+        cells.forEach(c => {
+          tableHtml += `<td class="p-2.5 text-slate-200 border-r border-slate-800/60 last:border-0 align-top">${c}</td>`;
+        });
+        tableHtml += '</tr>';
+      }
+      tableHtml += '</tbody></table></div>';
+
+      resultLines.push(tableHtml);
+      tableLines = [];
+      inTable = false;
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (isTableRow(line)) {
+        inTable = true;
+        tableLines.push(line);
+      } else {
+        if (inTable) {
+          flushTable();
+        }
+        resultLines.push(line);
+      }
+    }
+
+    if (inTable) {
+      flushTable();
+    }
+
+    return resultLines.join("\n");
   }
 
   formatMarkdown(raw) {
@@ -2716,22 +3461,62 @@ Apakah kamu memiliki contoh soal spesifik, angka tertentu, atau sudut pandang ya
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
 
-    // Headers
-    html = html.replace(/^### (.*$)/gim, '<h4 class="font-bold text-sm text-white mt-2 mb-1">$1</h4>');
-    html = html.replace(/^## (.*$)/gim, '<h3 class="font-bold text-base text-white mt-2 mb-1">$1</h3>');
+    // 1. Code blocks (```lang ... ```)
+    html = html.replace(/```([a-zA-Z0-9_\-]*)\r?\n([\s\S]*?)```/g, (match, lang, code) => {
+      return `<pre class="p-3 my-2.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs text-emerald-400 font-mono overflow-x-auto"><code>${code.trim()}</code></pre>`;
+    });
 
-    // Bold & Italic
+    // 2. Parse Markdown Tables with our robust line-by-line block parser
+    html = this.parseMarkdownTables(html);
+
+    // 3. Horizontal Rules (---, ***, ___, etc.)
+    html = html.replace(/^[ \t]*(?:---|\*\*\*|___|- - -|\* \* \*|_ _ _|-{3,}|\*{3,}|_{3,})[ \t]*$/gim, '<hr class="my-3.5 border-t border-slate-700/70" />');
+
+    // 4. Headers (h6 down to h1)
+    html = html.replace(/^[ \t]*######[ \t]+(.*$)/gim, '<h6 class="font-bold text-xs text-slate-400 mt-2.5 mb-1 tracking-wider uppercase">$1</h6>');
+    html = html.replace(/^[ \t]*#####[ \t]+(.*$)/gim, '<h6 class="font-bold text-xs text-cyan-300 mt-2.5 mb-1 tracking-wide uppercase">$1</h6>');
+    html = html.replace(/^[ \t]*####[ \t]+(.*$)/gim, '<h5 class="font-bold text-xs sm:text-sm text-blue-300 mt-3 mb-1">$1</h5>');
+    html = html.replace(/^[ \t]*###[ \t]+(.*$)/gim, '<h4 class="font-bold text-sm sm:text-base text-white mt-3.5 mb-1.5">$1</h4>');
+    html = html.replace(/^[ \t]*##[ \t]+(.*$)/gim, '<h3 class="font-bold text-base sm:text-lg text-white mt-4 mb-2 border-b border-slate-700/50 pb-1">$1</h3>');
+    html = html.replace(/^[ \t]*#[ \t]+(.*$)/gim, '<h2 class="font-extrabold text-lg sm:text-xl text-white mt-4 mb-2">$1</h2>');
+
+    // 5. Blockquotes (handling both escaped &gt; and raw >)
+    html = html.replace(/^[ \t]*(?:&gt;|>)[ \t]?(.*$)/gim, '<blockquote class="p-2.5 border-l-2 border-blue-500 bg-slate-800/40 rounded-r text-xs italic my-2 text-slate-300">$1</blockquote>');
+
+    // 6. Lists
+    // Numbered lists: 1. 2. etc with hanging indent
+    html = html.replace(/^([ \t]*)(\d+)\.[ \t]+(.*$)/gim, (match, indent, num, content) => {
+      const isNested = indent && indent.length >= 2;
+      const mlClass = isNested ? "ml-6" : "ml-2";
+      return `<div class="${mlClass} flex items-start gap-2 my-1 text-slate-300"><span class="font-bold text-cyan-400 select-none flex-shrink-0">${num}.</span><div class="flex-1">${content}</div></div>`;
+    });
+
+    // Bullet points: - or * or + with hanging indent
+    html = html.replace(/^([ \t]*)[-\*\+][ \t]+(.*$)/gim, (match, indent, content) => {
+      const isNested = indent && indent.length >= 2;
+      const mlClass = isNested ? "ml-6" : "ml-2";
+      const bulletSymbol = isNested ? "◦" : "•";
+      const bulletColor = isNested ? "text-cyan-400" : "text-blue-400";
+      return `<div class="${mlClass} flex items-start gap-2 my-0.5 text-slate-300"><span class="${bulletColor} select-none flex-shrink-0 text-sm leading-tight">${bulletSymbol}</span><div class="flex-1">${content}</div></div>`;
+    });
+
+    // 7. Bold & Italic & Strikethrough
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
-    html = html.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
+    html = html.replace(/__(.*?)__/g, '<strong class="font-bold text-white">$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em class="italic text-slate-200">$1</em>');
+    html = html.replace(/_([^_]+)_/g, '<em class="italic text-slate-200">$1</em>');
+    html = html.replace(/~~(.*?)~~/g, '<del class="line-through text-slate-400">$1</del>');
 
-    // Blockquotes
-    html = html.replace(/^> (.*$)/gim, '<blockquote class="p-2 border-l-2 border-blue-500 bg-slate-800/40 rounded-r text-xs italic my-1">$1</blockquote>');
+    // 8. Inline code: `code`
+    html = html.replace(/`([^`\n]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700/70 text-cyan-300 font-mono text-[11px]">$1</code>');
 
-    // Bullet points
-    html = html.replace(/^\- (.*$)/gim, '<li class="ml-4 list-disc">$1</li>');
-
-    // Line breaks
+    // 9. Convert line breaks
     html = html.replace(/\n/g, "<br/>");
+
+    // 10. Clean up redundant <br/> tags around block elements
+    html = html.replace(/(<\/(?:h[1-6]|pre|table|thead|tbody|tr|th|td|div|blockquote)>|<hr[^>]*\/?>)\s*<br\s*\/?>/gi, "$1");
+    html = html.replace(/<br\s*\/?>\s*(<(?:h[1-6]|pre|table|div|blockquote|hr)[^>]*>)/gi, "$1");
+    html = html.replace(/(?:<br\s*\/?>\s*){3,}/gi, "<br/><br/>");
 
     return html;
   }
@@ -2745,9 +3530,9 @@ Apakah kamu memiliki contoh soal spesifik, angka tertentu, atau sudut pandang ya
     if (!modal) {
       modal = document.createElement("div");
       modal.id = "ai-settings-modal";
-      modal.className = "fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop";
+      modal.className = "fixed inset-0 z-[100001] flex items-center justify-center p-4 modal-backdrop";
       modal.innerHTML = `
-        <div class="card-clean max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-700">
+        <div class="card-clean max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-700 bg-slate-900/95 max-h-[92vh] overflow-y-auto">
           <div class="flex items-center justify-between pb-2 border-b border-slate-700">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
               <span>⚙️</span> Konfigurasi Live Cloud AI (Gemini / OpenAI)
@@ -2829,14 +3614,14 @@ Apakah kamu memiliki contoh soal spesifik, angka tertentu, atau sudut pandang ya
 
         try {
           if (testProv === "gemini") {
-            const modelsToTry = ["gemini-3.6-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"];
+            const modelsToTry = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
             let connected = false;
             let connectedModel = "";
             let errMsg = "";
 
             for (const m of modelsToTry) {
               try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${testKey}`, {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${testKey.trim()}`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
