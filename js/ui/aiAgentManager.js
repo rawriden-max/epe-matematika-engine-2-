@@ -3283,7 +3283,7 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
     const mathPlaceholders = [];
 
     const stashMath = (expr, isDisplay) => {
-      const placeholder = `___EPEMATHTOKEN${mathPlaceholders.length}___`;
+      const placeholder = `@@@EPEMATHTOKEN${mathPlaceholders.length}@@@`;
       let rendered = "";
       if (typeof window !== "undefined" && window.katex) {
         try {
@@ -3340,7 +3340,8 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
     let html = this.formatMarkdown(text);
 
     // 5. Re-inject safely pre-rendered KaTeX HTML back into placeholders
-    html = html.replace(/___EPEMATHTOKEN(\d+)___/g, (match, idx) => {
+    // Robust against @@@EPEMATHTOKEN...@@@, legacy ___EPEMATHTOKEN...___, or any markdown-styled wrappers (<em>, <strong>)
+    html = html.replace(/(?:<[a-zA-Z0-9]+[^>]*>)*(?:@@@|___|%%)?EPEMATHTOKEN(\d+)(?:@@@|___|%%)?(?:<\/[a-zA-Z0-9]+>)*/g, (match, idx) => {
       const index = parseInt(idx, 10);
       return mathPlaceholders[index] !== undefined ? mathPlaceholders[index] : match;
     });

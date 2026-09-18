@@ -188,9 +188,10 @@ class EpeAppV2 {
     // 7. Binding Event Handlers
     this.bindEvents();
 
-    // 8. Update Statistik Awal
+    // 8. Update Statistik Awal & Status Guru
     this.updateStatsAndHistory();
     this.updateDashboardRecentSummary();
+    this.updateEducatorStatusUI();
 
     console.log("EPE V2.1 (Error Pattern Engine, Avatar & Cubic Economy) Berhasil Diinisialisasi.");
   }
@@ -205,6 +206,24 @@ class EpeAppV2 {
       tabBtnPosttest: document.getElementById("tab-btn-posttest"),
       tabBtnErrorProfile: document.getElementById("tab-btn-error-profile"),
       tabBtnResearch: document.getElementById("tab-btn-research"),
+      navLockBadge: document.getElementById("nav-lock-badge"),
+      btnLockResearch: document.getElementById("btn-lock-research"),
+      btnChangeEducatorPin: document.getElementById("btn-change-educator-pin"),
+      educatorAuthModal: document.getElementById("educator-auth-modal"),
+      btnCloseEducatorAuth: document.getElementById("btn-close-educator-auth"),
+      btnCancelEducatorAuth: document.getElementById("btn-cancel-educator-auth"),
+      btnSubmitEducatorAuth: document.getElementById("btn-submit-educator-auth"),
+      educatorPinInput: document.getElementById("educator-pin-input"),
+      btnTogglePinVisibility: document.getElementById("btn-toggle-pin-visibility"),
+      educatorPinError: document.getElementById("educator-pin-error"),
+      changePinModal: document.getElementById("change-pin-modal"),
+      btnCloseChangePin: document.getElementById("btn-close-change-pin"),
+      btnCancelChangePin: document.getElementById("btn-cancel-change-pin"),
+      btnSaveNewPin: document.getElementById("btn-save-new-pin"),
+      inputCurrentPin: document.getElementById("input-current-pin"),
+      inputNewPin: document.getElementById("input-new-pin"),
+      inputConfirmPin: document.getElementById("input-confirm-pin"),
+      changePinError: document.getElementById("change-pin-error"),
 
       // Section Containers
       sectionDashboard: document.getElementById("section-dashboard-mode"),
@@ -453,6 +472,11 @@ class EpeAppV2 {
   // TAB & MODE NAVIGATION
   // =========================================================================
   switchTab(tabName, event = null) {
+    if (tabName === "research" && !this.isEducatorUnlocked()) {
+      this.openEducatorAuthModal("research");
+      return;
+    }
+
     this.activeTab = tabName;
 
     // Trigger Efek Gelombang Energi (Wave) & Gelembung Melayang (Bubbles)
@@ -558,6 +582,11 @@ class EpeAppV2 {
   }
 
   setMode(mode) {
+    if (mode === "research" && !this.isEducatorUnlocked()) {
+      this.openEducatorAuthModal("research");
+      return;
+    }
+
     this.currentMode = mode;
     [this.elements.btnModeStudent, this.elements.btnModeStudentM].forEach((b) => {
       if (b) b.classList.toggle("active", mode === "student");
@@ -576,7 +605,155 @@ class EpeAppV2 {
   }
 
   // =========================================================================
-  // TAB 1: DIAGNOSTIK BAKU — 🌪️ TORNADO SOAL (24 SOAL PENELITIAN)
+  // GURU / EDUCATOR PRIVACY & SECURITY GATE
+  // =========================================================================
+
+  isEducatorUnlocked() {
+    return sessionStorage.getItem("epe_educator_unlocked") === "true";
+  }
+
+  getEducatorPin() {
+    const customPin = localStorage.getItem("epe_educator_pin");
+    if (!customPin || customPin === "epe2026") {
+      return "@EPEMath!";
+    }
+    return customPin;
+  }
+
+  updateEducatorStatusUI() {
+    const isUnlocked = this.isEducatorUnlocked();
+    if (this.elements.navLockBadge) {
+      this.elements.navLockBadge.textContent = isUnlocked ? "🔓" : "🔒";
+      this.elements.navLockBadge.title = isUnlocked ? "Sesi Guru Aktif (Terbuka)" : "Memerlukan PIN Pendidik";
+    }
+  }
+
+  openEducatorAuthModal(targetTab = "research") {
+    this.pendingEducatorTab = targetTab;
+    if (this.elements.educatorAuthModal) {
+      this.elements.educatorAuthModal.classList.remove("hidden");
+      if (this.elements.educatorPinInput) {
+        this.elements.educatorPinInput.value = "";
+        setTimeout(() => this.elements.educatorPinInput?.focus(), 100);
+      }
+      if (this.elements.educatorPinError) {
+        this.elements.educatorPinError.classList.add("hidden");
+      }
+    }
+  }
+
+  closeEducatorAuthModal() {
+    if (this.elements.educatorAuthModal) {
+      this.elements.educatorAuthModal.classList.add("hidden");
+    }
+    this.pendingEducatorTab = null;
+    this.pendingEducatorAction = null;
+  }
+
+  verifyAndUnlockEducator() {
+    const enteredPin = (this.elements.educatorPinInput?.value || "").trim();
+    const correctPin = this.getEducatorPin();
+
+    if (enteredPin === correctPin) {
+      sessionStorage.setItem("epe_educator_unlocked", "true");
+      this.updateEducatorStatusUI();
+      this.closeEducatorAuthModal();
+      NotificationToast.show("Akses Pendidik Terverifikasi! Privasi data siswa terjaga.", "success");
+      
+      [this.elements.btnModeStudent, this.elements.btnModeStudentM].forEach((b) => b?.classList.remove("active"));
+      [this.elements.btnModeResearch, this.elements.btnModeResearchM].forEach((b) => b?.classList.add("active"));
+      this.currentMode = "research";
+
+      if (this.pendingEducatorAction) {
+        const action = this.pendingEducatorAction;
+        this.pendingEducatorAction = null;
+        action();
+      } else {
+        const target = this.pendingEducatorTab || "research";
+        this.switchTab(target);
+      }
+    } else {
+      if (this.elements.educatorPinError) {
+        this.elements.educatorPinError.textContent = "PIN tidak sesuai. Silakan periksa kembali kata sandi Guru.";
+        this.elements.educatorPinError.classList.remove("hidden");
+      }
+      if (this.elements.educatorPinInput) {
+        this.elements.educatorPinInput.classList.add("border-rose-500");
+        this.elements.educatorPinInput.focus();
+        setTimeout(() => this.elements.educatorPinInput?.classList.remove("border-rose-500"), 1500);
+      }
+    }
+  }
+
+  lockEducatorMode() {
+    sessionStorage.removeItem("epe_educator_unlocked");
+    this.updateEducatorStatusUI();
+    [this.elements.btnModeStudent, this.elements.btnModeStudentM].forEach((b) => b?.classList.add("active"));
+    [this.elements.btnModeResearch, this.elements.btnModeResearchM].forEach((b) => b?.classList.remove("active"));
+    this.currentMode = "student";
+    this.switchTab("dashboard");
+    NotificationToast.show("Mode Riset telah dikunci. Privasi data seluruh siswa kini aman.", "info");
+  }
+
+  openChangePinModal() {
+    if (this.elements.changePinModal) {
+      this.elements.changePinModal.classList.remove("hidden");
+      if (this.elements.inputCurrentPin) this.elements.inputCurrentPin.value = "";
+      if (this.elements.inputNewPin) this.elements.inputNewPin.value = "";
+      if (this.elements.inputConfirmPin) this.elements.inputConfirmPin.value = "";
+      if (this.elements.changePinError) this.elements.changePinError.classList.add("hidden");
+      setTimeout(() => this.elements.inputCurrentPin?.focus(), 100);
+    }
+  }
+
+  closeChangePinModal() {
+    if (this.elements.changePinModal) {
+      this.elements.changePinModal.classList.add("hidden");
+    }
+  }
+
+  saveNewEducatorPin() {
+    const currentPin = (this.elements.inputCurrentPin?.value || "").trim();
+    const newPin = (this.elements.inputNewPin?.value || "").trim();
+    const confirmPin = (this.elements.inputConfirmPin?.value || "").trim();
+    const storedPin = this.getEducatorPin();
+
+    const showError = (msg) => {
+      if (this.elements.changePinError) {
+        this.elements.changePinError.textContent = msg;
+        this.elements.changePinError.classList.remove("hidden");
+      }
+    };
+
+    if (currentPin !== storedPin) {
+      showError("PIN saat ini tidak sesuai!");
+      return;
+    }
+    if (newPin.length < 4) {
+      showError("PIN baru minimal 4 karakter!");
+      return;
+    }
+    if (newPin !== confirmPin) {
+      showError("Konfirmasi PIN baru tidak cocok!");
+      return;
+    }
+
+    localStorage.setItem("epe_educator_pin", newPin);
+    this.closeChangePinModal();
+    NotificationToast.show("PIN Akses Guru berhasil diperbarui!", "success");
+  }
+
+  requireEducatorAuth(actionCallback) {
+    if (this.isEducatorUnlocked()) {
+      actionCallback();
+    } else {
+      this.pendingEducatorAction = actionCallback;
+      this.openEducatorAuthModal("research");
+    }
+  }
+
+  // =========================================================================
+  // TAB 1: DIAGNOSTIK BAKU — ORBIT DIAGNOSTIK 3D (24 SOAL PENELITIAN)
   // =========================================================================
 
   /** Domain icon map */
@@ -1616,6 +1793,48 @@ class EpeAppV2 {
     if (this.elements.btnModeStudentM) this.elements.btnModeStudentM.addEventListener("click", () => this.setMode("student"));
     if (this.elements.btnModeResearchM) this.elements.btnModeResearchM.addEventListener("click", () => this.setMode("research"));
 
+    // Educator Mode Lock & Security Controls
+    if (this.elements.btnLockResearch) {
+      this.elements.btnLockResearch.addEventListener("click", () => this.lockEducatorMode());
+    }
+    if (this.elements.btnChangeEducatorPin) {
+      this.elements.btnChangeEducatorPin.addEventListener("click", () => this.openChangePinModal());
+    }
+
+    // Educator Auth Modal Controls
+    if (this.elements.btnCloseEducatorAuth) {
+      this.elements.btnCloseEducatorAuth.addEventListener("click", () => this.closeEducatorAuthModal());
+    }
+    if (this.elements.btnCancelEducatorAuth) {
+      this.elements.btnCancelEducatorAuth.addEventListener("click", () => this.closeEducatorAuthModal());
+    }
+    if (this.elements.btnSubmitEducatorAuth) {
+      this.elements.btnSubmitEducatorAuth.addEventListener("click", () => this.verifyAndUnlockEducator());
+    }
+    if (this.elements.educatorPinInput) {
+      this.elements.educatorPinInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") this.verifyAndUnlockEducator();
+      });
+    }
+    if (this.elements.btnTogglePinVisibility) {
+      this.elements.btnTogglePinVisibility.addEventListener("click", () => {
+        const inp = this.elements.educatorPinInput;
+        if (!inp) return;
+        inp.type = inp.type === "password" ? "text" : "password";
+      });
+    }
+
+    // Change PIN Modal Controls
+    if (this.elements.btnCloseChangePin) {
+      this.elements.btnCloseChangePin.addEventListener("click", () => this.closeChangePinModal());
+    }
+    if (this.elements.btnCancelChangePin) {
+      this.elements.btnCancelChangePin.addEventListener("click", () => this.closeChangePinModal());
+    }
+    if (this.elements.btnSaveNewPin) {
+      this.elements.btnSaveNewPin.addEventListener("click", () => this.saveNewEducatorPin());
+    }
+
     // Dashboard Quick Buttons
     if (this.elements.dashBtnOpenDiagnostic) {
       this.elements.dashBtnOpenDiagnostic.addEventListener("click", (e) => this.switchTab("diagnostic", e));
@@ -1945,64 +2164,74 @@ class EpeAppV2 {
     // Tab 4 Events (Supabase, CSV, Clear)
     if (this.elements.btnSyncSupabase) {
       this.elements.btnSyncSupabase.addEventListener("click", async () => {
-        const allEntries = this.historyManager.getAll();
-        if (allEntries.length === 0) {
-          NotificationToast.show("Belum ada data riwayat di browser untuk diunggah.", "warning");
-          return;
-        }
-        NotificationToast.show(`Menyinkronkan ${allEntries.length} data riwayat ke Supabase...`, "info");
-        const res = await syncAllHistoryToSupabase(allEntries);
-        if (res.success) {
-          NotificationToast.show(`Berhasil mengunggah ${res.count} data riwayat ke database Supabase!`, "success");
-        } else {
-          NotificationToast.show(`Sinkronisasi gagal: ${res.message}`, "error");
-        }
+        this.requireEducatorAuth(async () => {
+          const allEntries = this.historyManager.getAll();
+          if (allEntries.length === 0) {
+            NotificationToast.show("Belum ada data riwayat di browser untuk diunggah.", "warning");
+            return;
+          }
+          NotificationToast.show(`Menyinkronkan ${allEntries.length} data riwayat ke Supabase...`, "info");
+          const res = await syncAllHistoryToSupabase(allEntries);
+          if (res.success) {
+            NotificationToast.show(`Berhasil mengunggah ${res.count} data riwayat ke database Supabase!`, "success");
+          } else {
+            NotificationToast.show(`Sinkronisasi gagal: ${res.message}`, "error");
+          }
+        });
       });
     }
 
     if (this.elements.btnSyncAssessmentsSupabase) {
       this.elements.btnSyncAssessmentsSupabase.addEventListener("click", async () => {
-        const preList = AssessmentStore.getAllAttempts("pretest");
-        const postList = AssessmentStore.getAllAttempts("posttest");
-        if (preList.length === 0 && postList.length === 0) {
-          NotificationToast.show("Belum ada rekaman Pre-Test atau Post-Test di browser untuk disinkronkan.", "warning");
-          return;
-        }
-        NotificationToast.show(`Menyinkronkan ${preList.length} Pre-Test dan ${postList.length} Post-Test ke Cloud Supabase...`, "info");
-        const res = await syncAllAssessmentsToSupabase(preList, postList);
-        if (res.success) {
-          NotificationToast.show(res.message, "success");
-        } else {
-          NotificationToast.show(`Sinkronisasi gagal: ${res.message}`, "error");
-        }
+        this.requireEducatorAuth(async () => {
+          const preList = AssessmentStore.getAllAttempts("pretest");
+          const postList = AssessmentStore.getAllAttempts("posttest");
+          if (preList.length === 0 && postList.length === 0) {
+            NotificationToast.show("Belum ada rekaman Pre-Test atau Post-Test di browser untuk disinkronkan.", "warning");
+            return;
+          }
+          NotificationToast.show(`Menyinkronkan ${preList.length} Pre-Test dan ${postList.length} Post-Test ke Cloud Supabase...`, "info");
+          const res = await syncAllAssessmentsToSupabase(preList, postList);
+          if (res.success) {
+            NotificationToast.show(res.message, "success");
+          } else {
+            NotificationToast.show(`Sinkronisasi gagal: ${res.message}`, "error");
+          }
+        });
       });
     }
 
     if (this.elements.btnExportCloudCsv) {
       this.elements.btnExportCloudCsv.addEventListener("click", async () => {
-        NotificationToast.show("Mengunduh data lengkap dari Cloud Supabase...", "info");
-        const res = await exportCloudDataToCSV();
-        if (res.success) {
-          NotificationToast.show(`Berhasil mengunduh ${res.count} rekaman Supabase ke CSV!`, "success");
-        } else {
-          NotificationToast.show(res.message, "warning");
-        }
+        this.requireEducatorAuth(async () => {
+          NotificationToast.show("Mengunduh data lengkap dari Cloud Supabase...", "info");
+          const res = await exportCloudDataToCSV();
+          if (res.success) {
+            NotificationToast.show(`Berhasil mengunduh ${res.count} rekaman Supabase ke CSV!`, "success");
+          } else {
+            NotificationToast.show(res.message, "warning");
+          }
+        });
       });
     }
 
     if (this.elements.btnExportCsvTab) {
       this.elements.btnExportCsvTab.addEventListener("click", () => {
-        const res = this.historyManager.exportToCSV();
-        if (res.success) NotificationToast.show(`Riwayat (${res.count} data) berhasil diekspor ke CSV!`, "success");
-        else NotificationToast.show(res.message, "warning");
+        this.requireEducatorAuth(() => {
+          const res = this.historyManager.exportToCSV();
+          if (res.success) NotificationToast.show(`Riwayat (${res.count} data) berhasil diekspor ke CSV!`, "success");
+          else NotificationToast.show(res.message, "warning");
+        });
       });
     }
 
     // Impor CSV Riwayat Diagnostik (Excel / Standard CSV)
     if (this.elements.btnImportHistoryCsv && this.elements.inputImportHistoryCsv) {
       this.elements.btnImportHistoryCsv.addEventListener("click", () => {
-        this.elements.inputImportHistoryCsv.value = "";
-        this.elements.inputImportHistoryCsv.click();
+        this.requireEducatorAuth(() => {
+          this.elements.inputImportHistoryCsv.value = "";
+          this.elements.inputImportHistoryCsv.click();
+        });
       });
 
       this.elements.inputImportHistoryCsv.addEventListener("change", async (e) => {
@@ -2037,78 +2266,90 @@ class EpeAppV2 {
     // Muat 24 Data Riset Bawaan (Q1-Q24)
     if (this.elements.btnPreloadResearchSample) {
       this.elements.btnPreloadResearchSample.addEventListener("click", async () => {
-        try {
-          NotificationToast.show("Memuat 24 dataset instrumen penelitian baku (Q1–Q24)...", "info");
-          let csvText = "";
+        this.requireEducatorAuth(async () => {
           try {
-            const resp = await fetch("/data_riwayat_epe_excel_rapi.csv");
-            if (resp.ok) {
-              csvText = await resp.text();
-            }
-          } catch (e) {
-            console.warn("Fetch CSV file failed, fallback to builtin string:", e);
-          }
-
-          if (!csvText) {
-            csvText = this._getRawDefaultResearchCSV();
-          }
-
-          const res = this.historyManager.importFromCSV(csvText, false);
-          if (res.success) {
-            res.entries.forEach((entry) => {
-              if (entry.questionId && this.cubeStore) {
-                this.cubeStore.recordDiagnosis(entry.questionId, {
-                  primaryErrorCode: entry.primaryErrorCode,
-                  primaryErrorText: entry.primaryError
-                });
+            NotificationToast.show("Memuat 24 dataset instrumen penelitian baku (Q1–Q24)...", "info");
+            let csvText = "";
+            try {
+              const resp = await fetch("/data_riwayat_epe_excel_rapi.csv");
+              if (resp.ok) {
+                csvText = await resp.text();
               }
-            });
-            this.updateStatsAndHistory();
-            this.tornadoEngine?.updateCardStatuses();
-            this.cubeEngine?.render();
-            NotificationToast.show(`Berhasil memuat ${res.count} data instrumen riset Q1–Q24! Monumen kubus & 3D Tornado telah diperbarui.`, "success");
-          } else {
-            NotificationToast.show(res.message, "warning");
+            } catch (e) {
+              console.warn("Fetch CSV file failed, fallback to builtin string:", e);
+            }
+
+            if (!csvText) {
+              csvText = this._getRawDefaultResearchCSV();
+            }
+
+            const res = this.historyManager.importFromCSV(csvText, false);
+            if (res.success) {
+              res.entries.forEach((entry) => {
+                if (entry.questionId && this.cubeStore) {
+                  this.cubeStore.recordDiagnosis(entry.questionId, {
+                    primaryErrorCode: entry.primaryErrorCode,
+                    primaryErrorText: entry.primaryError
+                  });
+                }
+              });
+              this.updateStatsAndHistory();
+              this.tornadoEngine?.updateCardStatuses();
+              this.cubeEngine?.render();
+              NotificationToast.show(`Berhasil memuat ${res.count} data instrumen riset Q1–Q24! Monumen kubus & Orbit Diagnostik 3D telah diperbarui.`, "success");
+            } else {
+              NotificationToast.show(res.message, "warning");
+            }
+          } catch (err) {
+            NotificationToast.show(`Gagal memuat dataset riset: ${err.message}`, "error");
           }
-        } catch (err) {
-          NotificationToast.show(`Gagal memuat dataset riset: ${err.message}`, "error");
-        }
+        });
       });
     }
 
     // Research Export Suite (5 Varian CSV)
     if (this.elements.btnExportPretestCsv) {
       this.elements.btnExportPretestCsv.addEventListener("click", () => {
-        const res = ResearchExport.exportPreTestCSV();
-        if (res.success) NotificationToast.show(`Pre-Test (${res.count} data) berhasil diekspor ke CSV!`, "success");
+        this.requireEducatorAuth(() => {
+          const res = ResearchExport.exportPreTestCSV();
+          if (res.success) NotificationToast.show(`Pre-Test (${res.count} data) berhasil diekspor ke CSV!`, "success");
+        });
       });
     }
 
     if (this.elements.btnExportDiagCsv) {
       this.elements.btnExportDiagCsv.addEventListener("click", () => {
-        const res = ResearchExport.exportDiagnosticCSV();
-        if (res.success) NotificationToast.show(`Diagnostik (${res.count} data) berhasil diekspor ke CSV!`, "success");
+        this.requireEducatorAuth(() => {
+          const res = ResearchExport.exportDiagnosticCSV();
+          if (res.success) NotificationToast.show(`Diagnostik (${res.count} data) berhasil diekspor ke CSV!`, "success");
+        });
       });
     }
 
     if (this.elements.btnExportRemCsv) {
       this.elements.btnExportRemCsv.addEventListener("click", () => {
-        const res = ResearchExport.exportRemediationCSV();
-        if (res.success) NotificationToast.show(`Remediasi (${res.count} data) berhasil diekspor ke CSV!`, "success");
+        this.requireEducatorAuth(() => {
+          const res = ResearchExport.exportRemediationCSV();
+          if (res.success) NotificationToast.show(`Remediasi (${res.count} data) berhasil diekspor ke CSV!`, "success");
+        });
       });
     }
 
     if (this.elements.btnExportPosttestCsv) {
       this.elements.btnExportPosttestCsv.addEventListener("click", () => {
-        const res = ResearchExport.exportPostTestCSV();
-        if (res.success) NotificationToast.show(`Post-Test (${res.count} data) berhasil diekspor ke CSV!`, "success");
+        this.requireEducatorAuth(() => {
+          const res = ResearchExport.exportPostTestCSV();
+          if (res.success) NotificationToast.show(`Post-Test (${res.count} data) berhasil diekspor ke CSV!`, "success");
+        });
       });
     }
 
     if (this.elements.btnExportCombinedCsv) {
       this.elements.btnExportCombinedCsv.addEventListener("click", () => {
-        const res = ResearchExport.exportCombinedResearchDataset();
-        if (res.success) NotificationToast.show("Combined Research Dataset berhasil diekspor ke CSV!", "success");
+        this.requireEducatorAuth(() => {
+          const res = ResearchExport.exportCombinedResearchDataset();
+          if (res.success) NotificationToast.show("Combined Research Dataset berhasil diekspor ke CSV!", "success");
+        });
       });
     }
 

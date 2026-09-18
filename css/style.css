@@ -260,7 +260,7 @@ body {
 }
 
 /* ============================================================= */
-/* 🌪️  EPE TORNADO SOAL — 3D CSS Vortex Question Navigator       */
+/* 🪐  EPE ORBIT DIAGNOSTIK 3D — 3D Orbital Question Navigator     */
 /* ============================================================= */
 
 /* Tornado Scene — Perspective Container */
@@ -1538,7 +1538,7 @@ main[id^="section-"] {
 }
 
 /* ========================================================================= */
-/* 🌪️ EPE TORNADO 3D VISUALIZATION STYLES                                  */
+/* 🪐 EPE ORBIT DIAGNOSTIK 3D VISUALIZATION STYLES                           */
 /* ========================================================================= */
 .tornado-scene {
   position: relative;
@@ -1916,4 +1916,32 @@ main[id^="section-"] {
   background: rgba(30, 41, 59, 0.8);
   border-color: #38bdf8;
   color: #38bdf8;
+}
+
+/* ========================================================================= */
+/* EDUCATOR GATE & STUDENT PRIVACY STYLING                                  */
+/* ========================================================================= */
+#nav-lock-badge {
+  display: inline-block;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#tab-btn-research:hover #nav-lock-badge {
+  transform: scale(1.25);
+}
+
+#educator-auth-modal .card-clean,
+#change-pin-modal .card-clean {
+  animation: educatorModalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes educatorModalPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }

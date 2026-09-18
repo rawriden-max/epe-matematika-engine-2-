@@ -356,7 +356,7 @@ export class TornadoEngine {
         } else {
           this.speedMode = "normal";
           this.currentSpeed = this.baseSpeed;
-          speedBtn.textContent = "🌪️ Normal";
+          speedBtn.textContent = "▶ Normal";
           speedBtn.classList.remove("text-rose-400");
         }
       });
@@ -369,7 +369,7 @@ export class TornadoEngine {
         this.rotationVelocity = 0;
         this.currentSpeed = this.baseSpeed;
         this.speedMode = "normal";
-        if (speedBtn) speedBtn.textContent = "🌪️ Normal";
+        if (speedBtn) speedBtn.textContent = "▶ Normal";
       });
     }
 
