@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://epe-matematika-engine-2.vercel.app/sitemap.xml

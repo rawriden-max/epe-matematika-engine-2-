@@ -180,8 +180,17 @@ export class IsometricCubeEngine {
   }
 
   startRenderLoop() {
-    const loop = () => {
-      this.render();
+    let lastTime = 0;
+    const loop = (timestamp) => {
+      // Throttle ke 30 FPS saat mode anti-lag aktif untuk menghemat baterai & mencegah lag
+      if (window.__EPE_LOW_PERF__) {
+        if (timestamp - lastTime >= 33) {
+          lastTime = timestamp;
+          this.render();
+        }
+      } else {
+        this.render();
+      }
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);

@@ -185,6 +185,13 @@ class EpeAppV2 {
       console.warn("Peringatan inisialisasi Profil & Multimodal:", err);
     }
 
+    // 6d. Inisialisasi Kualitas Grafis & Mode Anti-Lag
+    try {
+      this.initPerformanceMode();
+    } catch (err) {
+      console.warn("Peringatan inisialisasi Performance Mode:", err);
+    }
+
     // 7. Binding Event Handlers
     this.bindEvents();
 
@@ -248,11 +255,17 @@ class EpeAppV2 {
       btnExportCombinedCsv: document.getElementById("btn-export-combined-csv"),
       researchComparisonContainer: document.getElementById("research-comparison-container"),
 
-      // Mode Switcher
+      // Mode Switcher & Tools
       btnModeStudent: document.getElementById("btn-mode-student"),
       btnModeResearch: document.getElementById("btn-mode-research"),
       btnModeStudentM: document.getElementById("btn-mode-student-m"),
       btnModeResearchM: document.getElementById("btn-mode-research-m"),
+
+      // Graphics Quality & Performance Engine Control
+      btnToggleGraphics: document.getElementById("btn-toggle-graphics"),
+      graphicsIconSvg: document.getElementById("graphics-icon-svg"),
+      graphicsLabel: document.getElementById("graphics-label"),
+      graphicsBadge: document.getElementById("graphics-badge"),
 
       // Guide Modal
       btnOpenGuide: document.getElementById("btn-open-guide"),
@@ -597,10 +610,66 @@ class EpeAppV2 {
 
     if (mode === "research") {
       this.switchTab("research");
-      NotificationToast.show("Mode Riset & Guru Aktif.", "info");
+      NotificationToast.show("Mode Guru Aktif.", "info");
     } else {
       this.switchTab("dashboard");
       NotificationToast.show("Mode Siswa Aktif.", "info");
+    }
+  }
+
+  // =========================================================================
+  // KUALITAS GRAFIS & MODE ANTI-LAG (PERFORMANCE ENGINE)
+  // =========================================================================
+  initPerformanceMode() {
+    const saved = localStorage.getItem("epe_perf_mode") || "normal";
+    this.applyPerformanceMode(saved, false);
+    if (this.elements.btnToggleGraphics) {
+      this.elements.btnToggleGraphics.addEventListener("click", () => {
+        const current = localStorage.getItem("epe_perf_mode") || "normal";
+        const next = current === "low" ? "normal" : "low";
+        this.applyPerformanceMode(next, true);
+      });
+    }
+  }
+
+  applyPerformanceMode(mode, showNotification = false) {
+    localStorage.setItem("epe_perf_mode", mode);
+    window.__EPE_LOW_PERF__ = (mode === "low");
+
+    if (mode === "low") {
+      document.body.classList.add("perf-mode-low");
+      if (this.elements.btnToggleGraphics) {
+        this.elements.btnToggleGraphics.classList.add("active-low");
+        this.elements.btnToggleGraphics.setAttribute("title", "Kualitas Grafis: Mode Ringan / Hemat Daya (Klik untuk Mode Standar)");
+        this.elements.btnToggleGraphics.setAttribute("data-perf", "low");
+      }
+      if (this.elements.graphicsBadge) {
+        this.elements.graphicsBadge.textContent = "Ringan";
+        this.elements.graphicsBadge.className = "px-1.5 py-0.2 text-[9px] font-bold rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 transition-colors";
+      }
+      if (this.elements.graphicsIconSvg) {
+        this.elements.graphicsIconSvg.classList.add("text-amber-500");
+      }
+      if (showNotification) {
+        NotificationToast.show("Mode Efisiensi Grafis Aktif: Animasi & beban render diringankan untuk performa lancar.", "info");
+      }
+    } else {
+      document.body.classList.remove("perf-mode-low");
+      if (this.elements.btnToggleGraphics) {
+        this.elements.btnToggleGraphics.classList.remove("active-low");
+        this.elements.btnToggleGraphics.setAttribute("title", "Kualitas Grafis: Mode Standar (Klik untuk Mode Ringan / Hemat Daya)");
+        this.elements.btnToggleGraphics.setAttribute("data-perf", "normal");
+      }
+      if (this.elements.graphicsBadge) {
+        this.elements.graphicsBadge.textContent = "Standar";
+        this.elements.graphicsBadge.className = "px-1.5 py-0.2 text-[9px] font-bold rounded bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800/60 transition-colors";
+      }
+      if (this.elements.graphicsIconSvg) {
+        this.elements.graphicsIconSvg.classList.remove("text-amber-500");
+      }
+      if (showNotification) {
+        NotificationToast.show("Mode Grafis Standar Aktif: Seluruh simulasi 3D & efek visual beroperasi optimal.", "info");
+      }
     }
   }
 
@@ -692,7 +761,7 @@ class EpeAppV2 {
     [this.elements.btnModeResearch, this.elements.btnModeResearchM].forEach((b) => b?.classList.remove("active"));
     this.currentMode = "student";
     this.switchTab("dashboard");
-    NotificationToast.show("Mode Riset telah dikunci. Privasi data seluruh siswa kini aman.", "info");
+    NotificationToast.show("Mode Guru telah dikunci. Privasi data seluruh siswa kini aman.", "info");
   }
 
   openChangePinModal() {
@@ -932,7 +1001,12 @@ class EpeAppV2 {
     const q = this.questions.find((item) => item.id === questionId) || this.questions[0];
     const domain = this.domains[q.domainId];
 
-    if (this.elements.qNumberBadge) this.elements.qNumberBadge.textContent = q.id;
+    if (this.elements.qNumberBadge) {
+      this.elements.qNumberBadge.textContent = q.id;
+      this.elements.qNumberBadge.style.backgroundColor = domain?.color || "#3b82f6";
+      this.elements.qNumberBadge.style.color = "#ffffff";
+      this.elements.qNumberBadge.style.boxShadow = `0 2px 8px ${domain?.color || "#3b82f6"}55`;
+    }
     if (this.elements.qDomainBadge) {
       this.elements.qDomainBadge.textContent = `${q.domainId} - ${domain?.name || q.domainName}`;
       this.elements.qDomainBadge.className = `px-2 py-0.5 rounded-md text-xs font-semibold ${domain?.badgeClass || "badge-d1"}`;

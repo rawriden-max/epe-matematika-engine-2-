@@ -82,93 +82,93 @@ export class ErrorProfileManager {
     this.container.innerHTML = `
       <div class="max-w-5xl mx-auto space-y-6">
         
-        <!-- Header Halaman Profil Kesalahan -->
-        <div class="card-clean p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-slate-900/90 to-blue-950/40 border border-slate-800">
+        <!-- Header Halaman Hasil Diagnostik -->
+        <div class="card-clean p-5 sm:p-6 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 dark:from-slate-900 dark:via-slate-900/90 dark:to-blue-950/40 border border-slate-200 dark:border-slate-800">
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <div class="flex items-center gap-2 mb-1.5">
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                  Pedagogical Diagnostics
+              <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 dark:border-blue-500/30">
+                  Ringkasan Diagnostik Siswa
                 </span>
-                <span class="text-xs text-slate-400">Total Diuji: ${totalDiagnosed} dari 24 Soal</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Total Diuji: ${totalDiagnosed} dari 24 Soal</span>
               </div>
-              <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Profil Pola Kesalahan Siswa (Error Pattern Profile)</h2>
-              <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
-                Setiap kesalahan adalah peta penunjuk jalan belajar. Sistem mengidentifikasi pola sistematis pengerjaan Anda agar remediasi terfokus pada akar masalah.
+              <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">Hasil Diagnostik &amp; Profil Belajar Siswa</h2>
+              <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                Hasil evaluasi diagnostik untuk memetakan pemahaman aljabar Anda. Sistem mengidentifikasi materi yang telah dikuasai serta bagian yang perlu diperkuat agar proses perbaikan belajar lebih tepat sasaran.
               </p>
             </div>
             
             <div class="flex items-center gap-3">
-              <div class="text-center p-3 rounded-xl bg-slate-800/80 border border-slate-700/80 min-w-[100px]">
-                <span class="text-[10px] uppercase font-bold text-slate-400 block">Status Akurasi</span>
-                <span class="text-lg font-extrabold text-emerald-400">${errorCounts.E0}</span>
-                <span class="text-[10px] text-slate-400 block">Soal Akurat (E0)</span>
+              <div class="text-center p-3 rounded-xl bg-white/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 min-w-[100px] shadow-sm">
+                <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Tingkat Akurasi</span>
+                <span class="text-lg font-extrabold text-emerald-500 dark:text-emerald-400">${errorCounts.E0}</span>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Selesai Akurat (E0)</span>
               </div>
-              <div class="text-center p-3 rounded-xl bg-slate-800/80 border border-slate-700/80 min-w-[100px]">
-                <span class="text-[10px] uppercase font-bold text-slate-400 block">Pola Terdeteksi</span>
-                <span class="text-lg font-extrabold text-amber-400">${totalErrors}</span>
-                <span class="text-[10px] text-slate-400 block">Perlu Perhatian</span>
+              <div class="text-center p-3 rounded-xl bg-white/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 min-w-[100px] shadow-sm">
+                <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Fokus Perbaikan</span>
+                <span class="text-lg font-extrabold text-amber-500 dark:text-amber-400">${totalErrors}</span>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Perlu Remediasi</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Ringkasan Pola Dominan & Domain Menantang -->
+        <!-- Ringkasan Area Utama & Materi Penguatan -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- Dominant Pattern -->
-          <div class="card-clean p-5 space-y-3">
+          <div class="card-clean p-5 space-y-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase text-slate-400 tracking-wider">Pola Dominan Saat Ini</span>
-              <span class="text-xs font-mono text-blue-400 font-bold">${dominantError || "Belum Terdeteksi"}</span>
+              <span class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider">Area Utama Perlu Ditingkatkan</span>
+              <span class="text-xs font-mono text-blue-600 dark:text-blue-400 font-bold">${dominantError || "Belum Terdeteksi"}</span>
             </div>
             <div>
-              <h3 class="text-base font-bold text-white">
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">
                 ${dominantError ? TAXONOMY[dominantError]?.label : "Belum Ada Data Diagnosis Cukup"}
               </h3>
-              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                ${dominantError ? TAXONOMY[dominantError]?.description : "Selesaikan beberapa soal pada tab Diagnostik Baku untuk memetakan pola kesalahan Anda."}
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                ${dominantError ? TAXONOMY[dominantError]?.description : "Selesaikan beberapa soal pada tab Diagnostik Baku untuk memetakan pemahaman konsep Anda."}
               </p>
             </div>
           </div>
 
           <!-- Problematic Domain -->
-          <div class="card-clean p-5 space-y-3">
+          <div class="card-clean p-5 space-y-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase text-slate-400 tracking-wider">Domain Paling Menantang</span>
-              <span class="text-xs font-mono text-amber-400 font-bold">${problematicDomain || "Belum Terpetakan"}</span>
+              <span class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider">Materi yang Perlu Diperkuat</span>
+              <span class="text-xs font-mono text-amber-600 dark:text-amber-400 font-bold">${problematicDomain || "Belum Terpetakan"}</span>
             </div>
             <div>
-              <h3 class="text-base font-bold text-white">
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">
                 ${problematicDomain ? `${problematicDomain} · ${DOMAINS[problematicDomain]?.name}` : "Semua Domain Terkendali"}
               </h3>
-              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                ${problematicDomain ? DOMAINS[problematicDomain]?.description : "Lanjutkan diagnostik untuk melihat domain kompetensi mana yang memerlukan penguatan."}
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                ${problematicDomain ? DOMAINS[problematicDomain]?.description : "Lanjutkan diagnostik untuk melihat domain kompetensi mana yang memerlukan pendalaman materi."}
               </p>
             </div>
           </div>
         </div>
 
         <!-- Visual Bar Meter Distribusi E1 - E4 -->
-        <div class="card-clean p-6 space-y-5">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="card-clean p-6 space-y-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
             <div>
-              <h3 class="text-sm font-bold text-white">Distribusi Taksonomi Kesalahan Kognitif</h3>
-              <p class="text-xs text-slate-400">Proporsi kemunculan kategori kesalahan dari seluruh butir yang dianalisis</p>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Analisis Kebutuhan Belajar Siswa</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Proporsi jenis pemahaman konsep yang perlu pendampingan belajar</p>
             </div>
-            <span class="text-xs font-mono font-bold text-slate-400">${totalErrors} Temuan Kesalahan</span>
+            <span class="text-xs font-mono font-bold text-slate-600 dark:text-slate-400">${totalErrors} Catatan Remediasi</span>
           </div>
 
           <div class="space-y-4">
             <!-- E1: Konseptual -->
             <div class="space-y-1.5">
               <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-rose-400 flex items-center gap-2">
+                <span class="font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-sm bg-rose-500"></span>
-                  E1 · Kesalahan Konseptual
+                  E1 · Pemahaman Konsep Dasar
                 </span>
-                <span class="font-mono text-slate-300 font-bold">${errorCounts.E1} kali (${calcPercent(errorCounts.E1)}%)</span>
+                <span class="font-mono text-slate-600 dark:text-slate-300 font-bold">${errorCounts.E1} kali (${calcPercent(errorCounts.E1)}%)</span>
               </div>
-              <div class="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
+              <div class="w-full bg-slate-100 dark:bg-slate-800/80 h-2.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700/60">
                 <div class="bg-rose-500 h-full rounded-full transition-all duration-500" style="width: ${calcPercent(errorCounts.E1)}%"></div>
               </div>
             </div>
@@ -176,13 +176,13 @@ export class ErrorProfileManager {
             <!-- E2: Prosedural -->
             <div class="space-y-1.5">
               <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-amber-400 flex items-center gap-2">
+                <span class="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span>
-                  E2 · Kesalahan Prosedural
+                  E2 · Langkah Prosedur Penyelesaian
                 </span>
-                <span class="font-mono text-slate-300 font-bold">${errorCounts.E2} kali (${calcPercent(errorCounts.E2)}%)</span>
+                <span class="font-mono text-slate-600 dark:text-slate-300 font-bold">${errorCounts.E2} kali (${calcPercent(errorCounts.E2)}%)</span>
               </div>
-              <div class="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
+              <div class="w-full bg-slate-100 dark:bg-slate-800/80 h-2.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700/60">
                 <div class="bg-amber-500 h-full rounded-full transition-all duration-500" style="width: ${calcPercent(errorCounts.E2)}%"></div>
               </div>
             </div>
@@ -190,13 +190,13 @@ export class ErrorProfileManager {
             <!-- E3: Komputasi -->
             <div class="space-y-1.5">
               <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-yellow-400 flex items-center gap-2">
+                <span class="font-bold text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-sm bg-yellow-500"></span>
-                  E3 · Kesalahan Komputasi
+                  E3 · Ketelitian Perhitungan (Komputasi)
                 </span>
-                <span class="font-mono text-slate-300 font-bold">${errorCounts.E3} kali (${calcPercent(errorCounts.E3)}%)</span>
+                <span class="font-mono text-slate-600 dark:text-slate-300 font-bold">${errorCounts.E3} kali (${calcPercent(errorCounts.E3)}%)</span>
               </div>
-              <div class="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
+              <div class="w-full bg-slate-100 dark:bg-slate-800/80 h-2.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700/60">
                 <div class="bg-yellow-500 h-full rounded-full transition-all duration-500" style="width: ${calcPercent(errorCounts.E3)}%"></div>
               </div>
             </div>
@@ -204,13 +204,13 @@ export class ErrorProfileManager {
             <!-- E4: Interpretasi -->
             <div class="space-y-1.5">
               <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-purple-400 flex items-center gap-2">
+                <span class="font-bold text-purple-600 dark:text-purple-400 flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-sm bg-purple-500"></span>
-                  E4 · Kesalahan Interpretasi
+                  E4 · Interpretasi Soal Cerita / Simbol
                 </span>
-                <span class="font-mono text-slate-300 font-bold">${errorCounts.E4} kali (${calcPercent(errorCounts.E4)}%)</span>
+                <span class="font-mono text-slate-600 dark:text-slate-300 font-bold">${errorCounts.E4} kali (${calcPercent(errorCounts.E4)}%)</span>
               </div>
-              <div class="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
+              <div class="w-full bg-slate-100 dark:bg-slate-800/80 h-2.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700/60">
                 <div class="bg-purple-500 h-full rounded-full transition-all duration-500" style="width: ${calcPercent(errorCounts.E4)}%"></div>
               </div>
             </div>
@@ -218,48 +218,48 @@ export class ErrorProfileManager {
         </div>
 
         <!-- Before vs After Remediation Progression (Evolution Tracker) -->
-        <div class="card-clean p-6 space-y-4">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="card-clean p-6 space-y-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
             <div>
-              <h3 class="text-sm font-bold text-white">Evolusi Perbaikan (Before vs After Remediation)</h3>
-              <p class="text-xs text-slate-400">Perkembangan pemulihan pola kesalahan siswa melalui latihan adaptif</p>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Perkembangan Peningkatan Pemahaman</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Penyelesaian materi yang telah berhasil dipulihkan melalui latihan terarah</p>
             </div>
-            <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
-              ${remediatedCount} Kubus Berhasil Diremediasi
+            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
+              ${remediatedCount} Materi Berhasil Dipulihkan
             </span>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
             <!-- Before -->
-            <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-400">Sebelum Remediasi (Awal):</span>
-                <span class="font-mono text-xs font-bold text-amber-400">${beforeRemediationErrors} Masalah Terdeteksi</span>
+                <span class="text-xs font-bold text-slate-600 dark:text-slate-400">Sebelum Remediasi (Awal):</span>
+                <span class="font-mono text-xs font-bold text-amber-600 dark:text-amber-400">${beforeRemediationErrors} Masalah Terdeteksi</span>
               </div>
-              <div class="text-2xl font-extrabold text-white font-mono">${beforeRemediationErrors}</div>
-              <p class="text-[11px] text-slate-500">Total soal dengan pola kesalahan E1 - E4 yang terdeteksi saat tes awal.</p>
+              <div class="text-2xl font-extrabold text-slate-900 dark:text-white font-mono">${beforeRemediationErrors}</div>
+              <p class="text-[11px] text-slate-500">Total soal yang memerlukan penguatan konsep saat tes diagnostik awal.</p>
             </div>
 
             <!-- After -->
-            <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-emerald-400">Setelah Remediasi (Sisa):</span>
-                <span class="font-mono text-xs font-bold text-emerald-400">${currentActiveErrors} Belum Diremediasi</span>
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">Setelah Remediasi (Sisa):</span>
+                <span class="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">${currentActiveErrors} Belum Tuntas</span>
               </div>
-              <div class="text-2xl font-extrabold text-emerald-400 font-mono">${currentActiveErrors}</div>
-              <p class="text-[11px] text-slate-500">Sisa kesalahan yang belum dilakukan latihan perbaikan adaptif.</p>
+              <div class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">${currentActiveErrors}</div>
+              <p class="text-[11px] text-slate-500">Materi yang masih menunggu sesi latihan perbaikan.</p>
             </div>
           </div>
 
           ${beforeRemediationErrors > 0 && currentActiveErrors > 0 ? `
             <div class="pt-2">
-              <button id="btn-goto-remediation" class="btn-primary w-full py-2.5 text-xs font-bold shadow-lg">
-                Mulai Latihan Remediasi Adaptif untuk ${dominantError || "Pola Kesalahan Terdeteksi"}
+              <button id="btn-goto-remediation" class="btn-primary w-full py-2.5 text-xs font-bold shadow-md hover:shadow-lg transition-all">
+                Mulai Latihan Remediasi Adaptif untuk ${dominantError || "Materi Terdeteksi"}
               </button>
             </div>
           ` : `
-            <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center text-xs text-emerald-300 font-semibold">
-              ✨ Luar biasa! Tidak ada pola kesalahan yang menunggu remediasi saat ini.
+            <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center text-xs text-emerald-600 dark:text-emerald-300 font-semibold">
+              ✨ Luar biasa! Seluruh materi telah dikuasai dengan baik atau tidak ada catatan remediasi.
             </div>
           `}
         </div>

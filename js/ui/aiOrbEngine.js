@@ -233,6 +233,12 @@ export class AiOrbEngine {
     this.animId = requestAnimationFrame(() => this.animate());
     if (!this.ctx || !this.width || !this.height) return;
 
+    // Throttle rendering saat mode anti-lag aktif
+    if (window.__EPE_LOW_PERF__) {
+      this._perfFrame = (this._perfFrame || 0) + 1;
+      if (this._perfFrame % 2 !== 0) return; // Skip tiap frame kedua (render di ~30fps)
+    }
+
     // Auto-recover defensive check against any NaN corruption
     if (!Number.isFinite(this.rotX)) this.rotX = 0.22;
     if (!Number.isFinite(this.rotY)) this.rotY = 0;

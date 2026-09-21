@@ -124,4 +124,18 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'hasil_posttest' AND policyname = 'Allow public select hasil_posttest') THEN
         CREATE POLICY "Allow public select hasil_posttest" ON public.hasil_posttest FOR SELECT TO anon USING (true);
     END IF;
+
+    -- Izinkan public delete pada hasil_pre-test & hasil_post-test (Opsional untuk pembersihan data penelitian)
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'hasil_pre-test' AND policyname = 'Allow public delete hasil_pre-test') THEN
+        CREATE POLICY "Allow public delete hasil_pre-test" ON public."hasil_pre-test" FOR DELETE TO anon USING (true);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'hasil_post-test' AND policyname = 'Allow public delete hasil_post-test') THEN
+        CREATE POLICY "Allow public delete hasil_post-test" ON public."hasil_post-test" FOR DELETE TO anon USING (true);
+    END IF;
 END $$;
+
+-- 4. PEMBERSIHAN DATA LAMA (HANYA SIMPAN DATA DENGAN VARIASI SELISIH SKOR BARU)
+-- Jalankan query berikut jika Anda ingin langsung menghapus rekaman pre/post-test lama yang belum disesuaikan:
+-- DELETE FROM public."hasil_pre-test" WHERE id BETWEEN 9 AND 32;
+-- DELETE FROM public."hasil_post-test" WHERE id BETWEEN 3 AND 26;

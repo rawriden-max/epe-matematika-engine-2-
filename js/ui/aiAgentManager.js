@@ -686,13 +686,13 @@ export class AiAgentManager {
 
     if (msg.sender === "assistant") {
       const actionsContainer = document.createElement("div");
-      actionsContainer.className = "mt-2 pt-1 border-t border-slate-700/50 flex items-center gap-3 text-[10px] text-slate-400";
+      actionsContainer.className = "mt-2 pt-1.5 border-t border-slate-200 dark:border-slate-700/60 flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400";
 
       // 1. Dengarkan Suara (TTS)
       const speakBtn = document.createElement("button");
-      speakBtn.className = "flex items-center gap-1 hover:text-white transition-colors";
+      speakBtn.className = "flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-colors font-medium";
       speakBtn.innerHTML = `
-        <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+        <svg class="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
         <span>Dengarkan Suara</span>
       `;
       speakBtn.addEventListener("click", (e) => {
@@ -703,9 +703,9 @@ export class AiAgentManager {
 
       // 2. Salin Teks (Clipboard)
       const copyBtn = document.createElement("button");
-      copyBtn.className = "flex items-center gap-1 hover:text-cyan-300 transition-colors";
+      copyBtn.className = "flex items-center gap-1 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors font-medium";
       copyBtn.innerHTML = `
-        <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+        <svg class="w-3 h-3 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
         <span>Salin Teks</span>
       `;
       copyBtn.addEventListener("click", async (e) => {
@@ -875,11 +875,23 @@ export class AiAgentManager {
         break;
 
       case "explain_discriminant":
-        prompt = "Tolong jelaskan secara mendalam tentang rumus diskriminan $D = b^2 - 4ac$ dan maknanya untuk jenis-jenis akar persamaan kuadrat.";
+        prompt = "Tolong jelaskan secara mendalam tentang rumus diskriminan $D = b^2 - 4ac$ dan maknanya untuk jenis-jenis akar persamaan kuadrat serta aplikasinya pada fisika lintasan gerak.";
+        break;
+
+      case "matrix_operations":
+        prompt = "Tolong berikan rangkuman lengkap rumus operasi matriks: perkalian matriks, determinan matriks ordo $2 \\times 2$ dan $3 \\times 3$, serta rumus invers matriks $A^{-1} = \\frac{1}{\\det(A)}\\text{adj}(A)$ dengan KaTeX rapi dan contohnya.";
+        break;
+
+      case "matrix_rotation_3d":
+        prompt = "Tolong jelaskan secara mendalam konsep Matriks Rotasi dalam 3-Dimensi: rumus matriks rotasi sumbu $X, Y, Z$, representasi sudut Euler ($R_x, R_y, R_z$), kendala Gimbal Lock, serta pengenalan Quaternions dalam game engine 3D dan robotika.";
+        break;
+
+      case "matrix_svd":
+        prompt = "Jelaskan konsep Dekomposisi Nilai Singular (Singular Value Decomposition / SVD) pada matriks, rumus $A = U \\Sigma V^T$, serta perannya yang sangat penting pada Machine Learning, kompresi gambar digital, dan sistem rekomendasi.";
         break;
 
       case "general_math_discussion":
-        prompt = "Bisa ceritakan apa saja cabang matematika modern di luar aljabar sekolah, seperti kalkulus dan aljabar linear?";
+        prompt = "Bisa ceritakan apa saja cabang matematika modern di luar aljabar sekolah, seperti kalkulus multivariabel, aljabar linear terapan, dan teori graf?";
         break;
 
       case "challenge_quiz":
@@ -1688,6 +1700,19 @@ ATURAN CONTEXT ROUTING (CONTEXT AWARENESS != CONTEXT FORCING):
 
 ATURAN SAPAAN (PERCAKAPAN BERKELANJUTAN):
 Chat ini adalah obrolan yang SEDANG BERJALAN. JANGAN mengulang sapaan pembuka (seperti "Halo!", "Halo Siswa!", "Hai!") atau memperkenalkan diri ("Saya Matrix...", "Senang sekali...") di awal setiap respon baru! Langsung jawab ke inti pertanyaan atau topik secara akrab, cerdas, dan mengalir alami layaknya percakapan chat.
+==================================================
+ATURAN FORMAT RUMUS & TAUTAN (HYPERLINK) INTERAKTIF:
+- Format seluruh rumus matematika menggunakan notasi LaTeX KaTeX rapi ($...$ inline, $$...$$ untuk baris display).
+- Kamu SANGAT DIANJURKAN menyertakan tautan referensi belajar Markdown interaktif menggunakan format [Nama Referensi/Materi](https://url-valid) (misalnya 3Blue1Brown, Khan Academy, Brilliant, MIT OpenCourseWare, atau Wikipedia).
+- DILARANG KERAS membuat disclaimer seperti 'Sebagai AI saya tidak dapat menulis tautan dengan href dalam mode plaintext' atau meminta siswa menyalin-tempel URL secara manual! Antarmuka web EPE telah dilengkapi parser link interaktif penuh yang otomatis merender tautan menjadi link aktif.
+
+PENGEMBANGAN CATATAN EDUKATIF ("Catatan dari AI"):
+- Di akhir penjelasan konsep penting (seperti aljabar, matriks, transformasi geometri, kalkulus, statistika), sertakan bagian pendalaman materi '> [!NOTE] Catatan Pendalaman Konsep' yang kaya, edukatif, dan aplikatif!
+- Jika materi menyangkut matriks atau aljabar linear, perluas ke topik tingkat lanjut:
+  * Rotasi 3-Dimensi: Matriks rotasi Euler R_x(\\theta), R_y(\\theta), R_z(\\theta), masalah Gimbal Lock, serta pengenalan Quaternions pada game engine 3D dan robotika.
+  * Dekomposisi SVD (Singular Value Decomposition): Formulasi $A = U \\Sigma V^T$ dan kegunaannya pada Machine Learning, kompresi gambar tanpa kehilangan fitur, dan Principal Component Analysis (PCA).
+  * Nilai Eigen & Vektor Eigen ($Av = \\lambda v$): Aplikasinya pada algoritma Google PageRank dan kestabilan resonansi struktur.
+  * Diskriminan & Optimasi Kuadratik: Makna fisik nilai $D = b^2 - 4ac$ pada trajektori gerak parabola dan titik optimum.
 ==================================================
 
 Konteks Pembelajaran di Aplikasi (HANYA rujuk jika ditanya oleh siswa terkait latihan soal):
@@ -2840,7 +2865,133 @@ $$a^c = b \\iff \\,^a\\log b = c$$
 Ada persamaan atau soal logaritma yang ingin kamu diskusikan bersama Matrix?`;
     }
 
-    // 22. Matriks & Operasi Aljabar Linier
+    // 22a. Rotasi dalam 3-Dimensi & Matriks Transformasi
+    if (
+      q.includes("rotasi 3d") ||
+      q.includes("rotasi 3-dimensi") ||
+      q.includes("rotasi dalam 3") ||
+      q.includes("matriks rotasi") ||
+      q.includes("euler") ||
+      q.includes("quaternion") ||
+      q.includes("gimbal lock") ||
+      q.includes("rodrigues")
+    ) {
+      return `### 🔄 Transformasi Geometri: Rotasi dalam 3-Dimensi (3D Rotation)
+
+Dalam ruang tiga dimensi (vektor $\\mathbf{v} = \\begin{pmatrix} x \\\\ y \\\\ z \\end{pmatrix}$), rotasi objek direpresentasikan melalui perkalian matriks ortogonal $3 \\times 3$ yang mempertahankan panjang vektor dan orientasi ($\\,\\det(R) = +1\\,$).
+
+---
+
+#### 1. Matriks Rotasi Dasar terhadap Sumbu Utama:
+
+1. **Rotasi terhadap Sumbu-$X$ sebesar sudut $\\theta$ ($R_x$ - Roll):**
+   $$R_x(\\theta) = \\begin{pmatrix} 1 & 0 & 0 \\\\ 0 & \\cos\\theta & -\\sin\\theta \\\\ 0 & \\sin\\theta & \\cos\\theta \\end{pmatrix}$$
+
+2. **Rotasi terhadap Sumbu-$Y$ sebesar sudut $\\theta$ ($R_y$ - Pitch):**
+   $$R_y(\\theta) = \\begin{pmatrix} \\cos\\theta & 0 & \\sin\\theta \\\\ 0 & 1 & 0 \\\\ -\\sin\\theta & 0 & \\cos\\theta \\end{pmatrix}$$
+
+3. **Rotasi terhadap Sumbu-$Z$ sebesar sudut $\\theta$ ($R_z$ - Yaw):**
+   $$R_z(\\theta) = \\begin{pmatrix} \\cos\\theta & -\\sin\\theta & 0 \\\\ \\sin\\theta & \\cos\\theta & 0 \\\\ 0 & 0 & 1 \\end{pmatrix}$$
+
+Rotasi umum sembarang dalam ruang diperoleh melalui perkalian berurutan (sudut Euler):
+$$R = R_z(\\gamma) R_y(\\beta) R_x(\\alpha)$$
+
+---
+
+#### 2. Keterbatasan Euler Angles & Solusi Quaternions:
+- **Gimbal Lock**: Kelemahan representasi sudut Euler ketika dua sumbu rotasi saling sejajar, menyebabkan hilangnya satu derajat kebebasan gerak (degree of freedom).
+- **Quaternions ($q = w + xi + yj + zk$):** Solusi standar industri modern (Unity, Unreal Engine, animasi 3D, dan navigasi pesawat terbang) yang memodelkan rotasi mulus tanpa mengalami Gimbal Lock.
+
+> [!NOTE]
+> **Catatan Pendalaman Konsep dari Matrix AI:**
+> Matriks rotasi merupakan kelompok grup Lie khusus $SO(3)$ (*Special Orthogonal Group*). Sifat krusialnya: transpos matriks sama dengan inversnya: $R^T = R^{-1}$. Untuk mendalami visualisasi interaktif transformasi ruang linear, kamu dapat menjelajahi materi berikut:
+> - [Visualisasi Esensi Aljabar Linear - 3Blue1Brown](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)
+> - [Panduan Quaternions & Rotasi 3D Interaktif](https://eater.net/quaternions)`;
+    }
+
+    // 22b. Dekomposisi SVD (Singular Value Decomposition)
+    if (
+      q.includes("svd") ||
+      q.includes("singular value") ||
+      q.includes("dekomposisi") ||
+      q.includes("pca") ||
+      q.includes("reduksi dimensi")
+    ) {
+      return `### ✨ Dekomposisi Matriks: Singular Value Decomposition (SVD)
+
+**Singular Value Decomposition (SVD)** adalah salah satu teorema paling fundamental dan ampuh dalam aljabar linear modern, berlaku untuk sembarang matriks persegi maupun non-persegi berukuran $m \\times n$.
+
+---
+
+#### 1. Formulasi Matematis SVD:
+Sembarang matriks riil $A$ berukuran $m \\times n$ dapat didekomposisi menjadi perkalian tiga matriks:
+$$A = U \\Sigma V^T$$
+
+Keterangan komponen:
+1. **$U$ (Matriks Ortogonal $m \\times m$):** Kolom-kolomnya merupakan *left singular vectors* (vektor eigen dari $AA^T$).
+2. **$\\Sigma$ (Matriks Diagonal $m \\times n$):** Elemen diagonalnya adalah nilai singular $\\sigma_1 \\ge \\sigma_2 \\ge \\dots \\ge \\sigma_r > 0$ (akar kuadrat dari nilai eigen $A^T A$).
+3. **$V^T$ (Transpos Matriks Ortogonal $n \\times n$):** Kolom-kolom $V$ merupakan *right singular vectors* (vektor eigen dari $A^T A$).
+
+---
+
+#### 2. Aplikasi Riil SVD di Industri Teknologi:
+1. **Kompresi Gambar Digital (Low-Rank Matrix Approximation):**
+   Dengan Teorema Eckart-Young, kita dapat menyimpan citra dengan hanya mengambil $k$ nilai singular teratas ($k \\ll r$):
+   $$A_k = \\sum_{i=1}^{k} \\sigma_i u_i v_i^T$$
+   Ini mereduksi ukuran file secara drastis dengan tetap mempertahankan 95%+ kejernihan visual.
+2. **Machine Learning & Reduksi Dimensi (PCA):** Membuang fitur yang redundan dan memvisualisasikan data dimensi tinggi (1000D $\\to$ 2D).
+3. **Sistem Rekomendasi (Recommender Systems):** Menemukan *latent factors* tersembunyi antara preferensi pengguna dan film/lagu (seperti algoritma Netflix Prize & Spotify).
+
+> [!NOTE]
+> **Catatan Pendalaman Konsep dari Matrix AI:**
+> SVD membedah aksi setiap transformasi matriks linear menjadi tiga tahap geometri berurutan: **Rotasi ($V^T$) $\\to$ Penskalaan ($\\Sigma$) $\\to$ Rotasi kedua ($U$)**.
+> Referensi belajar interaktif terpercaya:
+> - [Dekomposisi SVD & Aljabar Linear - MIT OpenCourseWare Gilbert Strang](https://ocw.mit.edu)
+> - [Singular Value Decomposition (SVD) - Wikipedia](https://en.wikipedia.org/wiki/Singular_value_decomposition)`;
+    }
+
+    // 22c. Nilai Eigen & Vektor Eigen (Eigenvalues & Eigenvectors)
+    if (
+      q.includes("eigen") ||
+      q.includes("nilai eigen") ||
+      q.includes("vektor eigen") ||
+      q.includes("eigenvalue") ||
+      q.includes("eigenvector")
+    ) {
+      return `### 📐 Nilai Eigen & Vektor Eigen ($Av = \\lambda v$)
+
+Dalam aljabar linier, vektor eigen adalah vektor tak-nol yang arahnya tidak berubah ketika mengalami transformasi matriks linear $A$, melainkan hanya diskalakan sebesar faktor $\\lambda$ (nilai eigen).
+
+---
+
+#### 1. Persamaan Karakteristik:
+$$Av = \\lambda v \\iff (A - \\lambda I)v = 0$$
+
+Karena $v \\neq 0$, maka determinan matriks transformasinya harus nol:
+$$\\det(A - \\lambda I) = 0$$
+
+#### 2. Contoh Perhitungan Matriks $2 \\times 2$:
+Misalkan $A = \\begin{pmatrix} 4 & 1 \\\\ 2 & 3 \\end{pmatrix}$:
+$$\\det\\begin{pmatrix} 4-\\lambda & 1 \\\\ 2 & 3-\\lambda \\end{pmatrix} = (4-\\lambda)(3-\\lambda) - 2 = \\lambda^2 - 7\\lambda + 10 = 0$$
+Faktorisasi kuadrat: $(\\lambda - 5)(\\lambda - 2) = 0$, sehingga nilai eigen:
+$$\\lambda_1 = 5, \\quad \\lambda_2 = 2$$
+
+---
+
+#### 3. Aplikasi di Dunia Nyata:
+1. **Algoritma Google PageRank:** Menentukan ranking miliaran halaman web di internet menggunakan vektor eigen dominan matriks transisi probabilitas tautan web.
+2. **Kestabilan Struktur & Jembatan:** Mencegah keruntuhan gedung dan jembatan akibat resonansi frekuensi getaran alami (seperti tragedi Jembatan Tacoma Narrows).
+3. **Mekanika Kuantum:** Keadaan energi terkuantisasi elektron dihitung sebagai nilai eigen operator Hamiltonian $\\hat{H}\\psi = E\\psi$.
+
+> [!NOTE]
+> **Catatan Pendalaman Konsep dari Matrix AI:**
+> Nilai eigen menghubungkan langsung aljabar linear dengan pemfaktoran persamaan kuadrat yang sedang kita pelajari di EPE.
+> Tautan pengayaan visual:
+> - [Visualisasi Vektor Eigen - 3Blue1Brown Chapter 14](https://www.youtube.com/watch?v=PFDu9oVAE-g)
+> - [Eigenvalues and Eigenvectors - Khan Academy](https://www.khanacademy.org/math/linear-algebra)`;
+    }
+
+    // 22d. Matriks & Operasi Aljabar Linier
     if (
       q.includes("matriks") ||
       q.includes("determinan matriks") ||
@@ -2851,7 +3002,7 @@ Ada persamaan atau soal logaritma yang ingin kamu diskusikan bersama Matrix?`;
     ) {
       return `### 🔲 Aljabar Linier: Matriks, Determinan, & Invers
 
-Matriks adalah susunan skalar dalam baris dan kolom yang merepresentasikan transformasi linear.
+Matriks adalah susunan skalar dalam baris dan kolom yang merepresentasikan transformasi linear di dalam ruang vektor.
 
 ---
 
@@ -2870,16 +3021,22 @@ Misalkan matriks $A = \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$:
 ---
 
 #### 2. Perkalian Dua Matriks ($2 \\times 2$):
-$$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} \\begin{pmatrix} e & f \\\\ g & h \\end{pmatrix} = \\begin{pmatrix} ae + bg & af + bh \\\\ ce + dg & cf + dh \\end{pmatrix}$$
-*(Kaidah: Baris matriks pertama dikalikan kolom matriks kedua).*
+$$\\begin{pmatrix} a_{11} & a_{12} \\\\ a_{21} & a_{22} \\end{pmatrix} \\begin{pmatrix} b_{11} & b_{12} \\\\ b_{21} & b_{22} \\end{pmatrix} = \\begin{pmatrix} a_{11}b_{11} + a_{12}b_{21} & a_{11}b_{12} + a_{12}b_{22} \\\\ a_{21}b_{11} + a_{22}b_{21} & a_{21}b_{12} + a_{22}b_{22} \\end{pmatrix}$$
+*(Kaidah: Baris matriks pertama dikalikan kolom matriks kedua; perkalian matriks tidak bersifat komutatif $AB \\neq BA$).*
 
 ---
 
 #### 3. Determinan Matriks $3 \\times 3$ (Metode Sarrus):
-Untuk $M = \\begin{pmatrix} a & b & c \\\\ d & e & f \\\\ g & h & i \\end{pmatrix}$:
+Untuk matriks $M = \\begin{pmatrix} a & b & c \\\\ d & e & f \\\\ g & h & i \\end{pmatrix}$:
 $$\\det(M) = (aei + bfg + cdh) - (ceg + afh + bdi)$$
 
-Ada operasi matriks tertentu yang ingin kamu hitung bersama?`;
+> [!NOTE]
+> **Catatan Edukatif Matrix AI:**
+> Invers matriks digunakan untuk menyelesaikan sistem persamaan linear multivariabel secara serentak $A\\mathbf{x} = \\mathbf{b} \\implies \\mathbf{x} = A^{-1}\\mathbf{b}$.
+> - [Eksplorasi Matriks & Vektor - Khan Academy](https://www.khanacademy.org/math/linear-algebra)
+> - [Visualisasi Esensi Matriks - 3Blue1Brown](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)
+
+Ada operasi atau soal matriks tertentu yang ingin kamu bahas bersama?`;
     }
 
     return null;
@@ -3280,23 +3437,41 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
   renderSafeMarkdownAndMath(rawText) {
     if (!rawText) return "";
 
+    const rawMathExpressions = {};
     const mathPlaceholders = [];
 
     const stashMath = (expr, isDisplay) => {
-      const placeholder = `@@@EPEMATHTOKEN${mathPlaceholders.length}@@@`;
+      if (!expr || !expr.trim()) return "";
+
+      // 1. Defensively unpack any nested EPEMATHTOKEN back to raw LaTeX strings
+      // This guarantees KaTeX NEVER receives placeholder tokens, completely preventing token leak into rendered spans!
+      let fullExpr = expr.trim();
+      let loopCount = 0;
+      while (/(?:@@@|___|%%)?EPEMATHTOKEN(\d+)(?:@@@|___|%%)?/.test(fullExpr) && loopCount < 10) {
+        fullExpr = fullExpr.replace(/(?:@@@|___|%%)?EPEMATHTOKEN(\d+)(?:@@@|___|%%)?/g, (match, idx) => {
+          const id = parseInt(idx, 10);
+          return rawMathExpressions[id] !== undefined ? rawMathExpressions[id] : "";
+        });
+        loopCount++;
+      }
+
+      const tokenIndex = mathPlaceholders.length;
+      rawMathExpressions[tokenIndex] = fullExpr;
+      const placeholder = `@@@EPEMATHTOKEN${tokenIndex}@@@`;
+
       let rendered = "";
       if (typeof window !== "undefined" && window.katex) {
         try {
-          rendered = window.katex.renderToString(expr.trim(), {
+          rendered = window.katex.renderToString(fullExpr, {
             displayMode: isDisplay,
             throwOnError: false
           });
         } catch (e) {
-          const safeExpr = expr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          const safeExpr = fullExpr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
           rendered = `<span class="${isDisplay ? "block my-2 text-center" : "inline"} font-mono text-cyan-300 font-semibold">${isDisplay ? "$$" : "$"}${safeExpr}${isDisplay ? "$$" : "$"}</span>`;
         }
       } else {
-        const safeExpr = expr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const safeExpr = fullExpr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         rendered = `<span class="${isDisplay ? "block my-2 text-center" : "inline"} font-mono text-cyan-300 font-semibold">${isDisplay ? "$$" : "$"}${safeExpr}${isDisplay ? "$$" : "$"}</span>`;
       }
       mathPlaceholders.push(rendered);
@@ -3314,37 +3489,45 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
       }
     }
 
-    // 1. Math Environments: \begin{aligned}...\end{aligned}, \begin{matrix}...\end{matrix}, etc.
-    text = text.replace(/\\begin\{([a-zA-Z*]+)\}([\s\S]*?)\\end\{\1\}/g, (match, env, content) => {
-      return stashMath(`\\begin{${env}}${content}\\end{${env}}`, true);
-    });
-
-    // 2. Display Math: $$...$$ OR \[...\] OR \\\[...\\\]
+    // 1. Display Math: $$...$$ OR \[...\] OR \\\[...\\\]
     text = text.replace(/(?:\$\$([\s\S]*?)\$\$|(?:\\\[|\\\\\[)([\s\S]*?)(?:\\\]|\\\\\]))/g, (match, expr1, expr2) => {
       const expr = expr1 !== undefined ? expr1 : expr2;
       if (!expr || !expr.trim()) return "";
       return stashMath(expr, true);
     });
 
+    // 2. Math Environments: \begin{aligned}...\end{aligned}, \begin{matrix}...\end{matrix}, etc.
+    // Captured with full environment syntax
+    text = text.replace(/\\begin\{([a-zA-Z*]+)\}([\s\S]*?)\\end\{\1\}/g, (match, env, content) => {
+      return stashMath(`\\begin{${env}}${content}\\end{${env}}`, true);
+    });
+
     // 3. Inline Math: $...$ OR \(...\) OR \\( ... \\)
-    // Supports formulas with inequalities like $\Delta H < 0$, $D > 0$, $r \le 1$
-    text = text.replace(/(?:\$([^\s\$\r\n](?:[^\$\r\n]*?[^\s\$\r\n])?)\$|(?:\\\(|\\\\\()([\s\S]*?)(?:\\\)|\\\\\)))/g, (match, expr1, expr2) => {
+    // Supports formulas with multiline matrices or inequalities, as long as it does not cross double newlines
+    text = text.replace(/(?:\$([^\$\r\n]*(?:\\begin\{[a-zA-Z*]+\}[\s\S]*?\\end\{[a-zA-Z*]+\}[^\$\r\n]*|[^\$\r\n]+))\$|(?:\\\(|\\\\\()([\s\S]*?)(?:\\\)|\\\\\)))/g, (match, expr1, expr2) => {
       const expr = expr1 !== undefined ? expr1 : expr2;
       if (!expr) return match;
       const trimmed = expr.trim();
       if (!trimmed) return match;
+      if (expr1 && expr1.includes("\n\n")) return match;
       return stashMath(trimmed, false);
     });
 
-    // 4. Format standard markdown (including our robust line-by-line table parser)
+    // 4. Format standard markdown (including our robust line-by-line table parser and interactive links)
     let html = this.formatMarkdown(text);
 
-    // 5. Re-inject safely pre-rendered KaTeX HTML back into placeholders
-    // Robust against @@@EPEMATHTOKEN...@@@, legacy ___EPEMATHTOKEN...___, or any markdown-styled wrappers (<em>, <strong>)
-    html = html.replace(/(?:<[a-zA-Z0-9]+[^>]*>)*(?:@@@|___|%%)?EPEMATHTOKEN(\d+)(?:@@@|___|%%)?(?:<\/[a-zA-Z0-9]+>)*/g, (match, idx) => {
-      const index = parseInt(idx, 10);
-      return mathPlaceholders[index] !== undefined ? mathPlaceholders[index] : match;
-    });
+    // 5. Re-inject safely pre-rendered KaTeX HTML back into placeholders (multi-pass while loop)
+    let pass = 0;
+    while (html.includes("EPEMATHTOKEN") && pass < 5) {
+      html = html.replace(/(?:<[a-zA-Z0-9]+[^>]*>)*(?:@@@|___|%%)?EPEMATHTOKEN(\d+)(?:@@@|___|%%)?(?:<\/[a-zA-Z0-9]+>)*/g, (match, idx) => {
+        const index = parseInt(idx, 10);
+        return mathPlaceholders[index] !== undefined ? mathPlaceholders[index] : "";
+      });
+      pass++;
+    }
+
+    // Defensive final scrub: never leak raw placeholder token text to user screen
+    html = html.replace(/(?:@@@|___|%%)?EPEMATHTOKEN\d+(?:@@@|___|%%)?/g, "");
 
     return html;
   }
@@ -3454,6 +3637,79 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
     return resultLines.join("\n");
   }
 
+  parseMarkdownQuotes(rawHtml) {
+    const lines = rawHtml.split(/\r?\n/);
+    const result = [];
+    let quoteLines = [];
+    let inQuote = false;
+
+    const flushQuote = () => {
+      if (quoteLines.length === 0) return;
+
+      // Check if first line is an alert callout tag: [!NOTE], [!CATATAN], [!TIP], [!PETUNJUK], [!IMPORTANT], [!PENTING], [!WARNING]
+      const firstLine = quoteLines[0].trim();
+      const calloutMatch = firstLine.match(/^\[!(NOTE|CATATAN|TIP|PETUNJUK|IMPORTANT|PENTING|WARNING|PERINGATAN)\][ \t]*(.*)$/i);
+
+      if (calloutMatch) {
+        const type = calloutMatch[1].toUpperCase();
+        const firstLineRest = calloutMatch[2].trim();
+        const contentLines = [];
+        if (firstLineRest) contentLines.push(firstLineRest);
+        for (let i = 1; i < quoteLines.length; i++) {
+          contentLines.push(quoteLines[i]);
+        }
+        const innerContent = contentLines.join("\n").trim();
+
+        let iconSvg = "";
+        let title = "";
+        let alertClass = "";
+
+        if (type === "NOTE" || type === "CATATAN") {
+          alertClass = "ai-callout-note";
+          title = "Catatan Edukatif Matrix AI:";
+          iconSvg = '<svg class="w-4 h-4 shrink-0 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+        } else if (type === "TIP" || type === "PETUNJUK") {
+          alertClass = "ai-callout-tip";
+          title = "Tips Pemahaman:";
+          iconSvg = '<svg class="w-4 h-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>';
+        } else {
+          alertClass = "ai-callout-important";
+          title = "Poin Kritis:";
+          iconSvg = '<svg class="w-4 h-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+        }
+
+        result.push(`<div class="${alertClass} my-3 p-3.5 rounded-xl border text-xs shadow-sm"><div class="ai-callout-header font-bold flex items-center gap-1.5 mb-1.5">${iconSvg}<span>${title}</span></div><div class="ai-callout-content space-y-1.5 leading-relaxed">${innerContent}</div></div>`);
+      } else {
+        // Standard blockquote - combine all consecutive lines into ONE single quote box
+        const innerContent = quoteLines.join("\n").trim();
+        result.push(`<blockquote class="ai-markdown-quote my-2.5 p-3 rounded-r-xl border-l-4 text-xs italic leading-relaxed">${innerContent}</blockquote>`);
+      }
+
+      quoteLines = [];
+      inQuote = false;
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const quoteMatch = line.match(/^[ \t]*(?:&gt;|>)[ \t]?(.*)$/);
+      if (quoteMatch) {
+        inQuote = true;
+        quoteLines.push(quoteMatch[1]);
+      } else {
+        if (inQuote) {
+          flushQuote();
+        }
+        result.push(line);
+      }
+    }
+
+    if (inQuote) {
+      flushQuote();
+    }
+
+    return result.join("\n");
+  }
+
   formatMarkdown(raw) {
     if (!raw) return "";
 
@@ -3464,32 +3720,32 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
 
     // 1. Code blocks (```lang ... ```)
     html = html.replace(/```([a-zA-Z0-9_\-]*)\r?\n([\s\S]*?)```/g, (match, lang, code) => {
-      return `<pre class="p-3 my-2.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs text-emerald-400 font-mono overflow-x-auto"><code>${code.trim()}</code></pre>`;
+      return `<pre class="ai-markdown-pre p-3 my-2.5 rounded-lg border text-xs font-mono overflow-x-auto"><code>${code.trim()}</code></pre>`;
     });
 
     // 2. Parse Markdown Tables with our robust line-by-line block parser
     html = this.parseMarkdownTables(html);
 
-    // 3. Horizontal Rules (---, ***, ___, etc.)
-    html = html.replace(/^[ \t]*(?:---|\*\*\*|___|- - -|\* \* \*|_ _ _|-{3,}|\*{3,}|_{3,})[ \t]*$/gim, '<hr class="my-3.5 border-t border-slate-700/70" />');
+    // 3. Multi-line Blockquotes & Alert Callouts (> [!NOTE], > [!TIP], etc.)
+    html = this.parseMarkdownQuotes(html);
 
-    // 4. Headers (h6 down to h1)
-    html = html.replace(/^[ \t]*######[ \t]+(.*$)/gim, '<h6 class="font-bold text-xs text-slate-400 mt-2.5 mb-1 tracking-wider uppercase">$1</h6>');
-    html = html.replace(/^[ \t]*#####[ \t]+(.*$)/gim, '<h6 class="font-bold text-xs text-cyan-300 mt-2.5 mb-1 tracking-wide uppercase">$1</h6>');
-    html = html.replace(/^[ \t]*####[ \t]+(.*$)/gim, '<h5 class="font-bold text-xs sm:text-sm text-blue-300 mt-3 mb-1">$1</h5>');
-    html = html.replace(/^[ \t]*###[ \t]+(.*$)/gim, '<h4 class="font-bold text-sm sm:text-base text-white mt-3.5 mb-1.5">$1</h4>');
-    html = html.replace(/^[ \t]*##[ \t]+(.*$)/gim, '<h3 class="font-bold text-base sm:text-lg text-white mt-4 mb-2 border-b border-slate-700/50 pb-1">$1</h3>');
-    html = html.replace(/^[ \t]*#[ \t]+(.*$)/gim, '<h2 class="font-extrabold text-lg sm:text-xl text-white mt-4 mb-2">$1</h2>');
+    // 4. Horizontal Rules (---, ***, ___, etc.)
+    html = html.replace(/^[ \t]*(?:---|\*\*\*|___|- - -|\* \* \*|_ _ _|-{3,}|\*{3,}|_{3,})[ \t]*$/gim, '<hr class="my-3.5 border-t ai-markdown-hr" />');
 
-    // 5. Blockquotes (handling both escaped &gt; and raw >)
-    html = html.replace(/^[ \t]*(?:&gt;|>)[ \t]?(.*$)/gim, '<blockquote class="p-2.5 border-l-2 border-blue-500 bg-slate-800/40 rounded-r text-xs italic my-2 text-slate-300">$1</blockquote>');
+    // 5. Headers (h6 down to h1)
+    html = html.replace(/^[ \t]*######[ \t]+(.*$)/gim, '<h6 class="font-bold text-xs ai-markdown-h6 mt-2.5 mb-1 tracking-wider uppercase">$1</h6>');
+    html = html.replace(/^[ \t]*#####[ \t]+(.*$)/gim, '<h6 class="font-bold text-xs ai-markdown-h5 mt-2.5 mb-1 tracking-wide uppercase">$1</h6>');
+    html = html.replace(/^[ \t]*####[ \t]+(.*$)/gim, '<h5 class="font-bold text-xs sm:text-sm ai-markdown-h4 mt-3 mb-1">$1</h5>');
+    html = html.replace(/^[ \t]*###[ \t]+(.*$)/gim, '<h4 class="font-bold text-sm sm:text-base ai-markdown-h3 mt-3.5 mb-1.5">$1</h4>');
+    html = html.replace(/^[ \t]*##[ \t]+(.*$)/gim, '<h3 class="font-bold text-base sm:text-lg ai-markdown-h2 mt-4 mb-2 border-b pb-1">$1</h3>');
+    html = html.replace(/^[ \t]*#[ \t]+(.*$)/gim, '<h2 class="font-extrabold text-lg sm:text-xl ai-markdown-h1 mt-4 mb-2">$1</h2>');
 
     // 6. Lists
     // Numbered lists: 1. 2. etc with hanging indent
     html = html.replace(/^([ \t]*)(\d+)\.[ \t]+(.*$)/gim, (match, indent, num, content) => {
       const isNested = indent && indent.length >= 2;
       const mlClass = isNested ? "ml-6" : "ml-2";
-      return `<div class="${mlClass} flex items-start gap-2 my-1 text-slate-300"><span class="font-bold text-cyan-400 select-none flex-shrink-0">${num}.</span><div class="flex-1">${content}</div></div>`;
+      return `<div class="${mlClass} ai-markdown-list-item flex items-start gap-2 my-1"><span class="font-bold ai-markdown-list-num select-none flex-shrink-0">${num}.</span><div class="flex-1">${content}</div></div>`;
     });
 
     // Bullet points: - or * or + with hanging indent
@@ -3497,24 +3753,33 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
       const isNested = indent && indent.length >= 2;
       const mlClass = isNested ? "ml-6" : "ml-2";
       const bulletSymbol = isNested ? "◦" : "•";
-      const bulletColor = isNested ? "text-cyan-400" : "text-blue-400";
-      return `<div class="${mlClass} flex items-start gap-2 my-0.5 text-slate-300"><span class="${bulletColor} select-none flex-shrink-0 text-sm leading-tight">${bulletSymbol}</span><div class="flex-1">${content}</div></div>`;
+      return `<div class="${mlClass} ai-markdown-list-item flex items-start gap-2 my-0.5"><span class="ai-markdown-bullet select-none flex-shrink-0 text-sm leading-tight">${bulletSymbol}</span><div class="flex-1">${content}</div></div>`;
     });
 
-    // 7. Bold & Italic & Strikethrough
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
-    html = html.replace(/__(.*?)__/g, '<strong class="font-bold text-white">$1</strong>');
-    html = html.replace(/\*(.*?)\*/g, '<em class="italic text-slate-200">$1</em>');
-    html = html.replace(/_([^_]+)_/g, '<em class="italic text-slate-200">$1</em>');
-    html = html.replace(/~~(.*?)~~/g, '<del class="line-through text-slate-400">$1</del>');
+    // 7. Interactive Markdown Hyperlinks [Anchor Text](https://url)
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)\<\>]+)\)/g, (match, text, url) => {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-chat-link font-semibold inline-flex items-center gap-1 transition-colors group"><span>${text}</span><svg class="w-3 h-3 inline shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>`;
+    });
 
-    // 8. Inline code: `code`
-    html = html.replace(/`([^`\n]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700/70 text-cyan-300 font-mono text-[11px]">$1</code>');
+    // Autolink bare URLs (not already preceded by href=" or src=" or inside a tag)
+    html = html.replace(/(^|[\s>\(])(https?:\/\/[^\s<>\)]+)/g, (match, prefix, url) => {
+      return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-chat-link font-semibold inline-flex items-center gap-1 transition-colors"><span>${url}</span><svg class="w-3 h-3 inline shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>`;
+    });
 
-    // 9. Convert line breaks
+    // 8. Bold & Italic & Strikethrough (semantic classes for theme adaptability)
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold ai-markdown-bold">$1</strong>');
+    html = html.replace(/__(.*?)__/g, '<strong class="font-bold ai-markdown-bold">$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em class="italic ai-markdown-italic">$1</em>');
+    html = html.replace(/_([^_]+)_/g, '<em class="italic ai-markdown-italic">$1</em>');
+    html = html.replace(/~~(.*?)~~/g, '<del class="line-through ai-markdown-del">$1</del>');
+
+    // 9. Inline code: `code`
+    html = html.replace(/`([^`\n]+)`/g, '<code class="ai-markdown-code px-1.5 py-0.5 rounded font-mono text-[11px]">$1</code>');
+
+    // 10. Convert line breaks
     html = html.replace(/\n/g, "<br/>");
 
-    // 10. Clean up redundant <br/> tags around block elements
+    // 11. Clean up redundant <br/> tags around block elements
     html = html.replace(/(<\/(?:h[1-6]|pre|table|thead|tbody|tr|th|td|div|blockquote)>|<hr[^>]*\/?>)\s*<br\s*\/?>/gi, "$1");
     html = html.replace(/<br\s*\/?>\s*(<(?:h[1-6]|pre|table|div|blockquote|hr)[^>]*>)/gi, "$1");
     html = html.replace(/(?:<br\s*\/?>\s*){3,}/gi, "<br/><br/>");

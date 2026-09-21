@@ -65,46 +65,46 @@ export class AssessmentUI {
       <div class="max-w-4xl mx-auto space-y-6 py-4">
         
         <!-- Header Banner Riset -->
-        <div class="card-clean p-6 bg-gradient-to-r from-slate-900 via-blue-950/40 to-slate-900 border border-slate-800">
+        <div class="card-clean p-6 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 dark:from-slate-900 dark:via-blue-950/40 dark:to-slate-900 border border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-2 mb-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 dark:border-blue-500/30">
               Instrumen Riset EPE V2.2 &bull; Form A
             </span>
-            <span class="text-xs text-slate-400">Baseline Measurement Layer</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400">Baseline Measurement Layer</span>
           </div>
-          <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight">
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             Pre-Test Persamaan Kuadrat
           </h2>
-          <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
             "Ukur kemampuan awalmu sebelum memulai perjalanan belajar."
           </p>
         </div>
 
         <!-- Kartu Panduan & Aturan Pengerjaan -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="card-clean p-4 space-y-1.5 border border-slate-800">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Jumlah Soal</span>
-            <div class="text-xl font-extrabold text-white">12 Butir</div>
+          <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Jumlah Soal</span>
+            <div class="text-xl font-extrabold text-slate-900 dark:text-white">12 Butir</div>
             <p class="text-[11px] text-slate-500">Mencakup 6 domain kompetensi D1 s.d. D6 secara seimbang.</p>
           </div>
 
-          <div class="card-clean p-4 space-y-1.5 border border-slate-800">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Estimasi Waktu</span>
-            <div class="text-xl font-extrabold text-blue-400">20 - 30 Menit</div>
+          <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estimasi Waktu</span>
+            <div class="text-xl font-extrabold text-blue-600 dark:text-blue-400">20 - 30 Menit</div>
             <p class="text-[11px] text-slate-500">Dilengkapi timer observasional untuk analisis durasi penelitian.</p>
           </div>
 
-          <div class="card-clean p-4 space-y-1.5 border border-slate-800">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Integritas Penilaian</span>
-            <div class="text-xl font-extrabold text-emerald-400">Non-Reward</div>
+          <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Integritas Penilaian</span>
+            <div class="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">Non-Reward</div>
             <p class="text-[11px] text-slate-500">Bebas dari tekanan Cubic/Avatar untuk menjaga kemurnian data.</p>
           </div>
         </div>
 
         <!-- Pedoman Pengerjaan Riset -->
-        <div class="card-clean p-5 space-y-3 text-xs leading-relaxed text-slate-300 border border-slate-800">
-          <h4 class="font-bold text-white text-sm flex items-center gap-2">
-            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="card-clean p-5 space-y-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <h4 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+            <svg class="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span>Protokol &amp; Aturan Pengerjaan:</span>
           </h4>
           <ul class="list-disc list-inside space-y-1.5 text-slate-400 text-[11px]">
@@ -119,14 +119,14 @@ export class AssessmentUI {
         ${
           latest
             ? `
-          <div class="card-clean p-4 bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+          <div class="card-clean p-4 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div class="space-y-0.5">
-              <span class="text-[10px] font-bold uppercase text-slate-400">Status Baseline Anda:</span>
-              <div class="text-xs font-semibold text-white">
-                Attempt Terakhir: <strong class="text-blue-400">${latest.score}%</strong> (${latest.correctCount}/${latest.totalQuestions} Benar) &bull; ${latest.timestamp}
+              <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Status Baseline Anda:</span>
+              <div class="text-xs font-semibold text-slate-900 dark:text-white">
+                Attempt Terakhir: <strong class="text-blue-600 dark:text-blue-400 font-bold">${latest.score}%</strong> (${latest.correctCount}/${latest.totalQuestions} Benar) &bull; ${latest.timestamp}
               </div>
             </div>
-            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold">
+            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold">
               ✓ Telah Selesai
             </span>
           </div>
@@ -241,49 +241,49 @@ export class AssessmentUI {
       <div class="max-w-4xl mx-auto space-y-6 py-4">
         
         <!-- Header Banner Riset -->
-        <div class="card-clean p-6 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800">
+        <div class="card-clean p-6 bg-gradient-to-r from-indigo-50/70 via-blue-50/40 to-slate-50 dark:from-slate-900 dark:via-indigo-950/40 dark:to-slate-900 border border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-2 mb-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 dark:border-indigo-500/30">
               Instrumen Riset EPE V2.2 &bull; Form B (Paralel)
             </span>
-            <span class="text-xs text-slate-400">Post-Intervention Outcome Measurement</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400">Post-Intervention Outcome Measurement</span>
           </div>
-          <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight">
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             Post-Test Persamaan Kuadrat
           </h2>
-          <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
             "Uji kembali pemahamanmu setelah menyelesaikan proses pembelajaran."
           </p>
         </div>
 
         <!-- Kartu Panduan & Struktur Paralel -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="card-clean p-4 space-y-1.5 border border-slate-800">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Struktur Pengukuran</span>
-            <div class="text-xl font-extrabold text-white">12 Butir Paralel</div>
+          <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Struktur Pengukuran</span>
+            <div class="text-xl font-extrabold text-slate-900 dark:text-white">12 Butir Paralel</div>
             <p class="text-[11px] text-slate-500">Struktur kompetensi setara dengan Form A tanpa duplikasi soal.</p>
           </div>
 
-          <div class="card-clean p-4 space-y-1.5 border border-slate-800">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Estimasi Waktu</span>
-            <div class="text-xl font-extrabold text-indigo-400">20 - 30 Menit</div>
+          <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estimasi Waktu</span>
+            <div class="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">20 - 30 Menit</div>
             <p class="text-[11px] text-slate-500">Kondisi pengukuran terstandar dan bebas adaptivitas butir.</p>
           </div>
 
-          <div class="card-clean p-4 space-y-1.5 border border-slate-800">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Integritas Pengukuran</span>
-            <div class="text-xl font-extrabold text-teal-400">Comparable</div>
+          <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Integritas Pengukuran</span>
+            <div class="text-xl font-extrabold text-teal-600 dark:text-teal-400">Comparable</div>
             <p class="text-[11px] text-slate-500">Siap dibandingkan langsung dengan skor baseline Pre-Test.</p>
           </div>
         </div>
 
         <!-- Pedoman Pengerjaan -->
-        <div class="card-clean p-5 space-y-3 text-xs leading-relaxed text-slate-300 border border-slate-800">
-          <h4 class="font-bold text-white text-sm flex items-center gap-2">
-            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="card-clean p-5 space-y-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <h4 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+            <svg class="w-4 h-4 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span>Protokol Post-Test:</span>
           </h4>
-          <ul class="list-disc list-inside space-y-1.5 text-slate-400 text-[11px]">
+          <ul class="list-disc list-inside space-y-1.5 text-slate-600 dark:text-slate-400 text-[11px]">
             <li>Tidak ada petunjuk jawaban atau pembimbingan langkah selama tes berlangsung.</li>
             <li>Kerjakan secara mandiri dengan teliti untuk mengukur retensi konsep aljabar Anda.</li>
             <li>Hasil Post-Test akan otomatis dipetakan ke profil Before vs After di Mode Riset.</li>
@@ -294,14 +294,14 @@ export class AssessmentUI {
         ${
           latest
             ? `
-          <div class="card-clean p-4 bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+          <div class="card-clean p-4 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div class="space-y-0.5">
-              <span class="text-[10px] font-bold uppercase text-slate-400">Skor Evaluasi Terakhir:</span>
-              <div class="text-xs font-semibold text-white">
-                Attempt: <strong class="text-indigo-400">${latest.score}%</strong> (${latest.correctCount}/${latest.totalQuestions} Benar) &bull; ${latest.timestamp}
+              <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Skor Evaluasi Terakhir:</span>
+              <div class="text-xs font-semibold text-slate-900 dark:text-white">
+                Attempt: <strong class="text-indigo-600 dark:text-indigo-400 font-bold">${latest.score}%</strong> (${latest.correctCount}/${latest.totalQuestions} Benar) &bull; ${latest.timestamp}
               </div>
             </div>
-            <span class="px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20 text-xs font-bold">
+            <span class="px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 text-xs font-bold">
               ✓ Selesai
             </span>
           </div>
@@ -390,23 +390,23 @@ export class AssessmentUI {
       <div class="max-w-4xl mx-auto space-y-4 py-2 select-none">
         
         <!-- Header Assessment Bar -->
-        <div class="card-clean p-4 bg-slate-900/90 border border-slate-800 flex items-center justify-between flex-wrap gap-3">
+        <div class="card-clean p-4 bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-3">
           <div class="flex items-center gap-3">
-            <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+            <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 dark:border-blue-500/30">
               ${testTitle}
             </span>
-            <span class="text-xs text-slate-300 font-semibold">
+            <span class="text-xs text-slate-700 dark:text-slate-300 font-semibold">
               Soal ${this.currentIndex + 1} dari ${totalQ}
             </span>
           </div>
 
           <div class="flex items-center gap-4">
-            <div class="flex items-center gap-1.5 text-xs font-mono text-slate-300 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
-              <span class="text-blue-400">⏱️</span>
+            <div class="flex items-center gap-1.5 text-xs font-mono text-slate-800 dark:text-slate-300 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
+              <span class="text-blue-500 dark:text-blue-400">⏱️</span>
               <span id="assessment-timer-display">00:00</span>
             </div>
 
-            <button id="btn-cancel-test" class="text-xs text-slate-400 hover:text-rose-400 transition-colors">
+            <button id="btn-cancel-test" class="text-xs font-medium text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 transition-colors">
               Batal
             </button>
           </div>
@@ -417,34 +417,34 @@ export class AssessmentUI {
           
           <!-- Question Content Card (9 Kolom) -->
           <div class="lg:col-span-9 space-y-4">
-            <div class="card-clean p-6 bg-slate-900 border border-slate-800 space-y-5">
+            <div class="card-clean p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5">
               
               <!-- Badges & Domain -->
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-600/20 text-blue-300 border border-blue-500/30">
+                  <span class="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase bg-blue-500/10 dark:bg-blue-600/20 text-blue-600 dark:text-blue-300 border border-blue-500/20 dark:border-blue-500/30">
                     ${q.domain} &bull; ${q.domainName}
                   </span>
-                  <span class="text-[10px] font-mono text-slate-400 font-bold">${q.competencyId}</span>
+                  <span class="text-xs font-mono text-slate-500 dark:text-slate-400 font-bold">${q.competencyId}</span>
                 </div>
 
-                <label class="flex items-center gap-1.5 text-xs text-amber-400 cursor-pointer">
-                  <input type="checkbox" id="chk-flag-question" ${userAns.flagged ? "checked" : ""} class="rounded border-slate-700 bg-slate-800 text-amber-500" />
+                <label class="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-semibold cursor-pointer">
+                  <input type="checkbox" id="chk-flag-question" ${userAns.flagged ? "checked" : ""} class="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-amber-500" />
                   <span>Tandai Ragu-ragu</span>
                 </label>
               </div>
 
-              <!-- Question Title & Prompt -->
+              <!-- Question Title & Prompt (High Contrast on Both Light & Dark) -->
               <div class="space-y-2">
-                <h4 class="text-sm font-bold text-white">${q.title}</h4>
-                <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">${q.prompt}</p>
+                <h4 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight">${q.title}</h4>
+                <p class="text-sm sm:text-[15px] text-slate-800 dark:text-slate-200 font-medium leading-relaxed">${q.prompt}</p>
               </div>
 
               <!-- LaTeX Formula Display (If available) -->
               ${
                 q.latex
                   ? `
-                <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-center font-serif text-blue-300 text-sm sm:text-base overflow-x-auto assessment-latex-box" data-latex="${q.latex}" data-display="true">
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-center font-serif text-slate-900 dark:text-blue-300 text-sm sm:text-base overflow-x-auto assessment-latex-box shadow-xs" data-latex="${q.latex}" data-display="true">
                   ${this.formatFormulaHTML(q.latex, true)}
                 </div>
               `
@@ -457,8 +457,8 @@ export class AssessmentUI {
                   .map((opt) => {
                     const isSelected = userAns.answer === opt.key;
                     const activeBorder = isSelected
-                      ? "border-blue-500 bg-blue-950/30 ring-1 ring-blue-500/50"
-                      : "border-slate-800 hover:border-slate-700 bg-slate-900/60";
+                      ? "border-blue-500 bg-blue-50/80 dark:bg-blue-950/30 ring-2 ring-blue-500/50 shadow-xs"
+                      : "border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-slate-700 bg-slate-50/70 dark:bg-slate-900/60 hover:bg-white dark:hover:bg-slate-900/90";
 
                     return `
                     <label class="opt-label flex items-start gap-3 p-3.5 rounded-xl border ${activeBorder} transition-all cursor-pointer group">
@@ -468,16 +468,16 @@ export class AssessmentUI {
                         value="${opt.key}" 
                         data-errortype="${opt.errorType}"
                         ${isSelected ? "checked" : ""} 
-                        class="mt-0.5 text-blue-500 focus:ring-0 bg-slate-800 border-slate-700 cursor-pointer" 
+                        class="mt-0.5 text-blue-600 dark:text-blue-500 focus:ring-0 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 cursor-pointer" 
                       />
                       <div class="flex-1 text-xs sm:text-sm">
                         <div class="flex items-center gap-2.5">
                           <span class="w-6 h-6 rounded-md ${
-                            isSelected ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300"
+                            isSelected ? "bg-blue-600 text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold"
                           } flex items-center justify-center font-bold text-xs font-mono flex-shrink-0">
                             ${opt.key}
                           </span>
-                          <div class="text-slate-200 group-hover:text-white font-medium assessment-opt-display" data-latex="${opt.latex || ""}" data-text="${opt.text}">
+                          <div class="text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-white font-medium assessment-opt-display" data-latex="${opt.latex || ""}" data-text="${opt.text}">
                             ${this.renderOptionContent(opt)}
                           </div>
                         </div>
@@ -498,14 +498,14 @@ export class AssessmentUI {
                 ← Sebelumnya
               </button>
 
-              <div class="text-[11px] text-slate-400">
-                Terjawab: <strong class="text-white">${answeredCount}</strong> / ${totalQ}
+              <div class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                Terjawab: <strong class="text-slate-900 dark:text-white font-bold">${answeredCount}</strong> / ${totalQ}
               </div>
 
               ${
                 this.currentIndex === totalQ - 1
                   ? `
-                <button id="btn-submit-assessment" class="btn-primary text-xs px-5 py-2 font-bold bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-600/20">
+                <button id="btn-submit-assessment" class="btn-primary text-xs px-5 py-2 font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20">
                   Selesai &amp; Kirim Jawaban ✓
                 </button>
               `
@@ -520,10 +520,10 @@ export class AssessmentUI {
 
           <!-- Question Palette Navigator (3 Kolom) -->
           <div class="lg:col-span-3 space-y-4">
-            <div class="card-clean p-4 bg-slate-900 border border-slate-800 space-y-3">
-              <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-                <span class="text-xs font-bold text-white">Navigasi Butir</span>
-                <span class="text-[10px] text-slate-400 font-mono">${answeredCount}/${totalQ}</span>
+            <div class="card-clean p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                <span class="text-xs font-bold text-slate-900 dark:text-white">Navigasi Butir</span>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono font-bold">${answeredCount}/${totalQ}</span>
               </div>
 
               <!-- Question Grid (1 - 12) -->
@@ -535,10 +535,10 @@ export class AssessmentUI {
                     const isFlagged = ans && ans.flagged;
                     const isCurrent = idx === this.currentIndex;
 
-                    let btnClass = "bg-slate-950 text-slate-400 border-slate-800";
-                    if (isAnswered) btnClass = "bg-blue-600 text-white border-blue-500 font-bold";
-                    if (isFlagged) btnClass = "bg-amber-500 text-slate-950 border-amber-400 font-bold";
-                    if (isCurrent) btnClass += " ring-2 ring-cyan-400";
+                    let btnClass = "bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 font-bold";
+                    if (isAnswered) btnClass = "bg-blue-600 text-white border-blue-500 font-bold shadow-xs";
+                    if (isFlagged) btnClass = "bg-amber-500 text-white border-amber-400 font-bold shadow-xs";
+                    if (isCurrent) btnClass += " ring-2 ring-blue-500 dark:ring-cyan-400";
 
                     return `
                     <button data-jump-idx="${idx}" class="py-2 rounded-lg text-xs font-mono border transition-all hover:scale-105 ${btnClass}">
@@ -550,7 +550,7 @@ export class AssessmentUI {
               </div>
 
               <!-- Legend Navigator -->
-              <div class="space-y-1.5 pt-2 text-[10px] text-slate-400 border-t border-slate-800/80">
+              <div class="space-y-1.5 pt-2 text-[10px] text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800/80">
                 <div class="flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded bg-blue-600"></span>
                   <span>Sudah Terjawab</span>
@@ -560,14 +560,14 @@ export class AssessmentUI {
                   <span>Ragu-ragu</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded bg-slate-950 border border-slate-800"></span>
+                  <span class="w-2.5 h-2.5 rounded bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700"></span>
                   <span>Belum Dijawab</span>
                 </div>
               </div>
 
               <!-- Quick Submit Shortcut -->
               <div class="pt-2">
-                <button id="btn-quick-submit" class="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 font-semibold border border-slate-700 transition-colors">
+                <button id="btn-quick-submit" class="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs text-white font-bold border border-slate-700 transition-colors shadow-xs">
                   Akhiri Tes &amp; Kumpulkan
                 </button>
               </div>
@@ -904,41 +904,41 @@ export class AssessmentUI {
     const isPre = record.testType === "pretest";
 
     modal.innerHTML = `
-      <div class="card-clean max-w-lg w-full p-6 space-y-5 bg-slate-900 border border-slate-800 shadow-2xl animate-fade-in">
+      <div class="card-clean max-w-lg w-full p-6 space-y-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl animate-fade-in">
         
         <div class="text-center space-y-2">
-          <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-2xl mx-auto">
+          <div class="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-2xl mx-auto">
             ✓
           </div>
-          <h3 class="text-lg font-bold text-white">
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">
             ${isPre ? "Pre-Test Berhasil Diselesaikan" : "Post-Test Berhasil Diselesaikan"}
           </h3>
-          <p class="text-xs text-slate-400">
+          <p class="text-xs text-slate-600 dark:text-slate-400">
             Data evaluasi pengerjaan Anda telah direkam secara aman dalam basis data riset EPE V2.2.
           </p>
         </div>
 
         <!-- Ringkasan Hasil Observasional -->
-        <div class="grid grid-cols-3 gap-3 text-center bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+        <div class="grid grid-cols-3 gap-3 text-center bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
           <div>
-            <span class="text-[10px] uppercase font-bold text-slate-400 block">Skor Tes</span>
-            <span class="text-xl font-extrabold text-blue-400 font-mono">${record.score}%</span>
+            <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Skor Tes</span>
+            <span class="text-xl font-extrabold text-blue-600 dark:text-blue-400 font-mono">${record.score}%</span>
           </div>
 
           <div>
-            <span class="text-[10px] uppercase font-bold text-slate-400 block">Akurasi</span>
-            <span class="text-xl font-extrabold text-white font-mono">${record.correctCount}/${record.totalQuestions}</span>
+            <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Akurasi</span>
+            <span class="text-xl font-extrabold text-slate-900 dark:text-white font-mono">${record.correctCount}/${record.totalQuestions}</span>
           </div>
 
           <div>
-            <span class="text-[10px] uppercase font-bold text-slate-400 block">Durasi</span>
-            <span class="text-xl font-extrabold text-slate-300 font-mono">${mins}m ${secs}s</span>
+            <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Durasi</span>
+            <span class="text-xl font-extrabold text-slate-700 dark:text-slate-300 font-mono">${mins}m ${secs}s</span>
           </div>
         </div>
 
         <!-- Catatan Metodologis Riset -->
-        <div class="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 text-[11px] text-slate-400 leading-relaxed">
-          <strong>Catatan Penelitian:</strong> Penilaian ini murni sebagai instrumen pengukuran ilmiah dan tidak memengaruhi saldo koin Cubic maupun koleksi Learning Cubes Anda.
+        <div class="p-3 rounded-lg bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+          <strong class="text-slate-800 dark:text-slate-200">Catatan Penelitian:</strong> Penilaian ini murni sebagai instrumen pengukuran ilmiah dan tidak memengaruhi saldo koin Cubic maupun koleksi Learning Cubes Anda.
         </div>
 
         <!-- Tombol Kembali -->
