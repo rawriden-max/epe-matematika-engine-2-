@@ -7,9 +7,9 @@ Dikembangkan untuk mendukung penelitian:
 
 ---
 
-## 🌟 Fitur Utama EPE V2
+## Fitur Utama EPE V2
 
-### 1. 🧊 Sistem Gamifikasi 3D Learning Cubes (24 Collectible Blocks)
+### 1. Sistem Gamifikasi 3D Learning Cubes (24 Collectible Blocks)
 - **Monumen Isometrik Koleksi 24 Kubus**:
   - Menampilkan struktur 3D bertingkat (*Tier 0: 12 fondasi, Tier 1: 7 tengah, Tier 2: 4 atas, Tier 3: 1 mahkota capstone*).
   - Terinspirasi estetika balok kristal transparan dengan *neon top stud* dan pencahayaan lembut.
@@ -26,7 +26,7 @@ Dikembangkan untuk mendukung penelitian:
 
 ---
 
-### 2. 🎨 Radial Circular Color Theme Selector
+### 2. Radial Circular Color Theme Selector
 - Menu pemilih warna melingkar di navbar dengan animasi *spring scale-rotate-fade*.
 - 6 pilihan tema warna kurasi:
   1. **Electric Blue** (Default AI Research)
@@ -39,7 +39,7 @@ Dikembangkan untuk mendukung penelitian:
 
 ---
 
-### 3. 🔬 Mode Diagnostik Baku (Alur 3-Langkah Minimalis)
+### 3. Mode Diagnostik Baku (Alur 3-Langkah Minimalis)
 - **6 Domain Kompetensi ($D1$ s.d. $D6$)**:
   - **D1: Konsep Dasar (Q1 - Q4)** — Bentuk baku, identifikasi koefisien bertanda ($a, b, c$), konsep akar vs koefisien, uji diskriminan dasar.
   - **D2: Faktorisasi (Q5 - Q8)** — Pemfaktoran $a=1$, $a>1$, konstanta negatif, sifat perkalian nol.
@@ -57,7 +57,7 @@ Dikembangkan untuk mendukung penelitian:
 
 ---
 
-### 4. 📊 Dedicated Error Profile Page
+### 4. Dedicated Error Profile Page
 - Halaman visual khusus yang memetakan pola kelemahan siswa secara objektif.
 - Grafik sebaran taksonomi $E1 - E4$.
 - Indikator **Pola Dominan** (*e.g., E2 Prosedural*) & **Domain Paling Menantang** (*e.g., D3 Rumus ABC*).
@@ -65,11 +65,11 @@ Dikembangkan untuk mendukung penelitian:
 
 ---
 
-### 5. 📝 Mode Bank Soal & Latihan Ujian (Multimedia)
+### 5. Mode Bank Soal & Latihan Ujian (Multimedia)
 - **Input Soal Mandiri Guru & Siswa**:
-  - 🖼️ Lampiran Gambar Diagram (PNG, JPG, WebP) dengan Lightbox Zoom.
-  - 📁 Lampiran Dokumen Lembar Kerja (PDF, TXT, DOCX).
-  - 🎙️ Rekaman Suara Penjelasan Soal via Mikrofon Browser (WebM/WAV).
+  - Lampiran Gambar Diagram (PNG, JPG, WebP) dengan Lightbox Zoom.
+  - Lampiran Dokumen Lembar Kerja (PDF, TXT, DOCX).
+  - Rekaman Suara Penjelasan Soal via Mikrofon Browser (WebM/WAV).
   - Penulisan rumus matematika interaktif berbasis **KaTeX** ($\LaTeX$).
 - **Lembar Pengerjaan Siswa**:
   - Upload Foto Coretan Kertas langsung dari HP/kamera.
@@ -79,14 +79,14 @@ Dikembangkan untuk mendukung penelitian:
 
 ---
 
-### 6. 🏛️ Mode Riset & Guru (Research Mode Terpisah)
+### 6. Mode Riset & Guru (Research Mode Terpisah)
 - Memisahkan dashboard siswa dengan tampilan analitik penelitian saintifik.
 - Matriks distribusi $D1-D6 \times E1-E4$, tingkat keyakinan sistem, dan bukti analisis.
 - Sinkronisasi Cloud Database Supabase & Ekspor CSV Lokal.
 
 ---
 
-## 🚀 Panduan Menjalankan Aplikasi
+## Panduan Menjalankan Aplikasi
 
 ### Cara 1: Menjalankan secara Lokal
 - Jalankan file server ringan via PowerShell:
@@ -102,7 +102,7 @@ Dikembangkan untuk mendukung penelitian:
 
 ---
 
-## 📁 Struktur Berkas EPE V2
+## Struktur Berkas EPE V2
 
 ```
 epe-matematika/
