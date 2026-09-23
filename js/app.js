@@ -45,6 +45,14 @@ import { HandwritingStepReconstructor } from "./multimodal/handwritingStepRecons
 import { VisionProvider } from "./multimodal/visionProvider.js";
 import { QuestionDocument } from "./multimodal/questionDocument.js";
 
+// EPE Universal Assessment & Academic Integrity Modules
+import { QuestionBankUI } from "./ui/questionBankUI.js";
+import { IntegrityDashboardUI } from "./ui/integrityDashboardUI.js";
+import { AssessmentManager } from "./research/assessmentManager.js";
+import { SubjectRegistry } from "./engine/universal/subjectRegistry.js";
+import { integrityService } from "./services/integrityDetector.js";
+import { saveIntegritySessionToSupabase } from "./data/supabaseClient.js";
+
 
 class EpeAppV2 {
   constructor() {
@@ -90,6 +98,11 @@ class EpeAppV2 {
     this.errorProfileManager = null;
     this.transitionManager = null;
     this.avatarLab = null;
+
+    // Universal Question Bank & Academic Integrity
+    this.questionBankUI = null;
+    this.integrityDashboardUI = null;
+    this.activeResearchSubtab = "epe"; // 'epe' | 'qbank' | 'integrity'
 
     this.elements = {};
   }
@@ -190,6 +203,13 @@ class EpeAppV2 {
       this.initPerformanceMode();
     } catch (err) {
       console.warn("Peringatan inisialisasi Performance Mode:", err);
+    }
+
+    // 6e. Inisialisasi Universal Question Bank & Academic Integrity UI
+    try {
+      this.initUniversalModules();
+    } catch (err) {
+      console.warn("Peringatan inisialisasi Universal Modules:", err);
     }
 
     // 7. Binding Event Handlers
@@ -525,6 +545,16 @@ class EpeAppV2 {
     navButtons.forEach((btn) => btn?.classList.remove("active"));
     if (tabName !== "diagnostic") this.tornadoEngine?.pause();
 
+    // Simpan & tuntaskan sesi telemetri jika berpindah keluar dari tab Diagnostik Baku
+    if (this.activeTab === "diagnostic" && tabName !== "diagnostic") {
+      if (integrityService.isTracking && integrityService.currentSession?.testType === "diagnostic") {
+        const completedSession = integrityService.endSession();
+        if (completedSession) {
+          saveIntegritySessionToSupabase(completedSession);
+        }
+      }
+    }
+
     // Hide all sections
     const sections = [
       this.elements.sectionDashboard,
@@ -569,6 +599,20 @@ class EpeAppV2 {
         this.tornadoEngine?.updateCardStatuses();
       }, 50);
       this.renderRecentQuestions();
+
+      // Inisialisasi telemetri integritas non-invasif untuk Diagnostik Baku
+      if (!integrityService.isTracking) {
+        const studentName = ProfileManager.getStudentName() || "Siswa";
+        const studentId = studentName.toLowerCase().replace(/\s+/g, "_");
+        integrityService.startSession(
+          `diag_${Date.now()}`,
+          "diagnostic",
+          studentId,
+          studentName
+        );
+        const qIdx = this.questions.findIndex((item) => item.id === this.activeQuestionId);
+        integrityService.recordQuestionOpened(this.activeQuestionId, qIdx >= 0 ? qIdx : 0);
+      }
     } else if (tabName === "practice") {
       this.elements.tabBtnPractice?.classList.add("active");
       this.elements.sectionPractice?.classList.remove("hidden");
@@ -587,6 +631,11 @@ class EpeAppV2 {
       this.updateStatsAndHistory();
       if (this.elements.researchComparisonContainer) {
         ResearchAnalytics.renderResearchModeComparison(this.elements.researchComparisonContainer);
+      }
+      if (this.activeResearchSubtab === "qbank") {
+        this.questionBankUI?.render();
+      } else if (this.activeResearchSubtab === "integrity") {
+        this.integrityDashboardUI?.render();
       }
     }
 
@@ -615,6 +664,69 @@ class EpeAppV2 {
       this.switchTab("dashboard");
       NotificationToast.show("Mode Siswa Aktif.", "info");
     }
+  }
+
+  // =========================================================================
+  // UNIVERSAL ASSESSMENT & ACADEMIC INTEGRITY SUBTAB CONTROLLER
+  // =========================================================================
+  initUniversalModules() {
+    const qbankContainer = document.getElementById("container-universal-qbank");
+    const integrityContainer = document.getElementById("container-academic-integrity");
+
+    this.questionBankUI = new QuestionBankUI(qbankContainer || "container-universal-qbank", {
+      containerId: "container-universal-qbank",
+      onQuestionSaved: (q) => {
+        console.log("Question saved:", q?.id);
+        NotificationToast?.show?.(`Soal ${q?.id} berhasil disimpan ke Bank Soal!`, "success");
+      }
+    });
+
+    this.integrityDashboardUI = new IntegrityDashboardUI(integrityContainer || "container-academic-integrity", {
+      containerId: "container-academic-integrity"
+    });
+
+    const btnEpe = document.getElementById("subtab-btn-research-epe");
+    const btnQbank = document.getElementById("subtab-btn-research-qbank");
+    const btnIntegrity = document.getElementById("subtab-btn-research-integrity");
+
+    const containerEpe = document.getElementById("container-research-epe-view");
+    const containerQbank = document.getElementById("container-universal-qbank");
+    const containerIntegrity = document.getElementById("container-academic-integrity");
+
+    const setSubtab = (subtab) => {
+      this.activeResearchSubtab = subtab;
+      
+      const allButtons = [btnEpe, btnQbank, btnIntegrity];
+      allButtons.forEach((b) => {
+        if (!b) return;
+        b.classList.remove("active", "bg-white", "dark:bg-slate-700", "text-slate-900", "dark:text-white", "shadow-xs");
+        b.classList.add("text-slate-600", "dark:text-slate-400");
+      });
+
+      if (containerEpe) containerEpe.classList.add("hidden");
+      if (containerQbank) containerQbank.classList.add("hidden");
+      if (containerIntegrity) containerIntegrity.classList.add("hidden");
+
+      if (subtab === "epe") {
+        btnEpe?.classList.add("active", "bg-white", "dark:bg-slate-700", "text-slate-900", "dark:text-white", "shadow-xs");
+        btnEpe?.classList.remove("text-slate-600", "dark:text-slate-400");
+        if (containerEpe) containerEpe.classList.remove("hidden");
+      } else if (subtab === "qbank") {
+        btnQbank?.classList.add("active", "bg-white", "dark:bg-slate-700", "text-slate-900", "dark:text-white", "shadow-xs");
+        btnQbank?.classList.remove("text-slate-600", "dark:text-slate-400");
+        if (containerQbank) containerQbank.classList.remove("hidden");
+        this.questionBankUI?.render();
+      } else if (subtab === "integrity") {
+        btnIntegrity?.classList.add("active", "bg-white", "dark:bg-slate-700", "text-slate-900", "dark:text-white", "shadow-xs");
+        btnIntegrity?.classList.remove("text-slate-600", "dark:text-slate-400");
+        if (containerIntegrity) containerIntegrity.classList.remove("hidden");
+        this.integrityDashboardUI?.render();
+      }
+    };
+
+    btnEpe?.addEventListener("click", () => setSubtab("epe"));
+    btnQbank?.addEventListener("click", () => setSubtab("qbank"));
+    btnIntegrity?.addEventListener("click", () => setSubtab("integrity"));
   }
 
   // =========================================================================
@@ -1028,6 +1140,12 @@ class EpeAppV2 {
     this._addRecentQuestion(questionId);
     this.renderRecentQuestions();
     this.syncAiContext();
+
+    // Catat pembukaan butir soal ke telemetri integritas akademik
+    if (integrityService.isTracking) {
+      const qIdx = this.questions.findIndex((item) => item.id === questionId);
+      integrityService.recordQuestionOpened(questionId, qIdx >= 0 ? qIdx : 0);
+    }
   }
 
   loadPreset(presetId) {
@@ -1084,6 +1202,11 @@ class EpeAppV2 {
 
     if (stepRecon) {
       result.stepReconstruction = stepRecon;
+    }
+
+    // Catat perubahan jawaban siswa ke telemetri integritas akademik
+    if (integrityService.isTracking) {
+      integrityService.recordAnswerChanged(this.activeQuestionId, studentAnswer || studentSteps, null);
     }
 
     this.latestResult = result;

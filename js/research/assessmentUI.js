@@ -12,6 +12,7 @@
 
 import { FORM_A_PRETEST, FORM_B_POSTTEST } from "./assessmentForms.js";
 import { AssessmentStore } from "./assessmentStore.js";
+import { integrityService } from "../services/integrityDetector.js";
 
 export class AssessmentUI {
   constructor(appInstance) {
@@ -353,6 +354,15 @@ export class AssessmentUI {
     this.startTime = Date.now();
     this.isTestRunning = true;
 
+    // Inisialisasi telemetri integritas akademik non-invasif
+    const activeStudent = AssessmentStore.getActiveStudent();
+    integrityService.startSession(
+      `asm_${testType}_${Date.now()}`,
+      testType,
+      activeStudent.studentId,
+      activeStudent.studentName
+    );
+
     if (this.timerInterval) clearInterval(this.timerInterval);
     this.timerInterval = setInterval(() => {
       this.elapsedSeconds++;
@@ -381,6 +391,10 @@ export class AssessmentUI {
     if (!container || !this.isTestRunning) return;
 
     const q = this.questions[this.currentIndex];
+    
+    // Rekam peristiwa butir soal dibuka ke audit telemetri
+    integrityService.recordQuestionOpened(q.id, this.currentIndex);
+
     const userAns = this.userAnswers[q.id] || { answer: null, flagged: false };
     const testTitle = this.activeTestType === "pretest" ? "Pre-Test (Form A)" : "Post-Test (Form B)";
     const totalQ = this.questions.length;
@@ -428,10 +442,14 @@ export class AssessmentUI {
                   <span class="text-xs font-mono text-slate-500 dark:text-slate-400 font-bold">${q.competencyId}</span>
                 </div>
 
-                <label class="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-semibold cursor-pointer">
-                  <input type="checkbox" id="chk-flag-question" ${userAns.flagged ? "checked" : ""} class="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-amber-500" />
+                <button type="button" id="btn-toggle-flag" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold cursor-pointer select-none shadow-xs ${
+                  userAns.flagged
+                    ? "bg-amber-400 dark:bg-amber-500 text-slate-950 border-amber-300 dark:border-amber-400 ring-2 ring-amber-400/40"
+                    : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                }">
+                  <input type="checkbox" id="chk-flag-question" ${userAns.flagged ? "checked" : ""} class="pointer-events-none rounded text-amber-500 bg-white dark:bg-slate-800 border-amber-400 w-3.5 h-3.5" tabindex="-1" />
                   <span>Tandai Ragu-ragu</span>
-                </label>
+                </button>
               </div>
 
               <!-- Question Title & Prompt (High Contrast on Both Light & Dark) -->
@@ -532,16 +550,29 @@ export class AssessmentUI {
                   .map((item, idx) => {
                     const ans = this.userAnswers[item.id];
                     const isAnswered = ans && ans.answer !== null;
-                    const isFlagged = ans && ans.flagged;
+                    const isFlagged = ans && Boolean(ans.flagged);
                     const isCurrent = idx === this.currentIndex;
 
-                    let btnClass = "bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 font-bold";
-                    if (isAnswered) btnClass = "bg-blue-600 text-white border-blue-500 font-bold shadow-xs";
-                    if (isFlagged) btnClass = "bg-amber-500 text-white border-amber-400 font-bold shadow-xs";
-                    if (isCurrent) btnClass += " ring-2 ring-blue-500 dark:ring-cyan-400";
+                    let btnClass = "";
+                    if (isFlagged) {
+                      // Prioritas Ragu-ragu: Warna Kuning Menyala (Amber/Yellow) berbobot tebal
+                      btnClass = "bg-amber-400 dark:bg-amber-500 text-slate-950 dark:text-slate-950 border-amber-300 dark:border-amber-400 font-extrabold shadow-md";
+                    } else if (isAnswered) {
+                      // Biru: Sudah Terjawab
+                      btnClass = "bg-blue-600 text-white border-blue-500 font-bold shadow-xs";
+                    } else {
+                      // Abu-abu: Belum Terjawab
+                      btnClass = "bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 font-bold";
+                    }
+
+                    if (isCurrent) {
+                      btnClass += isFlagged
+                        ? " ring-2 ring-amber-300 dark:ring-yellow-300 scale-105"
+                        : " ring-2 ring-blue-500 dark:ring-cyan-400 scale-105";
+                    }
 
                     return `
-                    <button data-jump-idx="${idx}" class="py-2 rounded-lg text-xs font-mono border transition-all hover:scale-105 ${btnClass}">
+                    <button data-jump-idx="${idx}" class="py-2 rounded-lg text-xs font-mono border transition-all ${btnClass}">
                       ${idx + 1}
                     </button>
                   `;
@@ -761,14 +792,32 @@ export class AssessmentUI {
       radio.addEventListener("change", (e) => {
         const val = e.target.value;
         const errType = e.target.getAttribute("data-errortype");
+        const prevVal = this.userAnswers[q.id]?.answer || null;
         this.userAnswers[q.id].answer = val;
         this.userAnswers[q.id].selectedErrorType = errType;
+        integrityService.recordAnswerChanged(q.id, val, prevVal);
         this.renderActiveTestScreen(container);
       });
     });
 
-    // Flag checkbox
+    // Flag toggle button (Ragu-ragu)
+    const toggleFlagBtn = container.querySelector("#btn-toggle-flag");
+    if (toggleFlagBtn) {
+      toggleFlagBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!this.userAnswers[q.id]) {
+          this.userAnswers[q.id] = { answer: null, selectedErrorType: null, timeSpent: 0, flagged: false };
+        }
+        this.userAnswers[q.id].flagged = !this.userAnswers[q.id].flagged;
+        this.renderActiveTestScreen(container);
+      });
+    }
+
     container.querySelector("#chk-flag-question")?.addEventListener("change", (e) => {
+      if (!this.userAnswers[q.id]) {
+        this.userAnswers[q.id] = { answer: null, selectedErrorType: null, timeSpent: 0, flagged: false };
+      }
       this.userAnswers[q.id].flagged = e.target.checked;
       this.renderActiveTestScreen(container);
     });
@@ -812,6 +861,7 @@ export class AssessmentUI {
     container.querySelector("#btn-cancel-test")?.addEventListener("click", () => {
       const confirmCancel = confirm("Yakin ingin membatalkan tes? Seluruh progres saat ini tidak akan disimpan.");
       if (confirmCancel) {
+        integrityService.endSession();
         this.endTestSession();
         if (this.activeTestType === "pretest") {
           this.renderPreTestView();
@@ -846,6 +896,7 @@ export class AssessmentUI {
    */
   async submitAssessment() {
     if (this.timerInterval) clearInterval(this.timerInterval);
+    const integritySession = integrityService.endSession();
 
     const responses = this.questions.map((q) => {
       const u = this.userAnswers[q.id] || {};
@@ -868,7 +919,10 @@ export class AssessmentUI {
       studentId: student.studentId,
       studentName: student.studentName,
       durationSeconds: this.elapsedSeconds,
-      responses: responses
+      responses: responses,
+      integritySessionId: integritySession?.sessionId || null,
+      integritySignals: integritySession?.signals || null,
+      integritySession: integritySession
     };
 
     const savedRecord = await AssessmentStore.recordAttempt(payload);

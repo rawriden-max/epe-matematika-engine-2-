@@ -8,7 +8,7 @@
  * 4. Sinkronisasi otomatis ke Supabase Cloud (jika online/terkoneksi).
  */
 
-import { savePreTestToSupabase, savePostTestToSupabase } from "../data/supabaseClient.js";
+import { savePreTestToSupabase, savePostTestToSupabase, saveIntegritySessionToSupabase } from "../data/supabaseClient.js";
 
 const PRETEST_STORAGE_KEY = "epe_pretest_attempts";
 const POSTTEST_STORAGE_KEY = "epe_posttest_attempts";
@@ -127,7 +127,9 @@ export class AssessmentStore {
       score: score,
       errorDistribution: errorDistribution,
       domainAccuracy: domainRates,
-      responses: processedResponses
+      responses: processedResponses,
+      integritySessionId: attemptData.integritySessionId || null,
+      integritySignals: attemptData.integritySignals || null
     };
 
     // Simpan ke LocalStorage (Imutabel: array push)
@@ -148,6 +150,9 @@ export class AssessmentStore {
         await savePreTestToSupabase(newRecord);
       } else {
         await savePostTestToSupabase(newRecord);
+      }
+      if (attemptData.integritySession) {
+        await saveIntegritySessionToSupabase(attemptData.integritySession);
       }
     } catch (cloudErr) {
       console.warn(`[Supabase Sync] ${testType} cloud backup pending:`, cloudErr);

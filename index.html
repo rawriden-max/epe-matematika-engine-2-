@@ -13,8 +13,12 @@
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
   <link rel="canonical" href="https://epe-matematika-engine-2.vercel.app/" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📐</text></svg>" />
+  <!-- EPE Error Pattern Engine Brand Favicon Suite -->
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=5.0" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png?v=5.0" />
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png?v=5.0" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=5.0" />
+  <link rel="shortcut icon" href="./favicon.ico?v=5.0" />
 
   <!-- Open Graph / Facebook / WhatsApp Preview -->
   <meta property="og:type" content="website" />
@@ -22,12 +26,14 @@
   <meta property="og:title" content="EPE Matematika - Error Pattern Engine & Diagnostik Kognitif AI" />
   <meta property="og:description" content="Platform evaluasi dan pembelajaran adaptif matematika berbasis kecerdasan buatan untuk analisis pola kesalahan siswa secara komprehensif." />
   <meta property="og:site_name" content="EPE Matematika" />
+  <meta property="og:image" content="./assets/logo.png" />
 
   <!-- Twitter Cards -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:url" content="https://epe-matematika-engine-2.vercel.app/" />
   <meta name="twitter:title" content="EPE Matematika - Error Pattern Engine" />
   <meta name="twitter:description" content="Platform riset & diagnostik kognitif pola kesalahan aljabar matematika berbantuan AI." />
+  <meta name="twitter:image" content="./assets/logo.png" />
 
   <!-- Schema.org JSON-LD Structured Data for Google Rich Results -->
   <script type="application/ld+json">
@@ -78,7 +84,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Custom Stylesheet (Design System Tokens & 3D Styling) with Cache Buster -->
-  <link rel="stylesheet" href="./css/style.css?v=3.0" />
+  <link rel="stylesheet" href="./css/style.css?v=3.1" />
 
   <style>
     /* Critical Inline Fallback Styles */
@@ -152,20 +158,20 @@
       <!-- Brand & Mode Switcher -->
       <div class="flex items-center justify-between w-full lg:w-auto gap-4">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-extrabold flex items-center justify-center text-sm shadow-md flex-shrink-0 tracking-tight">
-            EPE
+          <div class="relative w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/20 ring-1 ring-indigo-500/30 flex-shrink-0 group bg-[#011027] cursor-pointer">
+            <img src="./favicon-192x192.png?v=5.0" alt="Error Pattern Engine Logo" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300" />
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
-                Error Pattern Engine
+              <h1 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">
+                <span>Error Pattern Engine</span>
               </h1>
-              <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                V2
+              <span class="text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-gradient-to-r from-blue-500/10 to-indigo-500/10 text-blue-500 dark:text-cyan-400 border border-blue-500/20">
+                V2.5
               </span>
             </div>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">
-              Sistem Diagnostik &amp; Adaptive Learning Matematika
+              Sistem Diagnostik &amp; Adaptive Learning Terpadu
             </p>
           </div>
         </div>
@@ -1284,11 +1290,51 @@
       </div>
     </div>
 
+    <!-- SUB-NAVIGASI PORTAL MODE GURU (3 TAB SUITE RISET & AUTHORING) -->
+    <div class="flex items-center gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 shadow-xs max-w-full overflow-x-auto">
+      <button id="subtab-btn-research-epe" class="subtab-research-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs">
+        <svg class="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+          <line x1="2" y1="20" x2="22" y2="20"/>
+        </svg>
+        <span>Data Riset &amp; Komparasi EPE</span>
+      </button>
+      <button id="subtab-btn-research-qbank" class="subtab-research-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+        <svg class="w-4 h-4 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polygon points="12,2 2,7 12,12 22,7 12,2"/>
+          <polyline points="2,17 12,22 22,17"/>
+          <polyline points="2,12 12,17 22,12"/>
+        </svg>
+        <span>Bank Soal Universal</span>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-purple-500/15 text-purple-600 dark:text-purple-400 font-extrabold">All Subjects</span>
+      </button>
+      <button id="subtab-btn-research-integrity" class="subtab-research-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+        <svg class="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 2L3 6.5V11.5C3 16.5 6.8 21.2 12 22.5C17.2 21.2 21 16.5 21 11.5V6.5L12 2Z"/>
+          <circle cx="12" cy="11.5" r="2.5"/>
+          <path d="M12 7v2m0 5v2"/>
+        </svg>
+        <span>Integritas Akademik</span>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/15 text-amber-600 dark:text-amber-400 font-extrabold">Telemetry</span>
+      </button>
+    </div>
+
+    <!-- VIEW 1: DATA RISET & KOMPARASI EPE PERSAMAAN KUADRAT -->
+    <div id="container-research-epe-view" class="space-y-6">
+
     <!-- EPE V2.2: Research Dataset Export Suite (5 Varian CSV) -->
     <div class="card-clean p-4 bg-slate-900/90 border border-slate-800 space-y-3">
       <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-800">
-        <div class="flex items-center gap-2">
-          <span class="text-emerald-400 font-bold">📥</span>
+        <div class="flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-lg flex items-center justify-center bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </span>
           <div>
             <h4 class="text-xs font-bold text-white uppercase tracking-wider">Ekspor Dataset Penelitian Terstandarisasi</h4>
             <p class="text-[10px] text-slate-400">Unduh dataset terstruktur untuk analisis kuantitatif dan publikasi ilmiah</p>
@@ -1299,23 +1345,28 @@
 
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
         <button id="btn-export-pretest-csv" class="btn-secondary py-2 px-2.5 text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center justify-center gap-1.5 border border-blue-500/30">
-          <span>📄 Pre-Test CSV</span>
+          <svg class="w-3.5 h-3.5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>Pre-Test CSV</span>
         </button>
 
         <button id="btn-export-diag-csv" class="btn-secondary py-2 px-2.5 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center justify-center gap-1.5 border border-indigo-500/30">
-          <span>🔬 Diagnostik CSV</span>
+          <svg class="w-3.5 h-3.5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="3" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="21"/></svg>
+          <span>Diagnostik CSV</span>
         </button>
 
         <button id="btn-export-rem-csv" class="btn-secondary py-2 px-2.5 text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center justify-center gap-1.5 border border-amber-500/30">
-          <span>🛠️ Remediasi CSV</span>
+          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Remediasi CSV</span>
         </button>
 
         <button id="btn-export-posttest-csv" class="btn-secondary py-2 px-2.5 text-[11px] font-bold text-teal-400 hover:text-teal-300 flex items-center justify-center gap-1.5 border border-teal-500/30">
-          <span>🎯 Post-Test CSV</span>
+          <svg class="w-3.5 h-3.5 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          <span>Post-Test CSV</span>
         </button>
 
         <button id="btn-export-combined-csv" class="btn-primary py-2 px-2.5 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 col-span-2 sm:col-span-1">
-          <span>✨ Combined Dataset</span>
+          <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12,2 2,7 12,12 22,7 12,2"/><polyline points="2,17 12,22 22,17"/><polyline points="2,12 12,17 22,12"/></svg>
+          <span>Combined Dataset</span>
         </button>
       </div>
     </div>
@@ -1444,6 +1495,17 @@ Remediasi = -</pre>
         Belum ada riwayat diagnostik pengerjaan siswa.
       </div>
     </section>
+    </div> <!-- /#container-research-epe-view -->
+
+    <!-- VIEW 2: UNIVERSAL QUESTION BANK & ASSESSMENT AUTHORING -->
+    <div id="container-universal-qbank" class="space-y-6 hidden">
+      <!-- Rendered dynamically by QuestionBankUI -->
+    </div>
+
+    <!-- VIEW 3: ACADEMIC INTEGRITY MONITOR & AUDIT TELEMETRY -->
+    <div id="container-academic-integrity" class="space-y-6 hidden">
+      <!-- Rendered dynamically by IntegrityDashboardUI -->
+    </div>
 
   </main>
 

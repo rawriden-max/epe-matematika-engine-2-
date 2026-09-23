@@ -12,6 +12,7 @@
 import { AVATAR_CATEGORIES, COSMETIC_CATALOG, DEFAULT_AVATAR_CONFIG } from "./avatarCatalog.js";
 import { AvatarEngine } from "./avatarEngine.js";
 import { CubicWallet } from "../economy/cubicWallet.js";
+import { NotificationToast } from "../ui/notification.js";
 
 export class AvatarLab {
   constructor() {
@@ -91,7 +92,9 @@ export class AvatarLab {
         <!-- Header -->
         <div class="p-4 sm:px-6 py-3.5 border-b border-slate-800 flex items-center justify-between flex-shrink-0 bg-slate-950/50">
           <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center text-base">🧬</span>
+            <span class="w-8 h-8 rounded-lg bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </span>
             <div>
               <h3 class="text-sm font-bold text-white flex items-center gap-2">
                 Avatar Customization Lab
@@ -146,8 +149,9 @@ export class AvatarLab {
 
             <!-- Action Buttons -->
             <div class="w-full space-y-2 pt-2">
-              <button id="btn-save-avatar-config" class="btn-primary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20">
-                <span>💾</span> Simpan & Terapkan Avatar
+              <button id="btn-save-avatar-config" class="btn-primary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/20">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <span>Simpan & Terapkan Avatar</span>
               </button>
               <button id="btn-reset-avatar-config" class="btn-secondary w-full py-1.5 text-xs text-slate-400 hover:text-white">
                 Reset ke Konfigurasi Awal
@@ -203,8 +207,10 @@ export class AvatarLab {
       }
 
       if (unownedCategories.length > 0) {
-        alert(
-          `Item berikut belum Anda beli:\n- ${unownedCategories.join("\n- ")}\n\nItem yang belum dibeli tidak dapat disimpan dan telah dikembalikan ke model yang Anda gunakan sebelumnya.`
+        NotificationToast.show(
+          `Item yang belum dibeli (${unownedCategories.join(", ")}) tidak dapat disimpan dan dikembalikan ke model awal.`,
+          "warning",
+          4500
         );
         this.updatePreview();
         this.renderItemGrid();
@@ -383,7 +389,7 @@ export class AvatarLab {
     const defaultIds = Object.values(DEFAULT_AVATAR_CONFIG);
     const isOwned = (ownedIds && ownedIds.includes(itemId)) || defaultIds.includes(itemId);
     if (!isOwned) {
-      alert(`Item "${item.name}" belum Anda miliki! Silakan beli terlebih dahulu.`);
+      NotificationToast.show(`Item "${item.name}" belum Anda miliki! Silakan beli terlebih dahulu.`, "warning");
       return;
     }
 
@@ -392,6 +398,46 @@ export class AvatarLab {
     this.savedConfig = { ...saved };
     this.updatePreview();
     this.renderItemGrid();
+    NotificationToast.show(`Kosmetik "${item.name}" berhasil dipakai!`, "success");
+  }
+
+  showConfirmModal({ title, message, price, onConfirm }) {
+    if (!this.modalEl) return;
+    let confirmBox = document.getElementById("avatar-lab-confirm-overlay");
+    if (!confirmBox) {
+      confirmBox = document.createElement("div");
+      confirmBox.id = "avatar-lab-confirm-overlay";
+      confirmBox.className = "absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md rounded-2xl";
+      this.modalEl.querySelector(".card-clean")?.appendChild(confirmBox);
+    }
+    confirmBox.innerHTML = `
+      <div class="card-clean max-w-sm w-full p-5 space-y-4 border border-cyan-500/40 bg-slate-900 shadow-2xl rounded-xl text-center">
+        <div class="w-12 h-12 mx-auto rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white">${title}</h4>
+          <p class="text-xs text-slate-300 mt-1">${message}</p>
+        </div>
+        <div class="p-2 rounded-lg bg-slate-950 border border-slate-800 font-mono text-cyan-400 font-bold text-sm">
+          Biaya: ◆ ${price} Cubic
+        </div>
+        <div class="flex items-center justify-center gap-2 pt-1">
+          <button id="btn-cancel-lab-confirm" class="btn-secondary text-xs px-4 py-2 flex-1">Batal</button>
+          <button id="btn-agree-lab-confirm" class="btn-primary text-xs px-4 py-2 flex-1 font-bold">Beli & Pasang</button>
+        </div>
+      </div>
+    `;
+    confirmBox.classList.remove("hidden");
+
+    confirmBox.querySelector("#btn-cancel-lab-confirm")?.addEventListener("click", () => {
+      confirmBox.classList.add("hidden");
+    });
+
+    confirmBox.querySelector("#btn-agree-lab-confirm")?.addEventListener("click", () => {
+      confirmBox.classList.add("hidden");
+      if (typeof onConfirm === "function") onConfirm();
+    });
   }
 
   buyAndEquipItem(itemId, price) {
@@ -400,23 +446,32 @@ export class AvatarLab {
 
     const currentBal = CubicWallet.getBalance();
     if (currentBal < price) {
-      alert(`Saldo Cubic Anda (${currentBal} ◆) belum cukup untuk membeli ${item.name} (${price} ◆).\n\nSelesaikan soal diagnostik (+10 ◆) atau modul remediasi (+15 ◆) untuk mengumpulkan lebih banyak Cubic!`);
+      NotificationToast.show(
+        `Saldo Cubic (${currentBal} ◆) belum cukup untuk ${item.name} (${price} ◆). Selesaikan diagnostik atau remediasi!`,
+        "warning",
+        4000
+      );
       return;
     }
 
-    const confirmBuy = confirm(`Beli "${item.name}" seharga ${price} ◆?`);
-    if (!confirmBuy) return;
-
-    const res = CubicWallet.deductCubic(price, `purchase_${item.id}`, `Pembelian Kosmetik: ${item.name}`);
-    if (res.success) {
-      CubicWallet.ownItem(itemId);
-      this.previewConfig[item.category] = itemId;
-      const saved = AvatarEngine.saveConfig(this.previewConfig);
-      this.savedConfig = { ...saved };
-      this.updateHeaderBalance();
-      this.updatePreview();
-      this.renderItemGrid();
-    }
+    this.showConfirmModal({
+      title: `Konfirmasi Pembelian Item`,
+      message: `Beli kosmetik "${item.name}" seharga ◆ ${price}?`,
+      price: price,
+      onConfirm: () => {
+        const res = CubicWallet.deductCubic(price, `purchase_${item.id}`, `Pembelian Kosmetik: ${item.name}`);
+        if (res.success) {
+          CubicWallet.ownItem(itemId);
+          this.previewConfig[item.category] = itemId;
+          const saved = AvatarEngine.saveConfig(this.previewConfig);
+          this.savedConfig = { ...saved };
+          this.updateHeaderBalance();
+          this.updatePreview();
+          this.renderItemGrid();
+          NotificationToast.show(`Kosmetik "${item.name}" berhasil dibeli dan dipasang!`, "success");
+        }
+      }
+    });
   }
 
   updatePreview() {

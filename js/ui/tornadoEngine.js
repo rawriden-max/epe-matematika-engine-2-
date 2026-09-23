@@ -583,10 +583,25 @@ export class TornadoEngine {
       const normZ = z / cfg.radius;
 
       // Hanya update transform dan zIndex via GPU compositing
-      const scale = (0.82 + (normZ + 1) * 0.18).toFixed(2);
-      const zIndex = Math.round(50 + (normZ + 1) * 50);
+      let scale = 0.82 + (normZ + 1) * 0.18;
+      let zIndex = Math.round(50 + (normZ + 1) * 50);
 
-      element.style.transform = `translate3d(${screenX}px, ${screenY}px, 0) translate(-50%, -50%) scale(${scale})`;
+      const isActive = cardData.question.id === this.activeQuestionId;
+      const isHovered = cardData.question.id === this.hoveredQid;
+
+      if (isActive) {
+        scale *= 1.25;
+        zIndex = 998;
+      } else if (isHovered) {
+        scale *= 1.15;
+        zIndex = 999;
+      }
+
+      if (element.classList.contains("filtered-out")) {
+        scale *= 0.65;
+      }
+
+      element.style.transform = `translate3d(${screenX}px, ${screenY}px, 0) translate(-50%, -50%) scale(${scale.toFixed(2)})`;
       element.style.zIndex = String(zIndex);
 
       // Update opacity hanya bila perubahan depth cukup signifikan (mencegah reflow berlebihan)

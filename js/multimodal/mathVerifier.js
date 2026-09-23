@@ -299,6 +299,87 @@ export class MathVerifier {
       }
     }
 
+    // Kasus 3: Penyederhanaan Pertidaksamaan Linear Koefisien: "c * var [rel] d" -> "var [rel] result"
+    // Contoh: "-4k > -36" -> "k < 9" (benar) vs "k > 9" (E2 - lupa membalik tanda minus)
+    const matchIneqA = normA.match(/^([+-]?[0-9]*)([a-zA-Z])([><]|>=|<=)([+-]?[0-9]+)$/);
+    if (matchIneqA) {
+      const coeffStr = matchIneqA[1];
+      const coeff = (coeffStr === "" || coeffStr === "+") ? 1 : coeffStr === "-" ? -1 : parseFloat(coeffStr);
+      const varName = matchIneqA[2];
+      const relA = matchIneqA[3];
+      const constA = parseFloat(matchIneqA[4]);
+
+      const matchIneqB = normB.match(new RegExp(`^${varName}([><]|>=|<=)([+-]?[0-9]+)$`));
+      if (matchIneqB) {
+        const relB = matchIneqB[1];
+        const constB = parseFloat(matchIneqB[2]);
+        const expectedConst = constA / coeff;
+
+        // Tentukan relasi harapan: jika koefisien pembagi negatif, tanda pertidaksamaan WAJIB dibalik
+        let expectedRel = relA;
+        if (coeff < 0) {
+          if (relA === ">") expectedRel = "<";
+          else if (relA === "<") expectedRel = ">";
+          else if (relA === ">=") expectedRel = "<=";
+          else if (relA === "<=") expectedRel = ">=";
+        }
+
+        if (constB === expectedConst && relB === expectedRel) {
+          return {
+            isValid: true,
+            errorPattern: "E0",
+            evidence: `Transformasi pertidaksamaan tepat: ${lineA} disederhanakan dengan membagi ${coeff}, tanda ${coeff < 0 ? "berbalik" : "tetap"} menjadi ${lineB}.`
+          };
+        } else if (constB === expectedConst && coeff < 0 && relB === relA) {
+          return {
+            isValid: false,
+            errorPattern: "E2",
+            evidence: `Kesalahan prosedural pertidaksamaan pada langkah [${lineB}]: saat membagi kedua ruas dengan bilangan negatif (${coeff}), arah tanda pertidaksamaan WAJIB dibalik dari '${relA}' menjadi '${expectedRel}'. Seharusnya: ${varName} ${expectedRel} ${expectedConst}.`
+          };
+        } else if (relB === expectedRel && constB !== expectedConst) {
+          return {
+            isValid: false,
+            errorPattern: "E3",
+            evidence: `Kesalahan komputasi hitung pada langkah [${lineB}]: hasil pembagian ${constA} / (${coeff}) seharusnya ${expectedConst}, bukan ${constB}.`
+          };
+        } else {
+          return {
+            isValid: false,
+            errorPattern: "E2",
+            evidence: `Transformasi pertidaksamaan tidak valid pada langkah [${lineB}]: dari ${lineA}, seharusnya ${varName} ${expectedRel} ${expectedConst}.`
+          };
+        }
+      }
+    }
+
+    // Kasus 4: Perpindahan Ruas Konstanta pada Pertidaksamaan: "36 - 4k > 0" -> "-4k > -36"
+    const matchTransIneqA = normA.match(/^([+-]?[0-9]+)([+-][0-9]*[a-zA-Z])([><]|>=|<=)0$/);
+    if (matchTransIneqA) {
+      const cVal = parseFloat(matchTransIneqA[1]);
+      const rawVarTerm = matchTransIneqA[2];
+      const relA = matchTransIneqA[3];
+      const cleanVar = rawVarTerm.replace(/^\+/, "");
+
+      const matchTransIneqB = normB.match(/^([+-]?[0-9]*[a-zA-Z])([><]|>=|<=)([+-]?[0-9]+)$/);
+      if (matchTransIneqB && matchTransIneqB[1] === cleanVar) {
+        const relB = matchTransIneqB[2];
+        const nextConst = parseFloat(matchTransIneqB[3]);
+        if (relB === relA && nextConst === -cVal) {
+          return {
+            isValid: true,
+            errorPattern: "E0",
+            evidence: `Perpindahan ruas tepat: konstanta ${cVal} dipindahkan ke ruas kanan menjadi ${-cVal}.`
+          };
+        } else if (nextConst === cVal) {
+          return {
+            isValid: false,
+            errorPattern: "E2",
+            evidence: `Kesalahan tanda perpindahan ruas pada langkah [${lineB}]: konstanta ${cVal} berpindah ruas tanpa mengubah tanda menjadi ${-cVal}.`
+          };
+        }
+      }
+    }
+
     return {
       isValid: true,
       errorPattern: null,

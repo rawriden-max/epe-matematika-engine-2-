@@ -29,7 +29,7 @@ export class HandwritingStepReconstructor {
       };
     }
 
-    // 1. Ekstraksi baris langkah bersih
+    // 1. Ekstraksi baris langkah bersih & filter teks narasi Bahasa Indonesia
     const rawLines = rawStepsInput
       .split(/\r?\n|=>|->|\\\\/)
       .map(line => line.trim())
@@ -49,14 +49,23 @@ export class HandwritingStepReconstructor {
     let cumulativeConfidence = 0;
     let primaryAnomaly = null;
 
-    // 2. Format setiap baris menjadi langkah terstruktur
+    // 2. Format setiap baris menjadi langkah terstruktur bersimbol matematika murni
     for (let i = 0; i < rawLines.length; i++) {
-      const rawText = rawLines[i].replace(/^(?:langkah|step)\s*\d+[\.:\s]*/i, "").trim();
+      let rawText = rawLines[i].replace(/^(?:langkah|step)\s*\d+[\.:\s]*/i, "").trim();
+      
+      // Bersihkan teks narasi / instruksi (misal "Syarat dua akar real berbeda: D > 0" -> "D > 0")
+      const pureMath = HandwritingStepReconstructor.extractPureMathExpression(rawText);
+      if (!pureMath) {
+        // Lewatkan baris yang murni komentar narasi tanpa ekspresi matematika terukur
+        continue;
+      }
+      rawText = pureMath;
+
       const normLatex = MathRepresentation.normalizeLatex(rawText);
-      const isEq = rawText.includes("=");
+      const isEq = rawText.includes("=") || rawText.includes(">") || rawText.includes("<");
 
       const stepObj = {
-        stepIndex: i + 1,
+        stepIndex: reconstructedSteps.length + 1,
         rawText: rawText,
         latex: normLatex,
         isEquation: isEq,
@@ -66,9 +75,9 @@ export class HandwritingStepReconstructor {
         evidence: "Langkah terdefinisi secara teratur."
       };
 
-      // 3. Verifikasi transformasi terhadap baris sebelumnya (i - 1)
-      if (i > 0) {
-        const prevStep = reconstructedSteps[i - 1];
+      // 3. Verifikasi transformasi terhadap baris sebelumnya yang valid
+      if (reconstructedSteps.length > 0) {
+        const prevStep = reconstructedSteps[reconstructedSteps.length - 1];
         const transResult = MathVerifier.verifyStepTransformation(prevStep.rawText, rawText);
 
         if (!transResult.isValid) {
@@ -155,5 +164,63 @@ export class HandwritingStepReconstructor {
 
     html += `</div>`;
     return html;
+  }
+
+  /**
+   * Ekstraksi dan pembersihan ekspresi matematika murni dari baris teks siswa/remediasi
+   * Menghilangkan kata-kata instruksi Bahasa Indonesia agar KaTeX tidak me-render teks bersambung.
+   */
+  static extractPureMathExpression(rawText) {
+    if (!rawText || typeof rawText !== "string") return "";
+    let text = rawText.trim();
+
+    // 1. Jika mengandung titik dua (misal "Syarat dua akar real berbeda: D > 0" atau "Maka: x = 5")
+    if (text.includes(":")) {
+      const parts = text.split(":");
+      const afterColon = parts.slice(1).join(":").trim();
+      if (afterColon && /[0-9a-zA-Z\+\-\*\/\^<>=]/.test(afterColon)) {
+        text = afterColon;
+      } else {
+        const beforeColon = parts[0].trim();
+        if (/[0-9a-zA-Z\+\-\*\/\^<>=]/.test(beforeColon)) {
+          text = beforeColon;
+        }
+      }
+    }
+
+    // 2. Daftar kata-kata instruksi / narasi umum Bahasa Indonesia yang sering ada di coretan
+    const idKeywords = [
+      "syarat", "dua", "akar", "real", "berbeda", "kembar", "tidak", "nyata",
+      "bagi", "dengan", "kedua", "ruas", "kali", "tambah", "kurang",
+      "karena", "maka", "sehingga", "diperoleh", "mencari", "hitung",
+      "substitusi", "substitusikan", "masukkan", "nilai", "rumus", "faktorkan", "faktor",
+      "bentuk", "baku", "persamaan", "kuadrat", "panjang", "lebar", "luas",
+      "keliling", "langkah", "step", "cara", "jawab", "solusi", "adalah"
+    ];
+
+    // Pisahkan token
+    const words = text.split(/\s+/);
+    const mathTokens = words.filter(w => {
+      const cleanW = w.toLowerCase().replace(/[^a-z]/g, "");
+      return !idKeywords.includes(cleanW);
+    });
+
+    let result = mathTokens.join(" ").trim();
+
+    // 3. Bersihkan tanda baca tepi (titik dua, titik koma, kurung tak berpasangan di tepi)
+    result = result.replace(/^[:;,\s]+|[:;,\s]+$/g, "");
+
+    // 4. Validasi apakah hasil memuat simbol matematika valid
+    // Harus mengandung ekspresi aljabar bermakna (bukan angka telanjang tunggal dari sisa instruksi naratif)
+    if (result && /[a-zA-Z0-9\+\-\*\/\^<>=]/.test(result)) {
+      // Jika hanya angka tunggal bertanda (+/-) tanpa variabel atau relasi (misal "-4" dari "Bagi dengan -4:"), lewati
+      const isSingleNumber = /^[+-]?\d+(\.\d+)?$/.test(result);
+      if (isSingleNumber) {
+        return "";
+      }
+      return result;
+    }
+
+    return "";
   }
 }

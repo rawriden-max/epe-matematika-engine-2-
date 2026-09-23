@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Slide Flowchart Sistem EPE Matematika</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=5.0" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png?v=5.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #0b1120;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      padding: 24px;
+    }
+    .slide-wrapper {
+      position: relative;
+    }
+    .slide-container {
+      width: 1280px;
+      height: 720px;
+      position: relative;
+      background: linear-gradient(135deg, #f0f7ff 0%, #dcecfe 45%, #eff6ff 100%);
+      border-radius: 14px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 34px 44px;
+    }
+
+    /* Background Watermark Architecture Lines */
+    .bg-watermark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0.14;
+      pointer-events: none;
+      background-image: 
+        repeating-linear-gradient(45deg, #1e40af 0, #1e40af 1.5px, transparent 0, transparent 40px),
+        repeating-linear-gradient(-45deg, #0369a1 0, #0369a1 1.5px, transparent 0, transparent 55px);
+    }
+    .bg-building-art {
+      position: absolute;
+      left: -5%;
+      top: 0;
+      width: 55%;
+      height: 100%;
+      opacity: 0.1;
+      pointer-events: none;
+      background: radial-gradient(circle at 25% 45%, #2563eb 0%, transparent 65%);
+    }
+
+    /* Header Slide */
+    .slide-header {
+      position: relative;
+      z-index: 2;
+      margin-bottom: 6px;
+    }
+    .slide-title {
+      font-size: 46px;
+      font-weight: 800;
+      color: #050b14;
+      letter-spacing: -0.5px;
+      line-height: 1.05;
+    }
+    .circles-bar {
+      display: flex;
+      gap: 9px;
+      margin-top: 5px;
+    }
+    .circle-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 3px solid #1d4ed8;
+      background: transparent;
+    }
+    .slide-subtitle {
+      font-size: 13.5px;
+      color: #334155;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* Flowchart Canvas */
+    .flowchart-wrapper {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    /* SVG Connecting Lines Canvas */
+    #connector-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Node Styles */
+    .box {
+      background: #ffffff;
+      border: 1.5px solid #0f172a;
+      border-radius: 3px;
+      padding: 5px 10px;
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #090d16;
+      box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 3;
+    }
+    .box.italic {
+      font-style: italic;
+    }
+    .box.bold {
+      font-weight: 700;
+    }
+    .box.header-box {
+      font-weight: 700;
+      font-style: italic;
+      background: #f8fafc;
+      padding: 7px 16px;
+      font-size: 12.5px;
+    }
+
+    /* Top Nodes */
+    .level-mulai {
+      width: 105px;
+      height: 32px;
+      font-weight: 700;
+    }
+    .level-login {
+      width: 220px;
+      height: 34px;
+      margin-top: 22px;
+    }
+
+    /* Main Split */
+    .branches-container {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      gap: 32px;
+      margin-top: 26px;
+      position: relative;
+      z-index: 3;
+    }
+
+    /* Left Branch: Mode Siswa */
+    .branch-left {
+      flex: 1.05;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .branch-left-header {
+      width: 92%;
+      height: 36px;
+    }
+    .left-subgroups {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 26px;
+    }
+    .left-subgroup {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .subgroup-title {
+      width: 100%;
+      height: 34px;
+      font-size: 12px;
+    }
+    .subgroup-boxes {
+      display: flex;
+      width: 100%;
+      gap: 6px;
+      margin-top: 24px;
+    }
+    .subgroup-boxes .box {
+      flex: 1;
+      height: 48px;
+      font-size: 10px;
+      line-height: 1.25;
+      padding: 3px;
+    }
+    .left-finish-bar {
+      width: 100%;
+      height: 32px;
+      margin-top: 28px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #f8fafc;
+    }
+
+    /* Right Branch: Mode Guru */
+    .branch-right {
+      flex: 1.15;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .branch-right-header {
+      width: 92%;
+      height: 36px;
+    }
+    .right-columns {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 26px;
+    }
+    .right-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .col-header {
+      height: 42px;
+      font-size: 10.5px;
+      line-height: 1.2;
+      padding: 3px;
+      background: #f1f5f9;
+      font-weight: 700;
+    }
+    .col-step {
+      height: 31px;
+      font-size: 9.5px;
+      font-style: italic;
+      background: #ffffff;
+      padding: 2px 3px;
+    }
+    .col-finish {
+      height: 30px;
+      font-size: 10.5px;
+      font-weight: 700;
+      background: #f8fafc;
+    }
+
+    /* Action bar on top */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+    .btn-action {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.15s;
+    }
+    .btn-action:hover {
+      background: #1d4ed8;
+    }
+    .btn-secondary {
+      background: #334155;
+      color: #f1f5f9;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-secondary:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="controls">
+    <button class="btn-action" onclick="window.print()">🖨️ Cetak / Unduh PDF Slide</button>
+    <button class="btn-secondary" onclick="toggleLines()">🔄 Perbarui Garis Konektor</button>
+    <span>📐 Desain Standar Rasio 16:9 Presentasi PowerPoint | Error Pattern Engine (EPE)</span>
+  </div>
+
+  <div class="slide-wrapper">
+    <div class="slide-container" id="slide">
+      <div class="bg-watermark"></div>
+      <div class="bg-building-art"></div>
+
+      <!-- Header Slide -->
+      <div class="slide-header">
+        <h1 class="slide-title">Flowchart</h1>
+        <div class="circles-bar">
+          <div class="circle-dot"></div>
+          <div class="circle-dot"></div>
+          <div class="circle-dot"></div>
+          <div class="circle-dot"></div>
+        </div>
+        <p class="slide-subtitle">Alur Kerja Sistem Error Pattern Engine (EPE) &amp; Pembelajaran Adaptif Matematika</p>
+      </div>
+
+      <!-- Flowchart Canvas Area -->
+      <div class="flowchart-wrapper" id="flowchart-root">
+        
+        <!-- SVG Canvas for Arrows & Connectors -->
+        <svg id="connector-svg">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#0f172a" />
+            </marker>
+          </defs>
+        </svg>
+
+        <!-- Top Node: Mulai -->
+        <div class="box level-mulai" id="n-mulai">Mulai</div>
+
+        <!-- Level 2: Log In / Pilih Peran Siswa atau Guru -->
+        <div class="box italic level-login" id="n-login">
+          Log In / Pilih Peran Pengguna
+        </div>
+
+        <!-- Split Branches Container -->
+        <div class="branches-container">
+          
+          <!-- ================= CABANG KIRI: MODE SISWA ================= -->
+          <div class="branch-left">
+            <div class="box italic header-box branch-left-header" id="n-siswa-h">
+              Mode Siswa: Asesmen &amp; Pembelajaran Adaptif
+            </div>
+
+            <!-- Subgroups: Asesmen Diagnostik & Remediasi -->
+            <div class="left-subgroups">
+              
+              <!-- Subgroup 1: Asesmen Diagnostik -->
+              <div class="left-subgroup">
+                <div class="box italic header-box subgroup-title" id="n-sg-asesmen">Asesmen Diagnostik</div>
+                <div class="subgroup-boxes">
+                  <div class="box" id="n-box-pretest">Pre-Test<br>(12 Soal)</div>
+                  <div class="box" id="n-box-diag">Diagnostik<br>(Q1–Q24)</div>
+                  <div class="box" id="n-box-ai">Analisis AI<br>[E1–E4]</div>
+                  <div class="box" id="n-box-posttest">Post-Test<br>(12 Soal)</div>
+                </div>
+              </div>
+
+              <!-- Subgroup 2: Remediasi & Pembelajaran -->
+              <div class="left-subgroup">
+                <div class="box italic header-box subgroup-title" id="n-sg-remedi">Remediasi &amp; Media</div>
+                <div class="subgroup-boxes">
+                  <div class="box" id="n-box-bank">Bank<br>Latihan</div>
+                  <div class="box" id="n-box-matrix">Matrix AI<br>Tutor</div>
+                  <div class="box" id="n-box-3d">Visual 3D<br>Tornado</div>
+                  <div class="box" id="n-box-profil">Profil<br>Kognitif</div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Finish Bar Kiri -->
+            <div class="box left-finish-bar" id="n-siswa-finish">
+              Selesai (Capaian Kompetensi &amp; Peningkatan Skor Pre-Test ke Post-Test)
+            </div>
+          </div>
+
+          <!-- ================= CABANG KANAN: MODE GURU (AUTOMATIONS / RISET) ================= -->
+          <div class="branch-right">
+            <div class="box italic header-box branch-right-header" id="n-guru-h">
+              Mode Guru / Peneliti: Monitoring &amp; Analitik Riset
+            </div>
+
+            <!-- 4 Parallel Columns -->
+            <div class="right-columns">
+              
+              <!-- Kolom 1: Validasi Pola Kesalahan -->
+              <div class="right-column" id="col-1">
+                <div class="box italic col-header" id="c1-h">Validasi Pola<br>Kesalahan</div>
+                <div class="box italic col-step" id="c1-s1">Input PIN Pendidik</div>
+                <div class="box italic col-step" id="c1-s2">Telaah Coretan Siswa</div>
+                <div class="box italic col-step" id="c1-s3">Cocokkan Rubrik [E1–E4]</div>
+                <div class="box italic col-step" id="c1-s4">Simpan Akurasi (Tabel 4.1)</div>
+                <div class="box col-finish" id="c1-f">Selesai</div>
+              </div>
+
+              <!-- Kolom 2: Monitoring Evaluasi -->
+              <div class="right-column" id="col-2">
+                <div class="box italic col-header" id="c2-h">Monitoring<br>Evaluasi Siswa</div>
+                <div class="box italic col-step" id="c2-s1">Input PIN Pendidik</div>
+                <div class="box italic col-step" id="c2-s2">Pilih Nama / 24 Siswa</div>
+                <div class="box italic col-step" id="c2-s3">Analisis Skor &amp; N-Gain</div>
+                <div class="box italic col-step" id="c2-s4">Evaluasi Klaster Siswa</div>
+                <div class="box col-finish" id="c2-f">Selesai</div>
+              </div>
+
+              <!-- Kolom 3: Sinkronisasi Cloud -->
+              <div class="right-column" id="col-3">
+                <div class="box italic col-header" id="c3-h">Sinkronisasi<br>Cloud Supabase</div>
+                <div class="box italic col-step" id="c3-s1">Input PIN Pendidik</div>
+                <div class="box italic col-step" id="c3-s2">Cek Status API Key</div>
+                <div class="box italic col-step" id="c3-s3">Sync 3 Tabel Riset</div>
+                <div class="box italic col-step" id="c3-s4">Update Database Cloud</div>
+                <div class="box col-finish" id="c3-f">Selesai</div>
+              </div>
+
+              <!-- Kolom 4: Ekspor Data Riset -->
+              <div class="right-column" id="col-4">
+                <div class="box italic col-header" id="c4-h">Ekspor Data<br>Penelitian</div>
+                <div class="box italic col-step" id="c4-s1">Input PIN Pendidik</div>
+                <div class="box italic col-step" id="c4-s2">Pilih Rentang Riwayat</div>
+                <div class="box italic col-step" id="c4-s3">Generate 18 Kolom CSV</div>
+                <div class="box italic col-step" id="c4-s4">Unduh Berkas Excel/SPSS</div>
+                <div class="box col-finish" id="c4-f">Selesai</div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function drawConnectors() {
+      const root = document.getElementById('flowchart-root');
+      const svg = document.getElementById('connector-svg');
+      const rootRect = root.getBoundingClientRect();
+
+      // Clear existing paths except marker
+      while (svg.childNodes.length > 2) {
+        svg.removeChild(svg.lastChild);
+      }
+
+      function getPos(id) {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return {
+          top: r.top - rootRect.top,
+          bottom: r.bottom - rootRect.top,
+          left: r.left - rootRect.left,
+          right: r.right - rootRect.left,
+          cx: r.left - rootRect.left + r.width / 2,
+          cy: r.top - rootRect.top + r.height / 2,
+          w: r.width,
+          h: r.height
+        };
+      }
+
+      function drawLine(p1, p2, withArrow = true) {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const d = `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', '#0f172a');
+        path.setAttribute('stroke-width', '1.3');
+        path.setAttribute('fill', 'none');
+        if (withArrow) path.setAttribute('marker-end', 'url(#arrow)');
+        svg.appendChild(path);
+      }
+
+      function drawPath(dStr, withArrow = true) {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', dStr);
+        path.setAttribute('stroke', '#0f172a');
+        path.setAttribute('stroke-width', '1.3');
+        path.setAttribute('fill', 'none');
+        if (withArrow) path.setAttribute('marker-end', 'url(#arrow)');
+        svg.appendChild(path);
+      }
+
+      const pMulai = getPos('n-mulai');
+      const pLogin = getPos('n-login');
+      const pSiswaH = getPos('n-siswa-h');
+      const pGuruH = getPos('n-guru-h');
+
+      if (!pMulai || !pLogin) return;
+
+      // 1. Mulai -> Login
+      drawLine({ x: pMulai.cx, y: pMulai.bottom }, { x: pLogin.cx, y: pLogin.top }, true);
+
+      // 2. Login -> Split to Siswa and Guru
+      const midY = (pLogin.bottom + pSiswaH.top) / 2;
+      drawPath(`M ${pLogin.cx} ${pLogin.bottom} L ${pLogin.cx} ${midY} L ${pSiswaH.cx} ${midY} L ${pSiswaH.cx} ${pSiswaH.top}`, true);
+      drawPath(`M ${pLogin.cx} ${midY} L ${pGuruH.cx} ${midY} L ${pGuruH.cx} ${pGuruH.top}`, true);
+
+      // 3. Siswa Header -> Subgroups (Asesmen & Remediasi)
+      const pSgAsesmen = getPos('n-sg-asesmen');
+      const pSgRemedi = getPos('n-sg-remedi');
+      const subMidY = (pSiswaH.bottom + pSgAsesmen.top) / 2;
+      drawPath(`M ${pSiswaH.cx} ${pSiswaH.bottom} L ${pSiswaH.cx} ${subMidY} L ${pSgAsesmen.cx} ${subMidY} L ${pSgAsesmen.cx} ${pSgAsesmen.top}`, true);
+      drawPath(`M ${pSiswaH.cx} ${subMidY} L ${pSgRemedi.cx} ${subMidY} L ${pSgRemedi.cx} ${pSgRemedi.top}`, true);
+
+      // 4. Asesmen Subgroup -> 4 Boxes
+      const bAsesmen = ['n-box-pretest', 'n-box-diag', 'n-box-ai', 'n-box-posttest'];
+      const subBoxMidY1 = (pSgAsesmen.bottom + getPos(bAsesmen[0]).top) / 2;
+      drawPath(`M ${pSgAsesmen.cx} ${pSgAsesmen.bottom} L ${pSgAsesmen.cx} ${subBoxMidY1}`, false);
+      bAsesmen.forEach(id => {
+        const bp = getPos(id);
+        drawPath(`M ${pSgAsesmen.cx} ${subBoxMidY1} L ${bp.cx} ${subBoxMidY1} L ${bp.cx} ${bp.top}`, true);
+      });
+
+      // 5. Remediasi Subgroup -> 4 Boxes
+      const bRemedi = ['n-box-bank', 'n-box-matrix', 'n-box-3d', 'n-box-profil'];
+      const subBoxMidY2 = (pSgRemedi.bottom + getPos(bRemedi[0]).top) / 2;
+      drawPath(`M ${pSgRemedi.cx} ${pSgRemedi.bottom} L ${pSgRemedi.cx} ${subBoxMidY2}`, false);
+      bRemedi.forEach(id => {
+        const bp = getPos(id);
+        drawPath(`M ${pSgRemedi.cx} ${subBoxMidY2} L ${bp.cx} ${subBoxMidY2} L ${bp.cx} ${bp.top}`, true);
+      });
+
+      // 6. All 8 Boxes -> Selesai Bar Kiri
+      const pSiswaFinish = getPos('n-siswa-finish');
+      [...bAsesmen, ...bRemedi].forEach(id => {
+        const bp = getPos(id);
+        drawLine({ x: bp.cx, y: bp.bottom }, { x: bp.cx, y: pSiswaFinish.top }, true);
+      });
+
+      // 7. Guru Header -> 4 Columns
+      const cols = ['c1', 'c2', 'c3', 'c4'];
+      const colMidY = (pGuruH.bottom + getPos('c1-h').top) / 2;
+      drawPath(`M ${pGuruH.cx} ${pGuruH.bottom} L ${pGuruH.cx} ${colMidY}`, false);
+      cols.forEach(c => {
+        const hp = getPos(`${c}-h`);
+        drawPath(`M ${pGuruH.cx} ${colMidY} L ${hp.cx} ${colMidY} L ${hp.cx} ${hp.top}`, true);
+
+        // Vertical steps in column
+        const steps = [`${c}-h`, `${c}-s1`, `${c}-s2`, `${c}-s3`, `${c}-s4`, `${c}-f`];
+        for (let i = 0; i < steps.length - 1; i++) {
+          const sCurr = getPos(steps[i]);
+          const sNext = getPos(steps[i + 1]);
+          drawLine({ x: sCurr.cx, y: sCurr.bottom }, { x: sNext.cx, y: sNext.top }, true);
+        }
+      });
+    }
+
+    function toggleLines() {
+      drawConnectors();
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(drawConnectors, 200);
+    });
+    window.addEventListener('resize', drawConnectors);
+  </script>
+</body>
+</html>

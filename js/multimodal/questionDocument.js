@@ -11,6 +11,9 @@
  * - Student response association (multiple choice, written, step-by-step)
  */
 
+import { AnswerTypeDetector } from "./answerTypeDetector.js";
+export { AnswerTypeDetector };
+
 export class QuestionDocument {
   /**
    * Create a new QuestionDocument
@@ -239,84 +242,3 @@ export class ExtractedQuestion {
   }
 }
 
-
-/**
- * AnswerTypeDetector - Classify the type of student answer
- */
-export class AnswerTypeDetector {
-  /**
-   * Detect answer type from text content
-   * @param {string} content
-   * @returns {string} Answer type
-   */
-  static detectFromContent(content) {
-    if (!content || typeof content !== "string") return "unknown";
-    
-    const clean = content.trim().toLowerCase();
-
-    // Single letter answer (A, B, C, D, E)
-    if (/^[a-e]\.?$/i.test(clean)) {
-      return "multiple_choice";
-    }
-
-    // "Opsi A" or "Jawaban A" or similar
-    if (/(?:opsi|jawaban|pilihan)\s+[a-e]/i.test(clean)) {
-      return "multiple_choice";
-    }
-
-    // Pure number answer
-    if (/^-?\d+(?:[.,]\d+)?$/.test(clean)) {
-      return "numeric";
-    }
-
-    // Equation (contains = sign with variables)
-    if (/[a-z]\s*=\s*[\d\-]/.test(clean) || /=\s*0\s*$/.test(clean)) {
-      return "equation";
-    }
-
-    // Matrix notation
-    if (clean.includes("matrix") || clean.includes("matriks") || /\[\[.*\]\]/.test(clean) || clean.includes("pmatrix")) {
-      return "matrix";
-    }
-
-    // Multi-step solution (multiple lines with equations)
-    const lines = content.split(/\n/).filter(l => l.trim());
-    if (lines.length >= 2 && lines.filter(l => l.includes("=")).length >= 2) {
-      return "multi_step_solution";
-    }
-
-    // Written explanation (long text without much math notation)
-    if (content.length > 50 && !/[=+\-×÷^]/.test(content.substring(0, 30))) {
-      return "written_explanation";
-    }
-
-    // Expression (contains math operators but no = sign)
-    if (/[\+\-\*\/\^²³]/.test(clean) || /\d+[a-z]/.test(clean)) {
-      return "expression";
-    }
-
-    return "unknown";
-  }
-
-  /**
-   * Detect answer type from manifest region
-   * @param {Object} region 
-   * @returns {string}
-   */
-  static detectFromRegion(region) {
-    if (!region) return "unknown";
-    
-    // Use region type as a hint
-    if (region.type === "student_answer") {
-      return this.detectFromContent(region.content);
-    }
-    if (region.type === "explanation") {
-      return "written_explanation";
-    }
-    if (region.type === "formula") {
-      return "expression";
-    }
-    
-    return this.detectFromContent(region.content);
-  }
-}

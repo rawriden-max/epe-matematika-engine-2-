@@ -34,57 +34,185 @@ export function getSupabaseClient() {
   return _supabaseClient;
 }
 
+// =========================================================================
+// OFFLINE RESILIENCE & QUEUE MANAGEMENT
+// =========================================================================
+const OFFLINE_QUEUE_KEY = "epe_supabase_offline_queue_v1";
+
+/**
+ * Mengambil seluruh antrean offline dari localStorage
+ */
+export function getOfflineQueue() {
+  try {
+    if (typeof localStorage !== "undefined") {
+      const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+    }
+  } catch (e) {
+    console.warn("Gagal membaca antrean offline Supabase:", e);
+  }
+  return [];
+}
+
+/**
+ * Menambahkan data transaksi ke antrean offline lokal
+ */
+export function addToOfflineQueue(type, payload) {
+  try {
+    if (typeof localStorage !== "undefined") {
+      const queue = getOfflineQueue();
+      const idKey = payload.attempt_id || payload.session_id || `${payload.student_id || ""}_${payload.question_id || ""}`;
+      
+      const existingIdx = queue.findIndex(item => {
+        const itemKey = item.payload?.attempt_id || item.payload?.session_id || `${item.payload?.student_id || ""}_${item.payload?.question_id || ""}`;
+        return item.type === type && itemKey === idKey && idKey !== "_";
+      });
+
+      const queueItem = {
+        id: `q_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+        type,
+        payload,
+        queuedAt: new Date().toISOString()
+      };
+
+      if (existingIdx >= 0) {
+        queue[existingIdx] = queueItem;
+      } else {
+        queue.push(queueItem);
+      }
+
+      if (queue.length > 200) queue.shift();
+      localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+      console.log(`[Supabase Offline Queue] Item '${type}' disimpan ke antrean offline (${queue.length} tertunda).`);
+      return queueItem;
+    }
+  } catch (e) {
+    console.warn("Gagal mencatat antrean offline:", e);
+  }
+  return null;
+}
+
+/**
+ * Memproses dan mengosongkan antrean offline saat jaringan pulih
+ */
+export async function processOfflineQueue() {
+  const client = getSupabaseClient();
+  if (!client) return { processed: 0, remaining: 0 };
+  const queue = getOfflineQueue();
+  if (queue.length === 0) return { processed: 0, remaining: 0 };
+
+  console.log(`[Supabase Offline Queue] Memproses ${queue.length} antrean offline...`);
+  const remaining = [];
+  let processed = 0;
+
+  for (const item of queue) {
+    try {
+      let success = false;
+      if (item.type === "diagnosis") {
+        const { error } = await client.from(SUPABASE_CONFIG.tableName).insert([item.payload]);
+        if (!error) success = true;
+      } else if (item.type === "integrity_signals") {
+        let res = await client.from("integrity_signals").upsert([item.payload], { onConflict: "session_id" });
+        if (res.error) res = await client.from("integrity_signals").insert([item.payload]);
+        if (!res.error) success = true;
+      } else if (item.type === "session_events") {
+        const { error } = await client.from("session_events").insert(item.payload);
+        if (!error) success = true;
+      }
+
+      if (success) {
+        processed++;
+      } else {
+        remaining.push(item);
+      }
+    } catch (e) {
+      remaining.push(item);
+    }
+  }
+
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(remaining));
+    }
+  } catch (e) {}
+
+  console.log(`[Supabase Offline Queue] Berhasil menyinkronkan ${processed} item offline, tersisa: ${remaining.length}.`);
+  return { processed, remaining: remaining.length };
+}
+
+/**
+ * Inisialisasi pendengar event 'online' peramban untuk background auto-sync
+ */
+export function initOnlineSyncListener() {
+  if (typeof window !== "undefined" && !window._epeOnlineSyncListenerInitialized) {
+    window._epeOnlineSyncListenerInitialized = true;
+    window.addEventListener("online", () => {
+      console.log("[Supabase] Sinyal internet pulih (online event terdeteksi), memulai sinkronisasi antrean...");
+      setTimeout(() => processOfflineQueue(), 1200);
+    });
+  }
+}
+
+// Jalankan listener segera
+initOnlineSyncListener();
+
 /**
  * Menyimpan respon siswa ke tabel Supabase `hasil_diagnosis` secara asinkron
  */
 export async function saveDiagnosisToSupabase(resultPackage) {
+  const codePrefix = resultPackage.primaryErrorCode ? `[${resultPackage.primaryErrorCode}] ` : "";
+  const primaryErrorText = resultPackage.primaryErrorText || resultPackage.primaryError || "Akurat";
+
+  let confInt = 85;
+  if (typeof resultPackage.confidence === "number") {
+    confInt = Math.round(resultPackage.confidence);
+  } else if (typeof resultPackage.confidenceText === "string") {
+    const match = resultPackage.confidenceText.match(/(\d+)%/);
+    if (match) {
+      confInt = parseInt(match[1], 10);
+    } else {
+      const numMatch = resultPackage.confidenceText.match(/\d+/);
+      if (numMatch) confInt = parseInt(numMatch[0], 10);
+    }
+  }
+
+  const payload = {
+    student_id: resultPackage.studentId || "Siswa",
+    question_id: resultPackage.questionId || "",
+    domain: resultPackage.domainCode || resultPackage.domain || "",
+    primary_error: `${codePrefix}${primaryErrorText}`.trim(),
+    secondary_error: resultPackage.secondaryErrorText || resultPackage.secondaryError || "-",
+    evidence: resultPackage.evidence || "-",
+    confidence: confInt,
+    learning_need: resultPackage.remediation || "-",
+    student_steps: resultPackage.studentSteps || "-",
+    student_answer: resultPackage.studentAnswer || "-"
+  };
+
   const client = getSupabaseClient();
-  if (!client) return null;
+  if (!client) {
+    addToOfflineQueue("diagnosis", payload);
+    return null;
+  }
 
   try {
-    // Ekstraksi angka confidence (integer) agar sesuai tipe kolom Supabase
-    let confInt = 85;
-    if (typeof resultPackage.confidence === "number") {
-      confInt = Math.round(resultPackage.confidence);
-    } else if (typeof resultPackage.confidenceText === "string") {
-      const match = resultPackage.confidenceText.match(/(\d+)%/);
-      if (match) {
-        confInt = parseInt(match[1], 10);
-      } else {
-        const numMatch = resultPackage.confidenceText.match(/\d+/);
-        if (numMatch) confInt = parseInt(numMatch[0], 10);
-      }
-    }
-
-    const codePrefix = resultPackage.primaryErrorCode ? `[${resultPackage.primaryErrorCode}] ` : "";
-    const primaryErrorText = resultPackage.primaryErrorText || resultPackage.primaryError || "Akurat";
-
-    // Format payload disesuaikan persis dengan skema tabel Supabase `hasil_diagnosis`
-    const payload = {
-      student_id: resultPackage.studentId || "Siswa",
-      question_id: resultPackage.questionId || "",
-      domain: resultPackage.domainCode || resultPackage.domain || "",
-      primary_error: `${codePrefix}${primaryErrorText}`.trim(),
-      secondary_error: resultPackage.secondaryErrorText || resultPackage.secondaryError || "-",
-      evidence: resultPackage.evidence || "-",
-      confidence: confInt,
-      learning_need: resultPackage.remediation || "-",
-      student_steps: resultPackage.studentSteps || "-",
-      student_answer: resultPackage.studentAnswer || "-"
-    };
-
     const { data, error } = await client
       .from(SUPABASE_CONFIG.tableName)
       .insert([payload]);
 
     if (error) {
-      console.warn("[Supabase] Gagal menyimpan data:", error.message);
+      console.warn("[Supabase] Gagal menyimpan data, dialihkan ke antrean offline:", error.message);
+      addToOfflineQueue("diagnosis", payload);
       return null;
     }
     console.log("[Supabase] Data diagnosis berhasil disimpan ke cloud!");
     return data;
   } catch (err) {
-    console.warn("[Supabase] Koneksi gagal:", err);
+    console.warn("[Supabase] Koneksi gagal, dialihkan ke antrean offline:", err);
+    addToOfflineQueue("diagnosis", payload);
     return null;
   }
 }
@@ -556,6 +684,101 @@ export async function syncAllAssessmentsToSupabase(pretestList = [], posttestLis
   };
 }
 
+/**
+ * Menyimpan sesi telemetri integritas akademik ke Supabase
+ * @param {Object} session - Objek sesi dari IntegrityDetector
+ */
+export async function saveIntegritySessionToSupabase(session) {
+  if (!session) return null;
 
+  const s = session.signals || {};
+  const signalsPayload = {
+    session_id: session.sessionId,
+    respondent_id: session.studentId || "siswa_01",
+    tab_switch_count: s.tabSwitches || 0,
+    total_inactive_duration: s.totalInactiveSeconds || 0,
+    rapid_answer_count: s.rapidAnswersCount || 0,
+    similarity_flag_count: 0,
+    overall_status: s.reviewRecommended ? "review_recommended" : "normal",
+    review_recommended: Boolean(s.reviewRecommended),
+    signals: s.reasons || []
+  };
 
+  const eventsPayload = (Array.isArray(session.events) && session.events.length > 0)
+    ? session.events.map(ev => ({
+        session_id: session.sessionId,
+        respondent_id: session.studentId || "siswa_01",
+        question_id: ev.questionId || null,
+        event_type: ev.eventType,
+        timestamp: ev.timestamp || Date.now(),
+        duration: ev.metadata?.inactiveDurationSeconds || ev.metadata?.totalDurationSeconds || 0,
+        metadata: ev.metadata || {}
+      }))
+    : [];
 
+  const client = getSupabaseClient();
+  if (!client) {
+    addToOfflineQueue("integrity_signals", signalsPayload);
+    if (eventsPayload.length > 0) addToOfflineQueue("session_events", eventsPayload);
+    return null;
+  }
+
+  try {
+    let { data: sigData, error: sigError } = await client
+      .from("integrity_signals")
+      .upsert([signalsPayload], { onConflict: "session_id" });
+
+    if (sigError) {
+      // Fallback insert biasa jika upsert onConflict belum didukung constraint
+      const insRes = await client.from("integrity_signals").insert([signalsPayload]);
+      if (insRes.error) {
+        console.warn("[Supabase] Simpan sinyal integritas ke antrean offline:", insRes.error.message);
+        addToOfflineQueue("integrity_signals", signalsPayload);
+      } else {
+        sigData = insRes.data;
+      }
+    }
+
+    // Simpan event telemetri jika ada
+    if (eventsPayload.length > 0) {
+      const { error: evError } = await client.from("session_events").insert(eventsPayload);
+      if (evError) {
+        addToOfflineQueue("session_events", eventsPayload);
+      }
+    }
+
+    return sigData;
+  } catch (err) {
+    console.warn("[Supabase] Gagal menyimpan sesi integritas, dialihkan ke antrean offline:", err);
+    addToOfflineQueue("integrity_signals", signalsPayload);
+    if (eventsPayload.length > 0) addToOfflineQueue("session_events", eventsPayload);
+    return null;
+  }
+}
+
+/**
+ * Sinkronisasi batch seluruh sesi integritas yang tersimpan di browser ke Cloud Supabase
+ */
+export async function syncAllIntegritySessionsToSupabase(sessions = []) {
+  const client = getSupabaseClient();
+  if (!client) return { success: false, message: "Koneksi Supabase belum siap atau offline." };
+  if (!Array.isArray(sessions) || sessions.length === 0) {
+    return { success: false, message: "Tidak ada sesi telemetri untuk disinkronkan." };
+  }
+
+  let count = 0;
+  for (const s of sessions) {
+    try {
+      await saveIntegritySessionToSupabase(s);
+      count++;
+    } catch (e) {
+      console.warn("Gagal sync sesi:", s.sessionId, e);
+    }
+  }
+
+  return {
+    success: true,
+    count: count,
+    message: `Berhasil menyinkronkan ${count} sesi telemetri integritas ke Cloud Supabase.`
+  };
+}
