@@ -2,9 +2,9 @@
  * multimodalInputUI.js - Modular Multimodal Answer Input Component (EPE V3)
  * 
  * Mengintegrasikan 3 mode input:
- * 1. [ ⌨ Ketik Jawaban ]
- * 2. [ 📷 Foto Coretan / Kamera HP ]
- * 3. [ 🎙 Rekam Suara Penalaran ]
+ * 1. [ Ketik Jawaban ]
+ * 2. [ Foto Coretan / Kamera HP ]
+ * 3. [ Rekam Suara Penalaran ]
  * 
  * Dilengkapi:
  * - HTML5 Canvas Image Preprocessing (binarisasi & kontras goresan)
@@ -66,14 +66,17 @@ export class MultimodalInputUI {
           </span>
 
           <div class="inline-flex p-1 rounded-lg bg-slate-200/80 dark:bg-slate-800 border border-slate-300 dark:border-slate-700/80 text-[11px] font-semibold gap-1">
-            <button type="button" id="${prefix}-mode-typed" class="px-2.5 py-1 rounded-md transition-all ${this.activeMode === 'typed' ? 'bg-white dark:bg-slate-900 text-cyan-600 dark:text-cyan-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-white'}">
-              ⌨ Ketik Teks
+            <button type="button" id="${prefix}-mode-typed" class="px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 ${this.activeMode === 'typed' ? 'bg-white dark:bg-slate-900 text-cyan-600 dark:text-cyan-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-white'}">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              <span>Ketik Teks</span>
             </button>
-            <button type="button" id="${prefix}-mode-image" class="px-2.5 py-1 rounded-md transition-all ${this.activeMode === 'image' ? 'bg-white dark:bg-slate-900 text-cyan-600 dark:text-cyan-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-white'}">
-              📷 Foto Coretan
+            <button type="button" id="${prefix}-mode-image" class="px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 ${this.activeMode === 'image' ? 'bg-white dark:bg-slate-900 text-cyan-600 dark:text-cyan-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-white'}">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              <span>Foto Coretan</span>
             </button>
-            <button type="button" id="${prefix}-mode-audio" class="px-2.5 py-1 rounded-md transition-all ${this.activeMode === 'audio' ? 'bg-white dark:bg-slate-900 text-cyan-600 dark:text-cyan-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-white'}">
-              🎙 Suara Penalaran
+            <button type="button" id="${prefix}-mode-audio" class="px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 ${this.activeMode === 'audio' ? 'bg-white dark:bg-slate-900 text-cyan-600 dark:text-cyan-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-white'}">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+              <span>Suara Penalaran</span>
             </button>
           </div>
         </div>
@@ -110,8 +113,9 @@ export class MultimodalInputUI {
                 <button type="button" id="${prefix}-btn-start-camera" class="btn-secondary flex-1 py-1.5 px-2 text-[11px] font-semibold">
                   <span>Nyalakan Kamera</span>
                 </button>
-                <button type="button" id="${prefix}-btn-snap-camera" class="btn-primary flex-1 py-1.5 px-2 text-[11px] font-bold hidden">
-                  <span>📸 Jepret Foto</span>
+                <button type="button" id="${prefix}-btn-snap-camera" class="btn-primary flex-1 py-1.5 px-2 text-[11px] font-bold hidden flex items-center justify-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  <span>Jepret Foto</span>
                 </button>
               </div>
             </div>
@@ -159,7 +163,8 @@ export class MultimodalInputUI {
         <div id="${prefix}-confirmation-guard" class="card-clean p-3.5 space-y-2.5 bg-slate-900 border border-cyan-500/40 hidden">
           <div class="flex items-center justify-between pb-1.5 border-b border-slate-800">
             <span class="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
-              <span>🔍 Rumus & Langkah yang Terdeteksi:</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span>Rumus &amp; Langkah Terdeteksi</span>
             </span>
             <span id="${prefix}-guard-confidence" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
               Keyakinan: 94%
@@ -173,11 +178,13 @@ export class MultimodalInputUI {
 
           <!-- Action Buttons -->
           <div class="flex items-center justify-end gap-2 pt-1">
-            <button type="button" id="${prefix}-btn-guard-edit" class="btn-secondary py-1.5 px-3 text-xs font-semibold">
-              ✏️ Edit Notasi Manual
+            <button type="button" id="${prefix}-btn-guard-edit" class="btn-secondary py-1.5 px-3 text-xs font-semibold flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+              <span>Edit Manual</span>
             </button>
-            <button type="button" id="${prefix}-btn-guard-confirm" class="btn-primary py-1.5 px-3.5 text-xs font-bold">
-              ✓ Sudah Tepat, Gunakan Ini
+            <button type="button" id="${prefix}-btn-guard-confirm" class="btn-primary py-1.5 px-3.5 text-xs font-bold flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              <span>Gunakan Langkah Ini</span>
             </button>
           </div>
         </div>
@@ -289,12 +296,15 @@ export class MultimodalInputUI {
         if (statusText) statusText.textContent = "Mendengarkan ucapan matematikamu...";
 
         speechController = SpeechMathParser.startSpeechRecognition({
+          onInterim: (liveText) => {
+            if (statusText) statusText.textContent = `Mendengarkan: "${liveText}"...`;
+          },
           onResult: (parsedResult) => {
             if (statusText) statusText.textContent = `Terdeteksi: "${parsedResult.rawSpeech}"`;
             this.showConfirmationGuard(parsedResult.latex, parsedResult.normalizedText, parsedResult.confidence, "audio");
           },
           onError: (err) => {
-            if (statusText) statusText.textContent = `Gagal mengenali suara: ${err.message}`;
+            if (statusText) statusText.textContent = `Pemberitahuan: ${err.message || "Gagal mengenali suara"}`;
             if (voicePulse) voicePulse.classList.add("hidden");
             if (btnLabel) btnLabel.textContent = "Mulai Rekam Suara";
             speechController = null;
@@ -365,9 +375,9 @@ export class MultimodalInputUI {
       const panel = document.getElementById(`${prefix}-panel-${m}`);
       if (btn) {
         if (m === mode) {
-          btn.className = "px-2.5 py-1 rounded-md transition-all bg-white dark:bg-slate-900 text-cyan-600 dark:text-cyan-400 shadow-sm font-bold";
+          btn.className = "px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 bg-white dark:bg-slate-900 text-cyan-600 dark:text-cyan-400 shadow-sm font-bold";
         } else {
-          btn.className = "px-2.5 py-1 rounded-md transition-all text-slate-600 dark:text-slate-400 hover:text-white";
+          btn.className = "px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-white";
         }
       }
       if (panel) {
@@ -583,16 +593,18 @@ export class MultimodalInputUI {
     katexBox.innerHTML = `
       <div class="text-center py-3 space-y-3">
         <div class="flex items-center justify-center gap-2">
-          <span class="text-amber-400 text-lg">📋</span>
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
           <span class="text-xs font-semibold text-amber-300">Pengenalan Otomatis Belum Tersedia</span>
         </div>
         <p class="text-[11px] text-slate-400 leading-relaxed max-w-sm mx-auto">${displayMessage}</p>
         <div class="flex items-center justify-center gap-2 pt-1">
-          <button type="button" class="vision-fallback-manual btn-primary py-1.5 px-3.5 text-[11px] font-bold">
-            ⌨ Ketik Jawaban Manual
+          <button type="button" class="vision-fallback-manual btn-primary py-1.5 px-3.5 text-[11px] font-bold flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            <span>Ketik Jawaban Manual</span>
           </button>
-          <button type="button" class="vision-fallback-settings btn-secondary py-1.5 px-3 text-[11px] font-semibold">
-            ⚙ Atur API Key
+          <button type="button" class="vision-fallback-settings btn-secondary py-1.5 px-3 text-[11px] font-semibold flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span>Atur API Key</span>
           </button>
         </div>
       </div>
@@ -782,10 +794,10 @@ export class MultimodalInputUI {
     };
 
     const statusBadge = multiSignal.status === "VERIFIED"
-      ? `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">✓ Terverifikasi CAS</span>`
+      ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold"><svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Terverifikasi CAS</span>`
       : multiSignal.status === "INVALID_TRANSFORMATION"
-      ? `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold">⚠ Terdeteksi Anomali Aljabar</span>`
-      : `<span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[10px] font-bold">ℹ Analisis Mandiri</span>`;
+      ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold"><svg class="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>Terdeteksi Anomali Aljabar</span>`
+      : `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[10px] font-bold"><svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Analisis Mandiri</span>`;
 
     katexBox.innerHTML = `
       <div class="w-full space-y-3 text-left">

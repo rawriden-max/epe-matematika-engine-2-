@@ -87,6 +87,10 @@ export class ProfileManager {
         `Nama pengguna/pribadi = ${studentName}`
       );
     }
+
+    // 8. Sidebar Student Name Tag
+    const sidebarName = document.getElementById("sidebar-student-name");
+    if (sidebarName) sidebarName.textContent = studentName;
   }
 
   /**
@@ -134,6 +138,13 @@ export class ProfileManager {
         e.stopPropagation();
         this.promptEditNickname();
       });
+    }
+
+    const sidebarStudentName = document.getElementById("sidebar-student-name");
+    if (sidebarStudentName) {
+      sidebarStudentName.style.cursor = "pointer";
+      sidebarStudentName.title = "Klik untuk Ubah Nama Siswa";
+      sidebarStudentName.addEventListener("click", () => this.promptEditNickname());
     }
 
     // Modal save / cancel buttons

@@ -237,6 +237,8 @@ export class AvatarLab {
     // Also update main header pill if exists
     const mainHeaderBal = document.getElementById("header-cubic-balance");
     if (mainHeaderBal) mainHeaderBal.textContent = bal.toLocaleString("id-ID");
+    const sidebarBal = document.getElementById("sidebar-cubic-balance");
+    if (sidebarBal) sidebarBal.textContent = bal.toLocaleString("id-ID");
 
     const ownedCount = CubicWallet.getOwnedItemIds().length;
     const ownedCountEl = document.getElementById("lab-owned-count");

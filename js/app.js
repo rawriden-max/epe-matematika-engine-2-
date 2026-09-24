@@ -52,7 +52,7 @@ import { AssessmentManager } from "./research/assessmentManager.js";
 import { SubjectRegistry } from "./engine/universal/subjectRegistry.js";
 import { integrityService } from "./services/integrityDetector.js";
 import { saveIntegritySessionToSupabase } from "./data/supabaseClient.js";
-
+import { HeaderCreativeWidget } from "./ui/headerCreativeWidget.js";
 
 class EpeAppV2 {
   constructor() {
@@ -138,6 +138,14 @@ class EpeAppV2 {
     // 1b. Inisialisasi 3D AI Orb Engine & AI Agent Manager
     this.initAiOrbAndAgent();
 
+    // 1c. Inisialisasi Dynamic Header Creative Widget (Jam Live, Stopwatch Sesi, Mini Stat)
+    try {
+      this.headerCreativeWidget = new HeaderCreativeWidget({ cubeStore: this.cubeStore });
+      this.headerCreativeWidget.init();
+    } catch (e) {
+      console.warn("Gagal inisialisasi HeaderCreativeWidget:", e);
+    }
+
     // 2. Inisialisasi 3D Isometric Cube Engine
     this.initCubeEngine();
 
@@ -210,6 +218,13 @@ class EpeAppV2 {
       this.initUniversalModules();
     } catch (err) {
       console.warn("Peringatan inisialisasi Universal Modules:", err);
+    }
+
+    // 6f. Inisialisasi Tata Letak Navigasi (Atas, Pojok/Sidebar, Bawah/Dock)
+    try {
+      this.initNavLayout();
+    } catch (err) {
+      console.warn("Peringatan inisialisasi Nav Layout:", err);
     }
 
     // 7. Binding Event Handlers
@@ -502,6 +517,156 @@ class EpeAppV2 {
   }
 
   // =========================================================================
+  // NAVIGATION LAYOUT MANAGER (ATAS, POJOK/SIDEBAR, BAWAH/DOCK)
+  // =========================================================================
+  initNavLayout() {
+    const savedLayout = localStorage.getItem("epe_nav_layout") || "top";
+    this.setNavLayout(savedLayout, false);
+
+    // Toggle dropdown menu
+    const btnToggle = document.getElementById("btn-toggle-nav-layout");
+    const menu = document.getElementById("nav-layout-menu");
+    if (btnToggle && menu) {
+      btnToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        menu.classList.toggle("hidden");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!menu.contains(e.target) && e.target !== btnToggle && !btnToggle.contains(e.target)) {
+          menu.classList.add("hidden");
+        }
+      });
+    }
+
+    // Dropdown options
+    document.querySelectorAll(".nav-layout-option").forEach((opt) => {
+      opt.addEventListener("click", () => {
+        const layout = opt.dataset.layout;
+        if (layout) {
+          this.setNavLayout(layout, true);
+          if (menu) menu.classList.add("hidden");
+        }
+      });
+    });
+
+    // Sidebar mini layout switcher pills
+    document.querySelectorAll(".sidebar-layout-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const layout = btn.dataset.layout;
+        if (layout) this.setNavLayout(layout, true);
+      });
+    });
+
+    // Bottom dock layout toggle button
+    const dockSwitchBtn = document.getElementById("dock-btn-switch-layout");
+    if (dockSwitchBtn) {
+      dockSwitchBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const current = this.currentNavLayout || "top";
+        const cycle = { bottom: "top", top: "sidebar", sidebar: "bottom" };
+        const next = cycle[current] || "top";
+        this.setNavLayout(next, true);
+      });
+    }
+
+    // Mobile sidebar toggle
+    const mobileToggleBtn = document.getElementById("btn-sidebar-mobile-toggle");
+    const mobileCloseBtn = document.getElementById("btn-close-sidebar-mobile");
+    const sidebar = document.getElementById("epe-sidebar-nav");
+    const backdrop = document.getElementById("epe-sidebar-backdrop");
+
+    if (mobileToggleBtn && sidebar) {
+      mobileToggleBtn.addEventListener("click", () => {
+        sidebar.classList.add("mobile-open");
+        if (backdrop) {
+          backdrop.classList.remove("hidden");
+          backdrop.classList.add("mobile-open");
+        }
+      });
+    }
+    if (mobileCloseBtn && sidebar) {
+      mobileCloseBtn.addEventListener("click", () => {
+        sidebar.classList.remove("mobile-open");
+        if (backdrop) {
+          backdrop.classList.remove("mobile-open");
+          backdrop.classList.add("hidden");
+        }
+      });
+    }
+    if (backdrop && sidebar) {
+      backdrop.addEventListener("click", () => {
+        sidebar.classList.remove("mobile-open");
+        backdrop.classList.remove("mobile-open");
+        backdrop.classList.add("hidden");
+      });
+    }
+
+    // Open Matrix Chat from Sidebar
+    const sidebarMatrixBtn = document.getElementById("sidebar-btn-open-matrix");
+    if (sidebarMatrixBtn) {
+      sidebarMatrixBtn.addEventListener("click", () => {
+        const floatingTrigger = document.getElementById("floating-ai-trigger");
+        if (floatingTrigger) {
+          floatingTrigger.click();
+        } else {
+          const drawer = document.getElementById("ai-chat-drawer");
+          if (drawer) drawer.classList.toggle("open");
+        }
+      });
+    }
+  }
+
+  setNavLayout(layoutName, triggerResize = true) {
+    if (!["top", "sidebar", "bottom"].includes(layoutName)) layoutName = "top";
+    this.currentNavLayout = layoutName;
+    localStorage.setItem("epe_nav_layout", layoutName);
+
+    // Update body classes
+    document.body.classList.remove("nav-pos-top", "nav-pos-sidebar", "nav-pos-bottom");
+    document.body.classList.add(`nav-pos-${layoutName}`);
+
+    // Update layout badge text
+    const badge = document.getElementById("nav-layout-badge");
+    if (badge) {
+      const labels = { top: "Atas", sidebar: "Pojok", bottom: "Bawah" };
+      badge.textContent = labels[layoutName] || "Atas";
+    }
+
+    // Update checkmarks in dropdown
+    document.querySelectorAll(".layout-active-check").forEach((check) => {
+      if (check.dataset.check === layoutName) {
+        check.classList.remove("hidden");
+      } else {
+        check.classList.add("hidden");
+      }
+    });
+
+    // Update sidebar layout buttons
+    document.querySelectorAll(".sidebar-layout-btn").forEach((btn) => {
+      if (btn.dataset.layout === layoutName) {
+        btn.classList.add("active", "bg-blue-600", "text-white");
+        btn.classList.remove("text-slate-400");
+      } else {
+        btn.classList.remove("active", "bg-blue-600", "text-white");
+        btn.classList.add("text-slate-400");
+      }
+    });
+
+    // Trigger canvas & 3D re-adaptation
+    if (triggerResize) {
+      setTimeout(() => {
+        if (this.aiOrbEngine && typeof this.aiOrbEngine.resumeAndResize === "function") {
+          this.aiOrbEngine.resumeAndResize();
+        }
+        if (this.cubeEngine && typeof this.cubeEngine.resize === "function") {
+          this.cubeEngine.resize();
+        }
+      }, 100);
+    }
+  }
+
+  // =========================================================================
   // TAB & MODE NAVIGATION
   // =========================================================================
   switchTab(tabName, event = null) {
@@ -510,6 +675,7 @@ class EpeAppV2 {
       return;
     }
 
+    const previousTab = this.activeTab;
     this.activeTab = tabName;
 
     // Trigger Efek Gelombang Energi (Wave) & Gelembung Melayang (Bubbles)
@@ -532,7 +698,7 @@ class EpeAppV2 {
       this.transitionManager.triggerWaveAndBubble(originX, originY, accentColor);
     }
 
-    // Reset button states
+    // Reset button states across all layouts (Top, Sidebar, Bottom Dock)
     const navButtons = [
       this.elements.tabBtnDashboard,
       this.elements.tabBtnPretest,
@@ -543,10 +709,22 @@ class EpeAppV2 {
       this.elements.tabBtnResearch
     ];
     navButtons.forEach((btn) => btn?.classList.remove("active"));
+    document.querySelectorAll(".epe-nav-item").forEach((btn) => btn.classList.remove("active"));
+    document.querySelectorAll(`.epe-nav-item[data-tab="${tabName}"]`).forEach((btn) => btn.classList.add("active"));
+
+    // Close mobile sidebar drawer if open
+    const sidebar = document.getElementById("epe-sidebar-nav");
+    const backdrop = document.getElementById("epe-sidebar-backdrop");
+    if (sidebar) sidebar.classList.remove("mobile-open");
+    if (backdrop) {
+      backdrop.classList.remove("mobile-open");
+      backdrop.classList.add("hidden");
+    }
+
     if (tabName !== "diagnostic") this.tornadoEngine?.pause();
 
     // Simpan & tuntaskan sesi telemetri jika berpindah keluar dari tab Diagnostik Baku
-    if (this.activeTab === "diagnostic" && tabName !== "diagnostic") {
+    if (previousTab === "diagnostic" && tabName !== "diagnostic") {
       if (integrityService.isTracking && integrityService.currentSession?.testType === "diagnostic") {
         const completedSession = integrityService.endSession();
         if (completedSession) {
@@ -1307,6 +1485,10 @@ class EpeAppV2 {
       if (balanceEl) {
         balanceEl.textContent = CubicWallet.getBalance().toLocaleString("id-ID");
       }
+      const sidebarBalanceEl = document.getElementById("sidebar-cubic-balance");
+      if (sidebarBalanceEl) {
+        sidebarBalanceEl.textContent = CubicWallet.getBalance().toLocaleString("id-ID");
+      }
 
       // Bind Header Avatar Click -> Open Avatar Lab
       const btnHeaderAvatar = document.getElementById("btn-header-avatar");
@@ -1335,6 +1517,10 @@ class EpeAppV2 {
       window.addEventListener("epe-cubic-balance-updated", (e) => {
         if (balanceEl && e.detail) {
           balanceEl.textContent = Number(e.detail.balance).toLocaleString("id-ID");
+        }
+        const sidebarBal = document.getElementById("sidebar-cubic-balance");
+        if (sidebarBal && e.detail) {
+          sidebarBal.textContent = Number(e.detail.balance).toLocaleString("id-ID");
         }
       });
 
@@ -1961,7 +2147,7 @@ class EpeAppV2 {
   // BIND ALL EVENTS
   // =========================================================================
   bindEvents() {
-    // Navigation Tabs
+    // Navigation Tabs (Top Header Bar)
     if (this.elements.tabBtnDashboard) this.elements.tabBtnDashboard.addEventListener("click", (e) => this.switchTab("dashboard", e));
     if (this.elements.tabBtnPretest) this.elements.tabBtnPretest.addEventListener("click", (e) => this.switchTab("pretest", e));
     if (this.elements.tabBtnDiagnostic) this.elements.tabBtnDiagnostic.addEventListener("click", (e) => this.switchTab("diagnostic", e));
@@ -1969,6 +2155,14 @@ class EpeAppV2 {
     if (this.elements.tabBtnPosttest) this.elements.tabBtnPosttest.addEventListener("click", (e) => this.switchTab("posttest", e));
     if (this.elements.tabBtnErrorProfile) this.elements.tabBtnErrorProfile.addEventListener("click", (e) => this.switchTab("error-profile", e));
     if (this.elements.tabBtnResearch) this.elements.tabBtnResearch.addEventListener("click", (e) => this.switchTab("research", e));
+
+    // Navigation Tabs (Sidebar Kiri & Floating Bottom Dock)
+    document.querySelectorAll(".sidebar-nav-btn, .bottom-dock-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const targetTab = btn.dataset.tab;
+        if (targetTab) this.switchTab(targetTab, e);
+      });
+    });
 
     // Pipeline Buttons on Dashboard
     if (this.elements.btnPipelinePretest) {
@@ -2732,9 +2926,11 @@ class EpeAppV2 {
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
     window.epeApp = new EpeAppV2();
+    window.EPEAppInstance = window.epeApp;
     window.epeApp.init();
   });
 } else {
   window.epeApp = new EpeAppV2();
+  window.EPEAppInstance = window.epeApp;
   window.epeApp.init();
 }

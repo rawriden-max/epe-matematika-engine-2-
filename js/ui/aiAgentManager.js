@@ -14,6 +14,9 @@ import { MathSolver } from "../engine/mathSolver.js";
 import { VisionProvider } from "../multimodal/visionProvider.js";
 import { SpeechMathParser } from "../multimodal/speechMathParser.js";
 import { WebSearchService } from "../services/webSearchService.js";
+import { aiVoiceEngine, AiVoiceEngine } from "../ai/aiVoiceEngine.js";
+import { VoiceCustomizerModal } from "./voiceCustomizerModal.js";
+import { LiveVoiceUI } from "./liveVoiceUI.js";
 
 const CHAT_HISTORY_STORAGE_KEY = "epe_matrix_chat_history_v1";
 const SESSIONS_STORAGE_KEY = "epe_matrix_chat_sessions_v2";
@@ -49,7 +52,20 @@ export class AiAgentManager {
     this.activeSession = this.sessions.find(s => s.id === this.activeSessionId) || this.sessions[0];
     this.messages = this.activeSession ? this.activeSession.messages : [];
 
-    this.recognition = null;
+    this.voiceCustomizerModal = new VoiceCustomizerModal({
+      onVoiceSaved: (cfg) => {
+        if (window.NotificationToast) {
+          window.NotificationToast.show(`Karakter suara AI diperbarui: ${aiVoiceEngine.getPersona().name}`, "info");
+        }
+      }
+    });
+
+    this.liveVoiceUI = new LiveVoiceUI({
+      aiAgentManager: this,
+      voiceCustomizerModal: this.voiceCustomizerModal
+    });
+
+    this.activeVoiceSession = null;
     this.isRecordingVoice = false;
 
     this.init();
@@ -108,7 +124,7 @@ export class AiAgentManager {
       messages: [
         {
           sender: "assistant",
-          text: "Halo! Aku **Matrix**, asisten AI kognitif matematikamu 🌐✨.\n\nAku siap mendampingimu menyelesaikan soal diagnostik, membedah langkah aljabar, atau berdiskusi topik sains dan matematika apa saja. Ada yang ingin kamu tanyakan atau diskusikan?",
+          text: "Halo! Aku **Matrix**, asisten penalaran matematika di platform EPE.\n\nAku siap mendampingimu menyelesaikan soal diagnostik, membedah langkah aljabar, atau berdiskusi topik sains dan matematika apa saja. Ada yang ingin kamu tanyakan atau diskusikan?",
           timestamp: new Date()
         }
       ]
@@ -213,7 +229,7 @@ export class AiAgentManager {
     this.activeSession.messages = [
       {
         sender: "assistant",
-        text: "Sesi percakapan ini telah dibersihkan 🔄✨. Ada topik atau soal baru apa yang ingin kita bahas bersama?",
+        text: "Sesi percakapan ini telah dibersihkan. Ada topik atau soal baru apa yang ingin kita bahas bersama?",
         timestamp: new Date()
       }
     ];
@@ -336,7 +352,7 @@ export class AiAgentManager {
     md += `### Sesi: ${sessionTitle}\n`;
     md += `*Tanggal Ekspor: ${new Date().toLocaleString("id-ID")}*\n\n---\n\n`;
     this.messages.forEach((m, idx) => {
-      const senderName = m.sender === "user" ? "👤 Siswa" : "🤖 Matrix AI";
+      const senderName = m.sender === "user" ? "Siswa" : "Matrix AI";
       const timeStr = m.timestamp ? new Date(m.timestamp).toLocaleTimeString("id-ID") : "";
       md += `#### ${idx + 1}. ${senderName} (${timeStr})\n\n${m.text}\n\n`;
       if (m.image) {
@@ -429,6 +445,9 @@ export class AiAgentManager {
     const heroChatBtn = document.getElementById("hero-btn-chat-ai");
     if (heroChatBtn) heroChatBtn.addEventListener("click", () => this.openDrawer());
 
+    const heroVoiceBtn = document.getElementById("hero-btn-voice-ai");
+    if (heroVoiceBtn) heroVoiceBtn.addEventListener("click", () => this.liveVoiceUI.open());
+
     const heroGuideBtn = document.getElementById("hero-btn-guide-step");
     if (heroGuideBtn) {
       heroGuideBtn.addEventListener("click", () => {
@@ -480,8 +499,8 @@ export class AiAgentManager {
         this.voiceEnabled = !this.voiceEnabled;
         this.voiceToggleBtn.classList.toggle("text-blue-400", this.voiceEnabled);
         this.voiceToggleBtn.classList.toggle("text-slate-500", !this.voiceEnabled);
-        if (!this.voiceEnabled && window.speechSynthesis) {
-          window.speechSynthesis.cancel();
+        if (!this.voiceEnabled) {
+          aiVoiceEngine.stopSpeaking();
         }
       });
     }
@@ -489,6 +508,43 @@ export class AiAgentManager {
     // Speech-to-Text Mic
     if (this.micBtn) {
       this.micBtn.addEventListener("click", () => this.toggleVoiceInput());
+    }
+
+    // Tombol Mode Bicara Langsung (Live Voice Mode) - Header, Input Bar & Sidebar
+    const liveVoiceBtn = document.getElementById("btn-ai-live-voice");
+    if (liveVoiceBtn) {
+      liveVoiceBtn.addEventListener("click", () => {
+        this.liveVoiceUI.open();
+      });
+    }
+
+    const inputLiveVoiceBtn = document.getElementById("btn-ai-input-live-voice");
+    if (inputLiveVoiceBtn) {
+      inputLiveVoiceBtn.addEventListener("click", () => {
+        this.liveVoiceUI.open();
+      });
+    }
+
+    const sidebarVoiceBtn = document.getElementById("sidebar-btn-voice-ai");
+    if (sidebarVoiceBtn) {
+      sidebarVoiceBtn.addEventListener("click", () => {
+        this.liveVoiceUI.open();
+      });
+    }
+
+    const dockVoiceBtn = document.getElementById("dock-btn-voice-ai");
+    if (dockVoiceBtn) {
+      dockVoiceBtn.addEventListener("click", () => {
+        this.liveVoiceUI.open();
+      });
+    }
+
+    // Tombol Ubah Karakter Suara AI
+    const voiceCustomizerBtn = document.getElementById("btn-open-voice-customizer");
+    if (voiceCustomizerBtn) {
+      voiceCustomizerBtn.addEventListener("click", () => {
+        this.voiceCustomizerModal.openModal();
+      });
     }
 
     // AI Settings Modal
@@ -560,38 +616,11 @@ export class AiAgentManager {
   }
 
   initSpeechRecognition() {
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRec) {
-      try {
-        this.recognition = new SpeechRec();
-        this.recognition.lang = "id-ID";
-        this.recognition.continuous = false;
-        this.recognition.interimResults = false;
-
-        this.recognition.onresult = (event) => {
-          const rawTranscript = event.results[0][0].transcript;
-          const parsed = SpeechMathParser.parseSpokenMath(rawTranscript);
-          const finalPrompt = parsed.normalizedText || rawTranscript;
-          if (this.chatInput) {
-            this.chatInput.value = finalPrompt;
-            this.handleSendMessage();
-          }
-          this.stopVoiceInput();
-        };
-
-        this.recognition.onerror = () => this.stopVoiceInput();
-        this.recognition.onend = () => this.stopVoiceInput();
-      } catch (e) {
-        console.warn("SpeechRecognition tidak didukung di browser ini.");
-      }
-    }
+    // Inisialisasi daftar suara TTS dan audio engine
+    aiVoiceEngine.initVoices();
   }
 
   toggleVoiceInput() {
-    if (!this.recognition) {
-      alert("Browser Anda belum mendukung input suara Speech-to-Text.");
-      return;
-    }
     if (this.isRecordingVoice) {
       this.stopVoiceInput();
     } else {
@@ -600,23 +629,89 @@ export class AiAgentManager {
   }
 
   startVoiceInput() {
-    if (!this.recognition) return;
-    try {
-      this.recognition.start();
-      this.isRecordingVoice = true;
-      if (this.micBtn) this.micBtn.classList.add("text-rose-500", "mic-recording-pulse");
-    } catch (e) {
-      console.warn("Gagal memulai perekaman suara:", e);
+    if (!AiVoiceEngine.isSpeechSupported()) {
+      alert("Browser Anda belum mendukung input suara Speech-to-Text. Gunakan Chrome, Edge, atau Opera terbaru.");
+      return;
     }
+
+    this.stopVoiceInput();
+    this.isRecordingVoice = true;
+
+    if (this.micBtn) {
+      this.micBtn.classList.add("text-rose-500", "mic-recording-pulse", "ring-2", "ring-rose-500/50");
+      this.micBtn.title = "Sedang Merekam... Klik untuk Berhenti";
+    }
+
+    // Tampilkan notifikasi live feedback
+    const toastBanner = document.getElementById("ai-chat-live-voice-hint");
+    if (toastBanner) {
+      toastBanner.classList.remove("hidden");
+      toastBanner.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0"></span><span id="ai-live-voice-text-inner">Mendengarkan ucapan... Silakan berbicara.</span>';
+    }
+
+    this.activeVoiceSession = aiVoiceEngine.startListening({
+      onInterimResult: ({ currentText, statusHint }) => {
+        if (this.chatInput && currentText) {
+          this.chatInput.value = currentText;
+        }
+        if (toastBanner) {
+          const inner = toastBanner.querySelector("#ai-live-voice-text-inner");
+          if (inner) {
+            inner.textContent = currentText ? `Terdeteksi: "${currentText}"` : (statusHint || "Mendengarkan ucapan...");
+          }
+        }
+      },
+      onFinalResult: (finalText) => {
+        if (!finalText || !finalText.trim()) return;
+        const parsed = SpeechMathParser.parseSpokenMath(finalText);
+        const textToSend = parsed.normalizedText || finalText;
+
+        if (this.chatInput) {
+          this.chatInput.value = textToSend;
+          this.handleSendMessage();
+        }
+        this.stopVoiceInput();
+      },
+      onError: (err) => {
+        console.warn("Speech-to-Text Error:", err);
+        if (toastBanner) {
+          toastBanner.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span><span>${err.message || "Gagal merekam suara"}</span>`;
+          setTimeout(() => toastBanner.classList.add("hidden"), 3500);
+        }
+        this.stopVoiceInput();
+      },
+      onEnd: () => {
+        this.stopVoiceInput();
+      },
+      onStateChange: ({ volume }) => {
+        if (this.micBtn) {
+          const scale = 1 + (volume || 0) * 0.35;
+          this.micBtn.style.transform = `scale(${scale})`;
+        }
+      }
+    });
   }
 
   stopVoiceInput() {
-    if (!this.recognition) return;
-    try {
-      this.recognition.stop();
-    } catch (e) {}
     this.isRecordingVoice = false;
-    if (this.micBtn) this.micBtn.classList.remove("text-rose-500", "mic-recording-pulse");
+    if (this.activeVoiceSession) {
+      try {
+        this.activeVoiceSession.stop();
+      } catch (e) {}
+      this.activeVoiceSession = null;
+    }
+    aiVoiceEngine.stopListening();
+
+    if (this.micBtn) {
+      this.micBtn.classList.remove("text-rose-500", "mic-recording-pulse", "ring-2", "ring-rose-500/50");
+      this.micBtn.style.transform = "";
+      this.micBtn.title = "Bicara via Mikrofon (Speech-to-Text Normalizer)";
+    }
+
+    const toastBanner = document.getElementById("ai-chat-live-voice-hint");
+    if (toastBanner) {
+      setTimeout(() => toastBanner.classList.add("hidden"), 1500);
+    }
   }
 
   openDrawer() {
@@ -1100,7 +1195,7 @@ export class AiAgentManager {
    */
   generateAlternativeMethods(context) {
     if (context.category === "rectangle_area") {
-      return `### 📐 Beragam Cara Lain Menghitung & Memahami Luas Persegi Panjang
+      return `### Beragam Cara Lain Menghitung & Memahami Luas Persegi Panjang
 
 Selain rumus standar dasar **$L = p \\times l$**, terdapat beberapa cara dan perspektif matematis lain untuk mencari luas persegi panjang tergantung komponen data yang diketahui:
 
@@ -1156,7 +1251,7 @@ Apakah salah satu metode di atas berkaitan dengan soal atau variasi kasus yang s
     }
 
     if (context.category === "discriminant" || context.category === "quadratic_factoring") {
-      return `### 🧩 5 Cara & Metode Berbeda Menyelesaikan Persamaan Kuadrat $ax^2 + bx + c = 0$
+      return `### 5 Cara & Metode Berbeda Menyelesaikan Persamaan Kuadrat $ax^2 + bx + c = 0$
 
 Selain melalui analisis diskriminan $D = b^2 - 4ac$, ada 5 metode standar yang dapat digunakan untuk menentukan akar-akar dan karakteristik persamaan kuadrat:
 
@@ -1203,7 +1298,7 @@ Mau mencoba menerapkan salah satu metode ini pada soal kuadrat yang sedang kamu 
     }
 
     if (context.category === "compound_interest") {
-      return `### 💰 Beragam Metode Menghitung Pertumbuhan Nilai Bunga Majemuk
+      return `### Beragam Metode Menghitung Pertumbuhan Nilai Bunga Majemuk
 
 Tergantung pada periode pemajemukan dan kebutuhan analisis keuangan, terdapat beberapa cara menghitung bunga majemuk:
 
@@ -1225,7 +1320,7 @@ Tergantung pada periode pemajemukan dan kebutuhan analisis keuangan, terdapat be
     }
 
     if (context.category === "pythagoras") {
-      return `### 📐 Beragam Cara Membuktikan & Menghitung Teorema Pythagoras ($a^2 + b^2 = c^2$)
+      return `### Beragam Cara Membuktikan & Menghitung Teorema Pythagoras ($a^2 + b^2 = c^2$)
 
 Teorema Pythagoras adalah salah satu teorema dengan pembuktian terbanyak dalam sejarah matematika (lebih dari 370 pembuktian!). Berikut cara-cara terbaiknya:
 
@@ -1247,7 +1342,7 @@ Teorema Pythagoras adalah salah satu teorema dengan pembuktian terbanyak dalam s
     }
 
     // Default alternative response for general topics
-    return `### 💡 Alternatif Pendekatan untuk: **"${context.topic}"**
+    return `### Alternatif Pendekatan untuk: **"${context.topic}"**
 
 Dalam matematika dan pemecahan masalah ilmiah, selalu ada lebih dari satu sudut pandang untuk mendekati suatu persoalan:
 
@@ -1264,7 +1359,7 @@ Apakah kamu ingin kita bedah topik **"${context.topic}"** menggunakan pendekatan
    */
   generateWhyExplanation(context) {
     if (context.category === "rectangle_area") {
-      return `### 💡 Mengapa Rumus Luas Persegi Panjang adalah $L = p \\times l$?
+      return `### Mengapa Rumus Luas Persegi Panjang adalah $L = p \\times l$?
 
 Pertanyaan kritis yang sangat bagus! Mengapa kita mengalikan panjang dan lebar?
 
@@ -1287,7 +1382,7 @@ Itulah sebabnya perkalian panjang dan lebar adalah ukuran alami dari ruang dua d
     }
 
     if (context.category === "discriminant") {
-      return `### 💡 Mengapa Rumus Diskriminan $D = b^2 - 4ac$ Menentukan Jenis Akar?
+      return `### Mengapa Rumus Diskriminan $D = b^2 - 4ac$ Menentukan Jenis Akar?
 
 Diskriminan dinamakan dari kata bahasa Latin *"discriminare"* yang berarti **membedakan**. Mengapa rumusnya $b^2 - 4ac$?
 
@@ -1310,7 +1405,7 @@ Nilai di bawah akar inilah yang kita beri simbol **$D = b^2 - 4ac$**.
 Itulah mengapa hanya dengan melihat nilai $b^2 - 4ac$, kita langsung tahu sifat akarnya tanpa perlu repot menghitung nilai $x$!`;
     }
 
-    return `### 💡 Menelusuri Logika Fundamental: **"${context.topic}"**
+    return `### Menelusuri Logika Fundamental: **"${context.topic}"**
 
 Konsep ini bekerja berdasarkan prinsip keteraturan dan sebab-akibat matematis:
 1. Setiap formula yang kita gunakan lahir dari proses deduktif—bermula dari aksioma dasar yang dibuktikan secara logis langkah demi langkah.
@@ -1324,7 +1419,7 @@ Ada bagian dari langkah penurunan logisnya yang ingin kamu bedah lebih dalam?`;
    */
   generateConcreteExamples(context) {
     if (context.category === "rectangle_area") {
-      return `### 📝 Contoh Soal & Penerapan Nyata: Luas Persegi Panjang
+      return `### Contoh Soal & Penerapan Nyata: Luas Persegi Panjang
 
 Mari kita telaah dua variasi contoh soal berikut:
 
@@ -1351,7 +1446,7 @@ Mau mencoba menyelesaikan satu soal latihan dengan angka lain?`;
     }
 
     if (context.category === "discriminant") {
-      return `### 📝 Contoh Soal Menghitung & Menginterpretasikan Nilai Diskriminan
+      return `### Contoh Soal Menghitung & Menginterpretasikan Nilai Diskriminan
 
 Mari kita selesaikan dua contoh soal yang sering muncul di ujian:
 
@@ -1374,7 +1469,7 @@ Tentukan nilai $k$ agar persamaan $x^2 + kx + 16 = 0$ memiliki akar kembar!
 - Jadi, nilai $k$ yang memenuhi adalah **$k = 8$** atau **$k = -8$**.`;
     }
 
-    return `### 📝 Contoh Penerapan: **"${context.topic}"**
+    return `### Contoh Penerapan: **"${context.topic}"**
 
 Mari kita lihat bagaimana konsep ini diterapkan dalam skenario nyata:
 - Menghitung parameter input yang diketahui.
@@ -1391,7 +1486,7 @@ Ketikkan angka atau soal spesifik jika kamu ingin kita kerjakan bersama!`;
     if (context.category === "rectangle_area") {
       return this.generateAlternativeMethods(context);
     }
-    return `### 🔍 Penjelasan Lebih Mendalam: **"${context.topic}"**
+    return `### Penjelasan Lebih Mendalam: **"${context.topic}"**
 
 Mari kita telaah konsep ini secara lebih terstruktur dan komprehensif:
 
@@ -1443,7 +1538,7 @@ Ada bagian tertentu yang ingin kamu tanyakan lebih spesifik?`;
           const firstQ = manifest.questions?.[0];
           const detectedLatex = norm.latex || firstQ?.mathematicalObjects?.[0] || "";
 
-          let analysis = `### 📷 Analisis Konten Gambar oleh Matrix AI 🔍✨\n\n`;
+          let analysis = `### Analisis Konten Gambar oleh Matrix AI\n\n`;
           analysis += `Saya berhasil memindai visual gambar matematika yang kamu lampirkan:\n\n`;
 
           if (detectedLatex) {
@@ -1459,7 +1554,7 @@ Ada bagian tertentu yang ingin kamu tanyakan lebih spesifik?`;
           if (detectedLatex) {
             const solved = MathSolver.solve(detectedLatex);
             if (solved) {
-              analysis += `\n---\n#### 📐 Penyelesaian Komputasi Deterministik:\n${solved}\n`;
+              analysis += `\n---\n#### Penyelesaian Komputasi Deterministik:\n${solved}\n`;
             }
           }
 
@@ -1505,11 +1600,11 @@ Ada bagian tertentu yang ingin kamu tanyakan lebih spesifik?`;
         try {
           const liveAiResult = await this.callFreeWebAI(searchPrompt);
           if (liveAiResult && liveAiResult.trim()) {
-            return `${liveAiResult}\n\n---\n🌐 *Sumber Referensi Web: [${webResult.title}](${webResult.sourceUrl})*`;
+            return `${liveAiResult}\n\n---\n*Sumber Referensi Web: [${webResult.title}](${webResult.sourceUrl})*`;
           }
         } catch (e) {}
 
-        return `### 🌐 Informasi Terkini dari Web: **${webResult.title}**\n\n${webResult.summary}\n\n---\n🔗 *Baca selengkapnya di: [${webResult.title}](${webResult.sourceUrl})*`;
+        return `### Informasi Terkini dari Web: **${webResult.title}**\n\n${webResult.summary}\n\n---\n*Baca selengkapnya di: [${webResult.title}](${webResult.sourceUrl})*`;
       }
     } catch (err) {
       console.warn("Web search lookup notice:", err);
@@ -1568,7 +1663,7 @@ Ada bagian tertentu yang ingin kamu tanyakan lebih spesifik?`;
         if (data.success && data.text) {
           let output = data.text;
           if (data.grounding?.webSearchQueries) {
-            output += `\n\n---\n🔍 *Pencarian Google: ${data.grounding.webSearchQueries.join(", ")}*`;
+            output += `\n\n---\n*Pencarian Google: ${data.grounding.webSearchQueries.join(", ")}*`;
           }
           return output;
         }
@@ -1899,7 +1994,7 @@ Konteks Pembelajaran di Aplikasi (HANYA rujuk jika ditanya oleh siswa terkait la
       const aDisplay = Number.isInteger(a) ? a : a.toString();
       const bDisplay = Number.isInteger(b) ? b : b.toString();
 
-      return `### 🧮 Hasil Perhitungan Matematika
+      return `### Hasil Perhitungan Matematika
 
 **Pertanyaan:** $${aDisplay} ${opSymbol} ${bDisplay}$
 **Hasil Akhir:** **$${formattedRes}$**
@@ -1923,7 +2018,7 @@ Apakah ada perhitungan atau persamaan aljabar lain yang ingin kamu hitung bersam
       }
       const res = Math.sqrt(n);
       const formatted = Number.isInteger(res) ? res : res.toFixed(4).replace(/\.?0+$/, "");
-      return `### 📐 Hasil Penarikan Akar Kuadrat
+      return `### Hasil Penarikan Akar Kuadrat
 
 $$\\sqrt{${n}} = ${formatted}$$
 
@@ -1941,13 +2036,13 @@ Akar kuadrat adalah operasi kebalikan dari pemangkatan dua (kuadrat). Karena $${
 
     // 0. Apa Itu Matematika
     if (q.includes("apa itu matematika") || q.includes("definisi matematika") || q.includes("pengertian matematika") || q.includes("tentang matematika") || q === "matematika") {
-      return `### 📐 Apa Itu Matematika?
+      return `### Apa Itu Matematika?
 
 **Matematika** (berasal dari bahasa Yunani Kuno: *máthēma* yang berarti "pengetahuan, pemikiran, atau pembelajaran") adalah ilmu deduktif murni tentang **pola, struktur, kuantitas, ruang, dan perubahan**.
 
 ---
 
-#### 🏛️ Mengapa Matematika Disebut Ratu Ilmu Pengetahuan?
+#### Mengapa Matematika Disebut Ratu Ilmu Pengetahuan?
 Fisikawan dan matematikawan legendaris **Carl Friedrich Gauss** menjuluki matematika sebagai:
 > *"The Queen of the Sciences"* (Ratu dari Seluruh Ilmu Pengetahuan).
 
@@ -1955,7 +2050,7 @@ Hal ini karena seluruh cabang ilmu alam dan rekayasa teknologi modern—dari mek
 
 ---
 
-#### 🌿 Cabang-Cabang Utama Matematika:
+#### Cabang-Cabang Utama Matematika:
 1. **Aritmatika & Teori Bilangan**:
    Mempelajari sifat dasar bilangan bulat, pecahan, desimal, dan misteri bilangan prima.
 2. **Aljabar (Warisan Al-Khawarizmi)**:
@@ -1974,7 +2069,7 @@ Matematika melatih kita untuk berpikir logis, runtut, dan objektif dalam memecah
 
     // 1. Rumus & Bilangan Avogadro
     if (q.includes("avogadro") || q.includes("rumus avogadro") || q.includes("bilangan avogadro") || q.includes("hukum avogadro")) {
-      return `### ⚛️ Rumus & Bilangan Avogadro
+      return `### Rumus & Bilangan Avogadro
 
 **Bilangan Avogadro ($N_A$)** adalah konstanta fundamental dalam ilmu kimia dan fisika yang menyatakan jumlah partikel elementer (atom, molekul, atau ion) dalam satu mol zat:
 $$N_A \\approx 6{,}02214076 \\times 10^{23} \\text{ partikel/mol}$$
@@ -2001,7 +2096,7 @@ Konstanta ini dinamai untuk menghormati ilmuwan fisika-kimia Italia, **Amedeo Av
 
     // 2. Menteri Keuangan Indonesia
     if (q.includes("menteri keuangan") || q.includes("mentri keuangan") || q.includes("sri mulyani") || q.includes("kemenkeu") || q.includes("keuangan indonesia")) {
-      return `### 🏛️ Menteri Keuangan Republik Indonesia
+      return `### Menteri Keuangan Republik Indonesia
 
 Menteri Keuangan Republik Indonesia saat ini adalah:
 **Sri Mulyani Indrawati, S.E., M.Sc., Ph.D.**
@@ -2028,7 +2123,7 @@ Apakah ada topik ekonomi, perbendaharaan, atau model matematika keuangan yang in
 
     // 3. Apa Itu Rumus
     if (q.includes("apa itu rumus") || q.includes("definisi rumus") || q.includes("pengertian rumus") || q.includes("arti rumus") || q.includes("apa itu formula")) {
-      return `### 📐 Apa Itu Rumus (Formula)?
+      return `### Apa Itu Rumus (Formula)?
 
 **Rumus** (dalam matematika, fisika, dan sains) adalah pernyataan simbolis yang ringkas, terstruktur, dan konsisten yang menyatakan **hubungan matematis, aturan keteraturan alam, atau metode perhitungan** antara besaran-besaran (variabel).
 
@@ -2052,7 +2147,7 @@ Rumus diciptakan agar manusia tidak perlu menalar kembali fenomena yang rumit da
 
     // 4. Sains Umum
     if (q.includes("apa itu sains") || q.includes("definisi sains") || q.includes("tentang sains") || q.includes("ilmu pengetahuan")) {
-      return `### 🔬 Apa Itu Sains?
+      return `### Apa Itu Sains?
 
 **Sains** (dari bahasa Latin *scientia*, artinya "pengetahuan") adalah usaha sistematis manusia untuk membangun dan mengorganisasi pengetahuan dalam bentuk **penjelasan serta prediksi yang dapat diuji mengenai alam semesta**.
 
@@ -2066,7 +2161,7 @@ Ada cabang sains tertentu yang ingin kamu pelajari, seperti Fisika, Kimia, Astro
 
     // 5. Fisika & Hukum Newton
     if (q.includes("hukum newton") || q.includes("gaya") || q.includes("f = m") || q.includes("gravitasi")) {
-      return `### ⚡ Fisika: Hukum Gerak Newton & Gravitasi
+      return `### Fisika: Hukum Gerak Newton & Gravitasi
 
 Sir Isaac Newton merumuskan 3 hukum gerak fundamental:
 1. **Hukum I Newton (Inersia)**: Benda akan mempertahankan keadaan diam atau bergerak lurus beraturan jika resultan gaya bernilai nol:
@@ -2083,7 +2178,7 @@ $$F = G \\frac{m_1 \\cdot m_2}{r^2}$$
 
     // 6. Energi & Usaha
     if (q.includes("energi kinetik") || q.includes("energi potensial") || q.includes("hukum kekekalan energi")) {
-      return `### 🔋 Energi & Usaha dalam Fisika
+      return `### Energi & Usaha dalam Fisika
 
 1. **Energi Kinetik ($E_k$)**: Energi gerak benda bermassa $m$ dengan kecepatan $v$:
    $$E_k = \\frac{1}{2} m v^2$$
@@ -2095,7 +2190,7 @@ $$F = G \\frac{m_1 \\cdot m_2}{r^2}$$
 
     // 7. Listrik & Hukum Ohm
     if (q.includes("hukum ohm") || q.includes("arus listrik") || q.includes("tegangan") || q.includes("daya listrik")) {
-      return `### ⚡ Listrik Dinamis & Hukum Ohm
+      return `### Listrik Dinamis & Hukum Ohm
 
 Hubungan antara tegangan ($V$), kuat arus ($I$), dan hambatan ($R$):
 $$V = I \\cdot R \\quad \\iff \\quad I = \\frac{V}{R}$$
@@ -2113,37 +2208,37 @@ $$P = V \\cdot I = I^2 R = \\frac{V^2}{R} \\quad (\\text{Watt})$$`;
       q.includes("banyak bulan") ||
       (q.includes("bumi") && q.includes("bulan") && (q.includes("dua") || q.includes("tambah") || q.includes("banyak") || q.includes("kedua")))
     ) {
-      return `### 🌕🌕 Apa yang Terjadi Jika Bumi Memiliki Lebih dari 1 Bulan?
+      return `### Apa yang Terjadi Jika Bumi Memiliki Lebih dari 1 Bulan?
 
-Pertanyaan hipotetis astrofisika dan mekanika orbital yang sangat memukau! 🌌✨
+Pertanyaan hipotetis astrofisika dan mekanika orbital yang sangat menarik!
 
 Jika Bumi memiliki satelit alami kedua (misalnya Bulan kedua berukuran mirip atau sepertiga ukuran Bulan saat ini), dinamika planet kita akan berubah total akibat gravitasi dan mekanika benda langit:
 
 ---
 
-#### 1. 🌊 Pasang Surut Air Laut Ekstrem (*Mega-Tides*)
+#### 1. Pasang Surut Air Laut Ekstrem (*Mega-Tides*)
 Gaya pasang surut gravitasi dirumuskan dengan:
 $$F_{\\text{pasang}} \\approx \\frac{2 G M_{\\text{bulan}} M_{\\text{bumi}} R_{\\text{bumi}}}{r^3}$$
 Perhatikan bahwa gaya diferensial pasang surut ini berbanding terbalik dengan **pangkat tiga jarak** ($r^3$)!
 - Ketika kedua bulan berada pada posisi sejajar searah terhadap Bumi (*syzygy*), resultan gaya gravitasi keduanya akan bergabung menciptakan **gelombang pasang laut raksasa (*mega-tides*) setinggi puluhan hingga ratusan meter**.
 - Dataran rendah dan kota-kota pesisir dunia (seperti Jakarta, New York, Tokyo, dan London) akan terendam secara berkala, mengubah peta geografi dan peradaban manusia.
 
-#### 2. 🪐 Batas Roche (*Roche Limit*) & Cincin Puing Kosmik
+#### 2. Batas Roche (*Roche Limit*) & Cincin Puing Kosmik
 Dalam fisika gravitasi, interaksi tiga benda (**The Three-Body Problem**) antara Bumi dan dua bulan cenderung bersifat tidak stabil (*chaotic*):
 - **Batas Roche**: Jarak kritis di mana gaya pasang surut gravitasi Bumi mampu meremukkan struktur batuan satelitnya:
   $$d_{\\text{Roche}} \\approx 2{,}44 \\cdot R_{\\text{bumi}} \\sqrt[3]{\\frac{\\rho_{\\text{bumi}}}{\\rho_{\\text{bulan}}}}$$
 - Jika bulan kedua mengorbit terlalu dekat dan melewati Batas Roche, gaya gravitasi diferensial Bumi akan mencabik-cabik bulan tersebut menjadi miliaran bongkahan batu dan debu es, menciptakan **sistem cincin raksasa mengelilingi Bumi layaknya cincin planet Saturnus**!
 - Sebaliknya, jika orbit kedua bulan berdekatan, perturbasi gravitasi antarkedua bulan pada akhirnya dapat memicu tabrakan dahsyat (*orbital collision*), menghujani Bumi dengan hujan meteorit raksasa pemusnah massal.
 
-#### 3. 🌙 Malam Hari yang Benderang & Gangguan Ritme Sirkadian
+#### 3. Malam Hari yang Benderang & Gangguan Ritme Sirkadian
 - Dua bulan dengan periode orbit dan fase yang berbeda akan membuat langit malam Bumi hampir tidak pernah gelap gulita.
 - Cahaya malam yang benderang akan mengacaukan ritme sirkadian (jam biologis tidur) manusia serta merusak pola navigasi dan berburu hewan-hewan nokturnal.
 
-#### 4. 🌗 Gerhana Ganda & Kalender Multivariabel
+#### 4. Gerhana Ganda & Kalender Multivariabel
 - Fenomena gerhana matahari dan gerhana bulan akan terjadi jauh lebih sering, bahkan memunculkan gerhana ganda yang spektakuler.
 - Sistem penanggalan berbasis bulan (seperti Kalender Hijriah atau Imlek) akan membutuhkan kalkulasi aljabar multivariabel non-linear yang sangat rumit untuk memadukan dua siklus sinodik yang berbeda.
 
-Secara matematis, satu Bulan tunggal berjarak $\\approx 384.400\\text{ km}$ yang kita miliki saat ini adalah **anugerah kesetimbangan gravitasi yang paling stabil** untuk mengunci kemiringan sumbu rotasi Bumi pada $23{,}5^\\circ$ dan menjaga iklim kehidupan tetap ramah! 🌍✨`;
+Secara matematis, satu Bulan tunggal berjarak $\\approx 384.400\\text{ km}$ yang kita miliki saat ini adalah **anugerah kesetimbangan gravitasi yang paling stabil** untuk mengunci kemiringan sumbu rotasi Bumi pada $23{,}5^\\circ$ dan menjaga iklim kehidupan tetap ramah!`;
     }
 
     // 7c. Hipotetis Fisika: Jika Matahari Tiba-tiba Lenyap / Padam
@@ -2151,24 +2246,24 @@ Secara matematis, satu Bulan tunggal berjarak $\\approx 384.400\\text{ km}$ yang
       (q.includes("matahari") && (q.includes("lenyap") || q.includes("hilang") || q.includes("padam") || q.includes("mati") || q.includes("tidak ada"))) ||
       (q.includes("jika") && q.includes("matahari") && (q.includes("padam") || q.includes("hilang")))
     ) {
-      return `### ☀️❌ Apa yang Terjadi Jika Matahari Tiba-tiba Lenyap?
+      return `### Apa yang Terjadi Jika Matahari Tiba-tiba Lenyap?
 
-Skenario eksperimen pikiran relativitas dan termodinamika yang spektakuler! 🚀
+Skenario eksperimen pikiran relativitas dan termodinamika yang spektakuler:
 
 ---
 
-#### 1. ⏱️ 8 Menit 20 Detik Pertama: Kita Belum Menyadari Apapun!
+#### 1. Delapan Menit 20 Detik Pertama: Kita Belum Menyadari Apapun!
 Menurut Teori Relativitas Umum Einstein, **gelombang gravitasi dan foton cahaya merambat pada kecepatan yang sama: kecepatan cahaya ($c \\approx 3 \\times 10^8 \\text{ m/s}$)**.
 Jarak rata-rata Bumi ke Matahari adalah $150.000.000\\text{ km}$:
 $$t = \\frac{s}{c} = \\frac{150.000.000\\text{ km}}{300.000\\text{ km/s}} = 500\\text{ detik} = 8\\text{ menit } 20\\text{ detik}$$
 Selama 8 menit 20 detik setelah Matahari lenyap, Bumi masih bermandikan cahaya terang benderang dan tetap mengorbit secara melingkar seolah-olah Matahari masih ada!
 
-#### 2. 🌌 Detik ke-501: Langit Gelap Gulita & Bumi Terlempar Lurus
+#### 2. Detik ke-501: Langit Gelap Gulita & Bumi Terlempar Lurus
 Tepat pada menit ke-8 lewat 20 detik:
 - Langit Bumi seketika menjadi gelap gulita (Bulan pun langsung tak terlihat karena tak ada lagi pantulan sinar surya).
 - Tarikan gravitasi sentripetal lenyap! Berdasarkan **Hukum Inersia I Newton**, Bumi akan lepas dari orbit melingkarnya dan meluncur lurus dengan kecepatan konstan $\\approx 30\\text{ km/detik}$ ($108.000\\text{ km/jam}$) menuju kehampaan ruang antarbintang sebagai *rogue planet*.
 
-#### 3. ❄️ Pendinginan Global Ekstrem
+#### 3. Pendinginan Global Ekstrem
 - Dalam waktu **1 minggu**, suhu rata-rata permukaan Bumi anjlok ke $-18^\\circ\\text{C}$.
 - Dalam **1 tahun**, suhu anjlok ke $-100^\\circ\\text{C}$. Samudra membeku mulai dari lapisan permukaan ke bawah.
 - Pada akhirnya suhu stabil di kisaran $-240^\\circ\\text{C}$, di mana atmosfer gas oksigen dan nitrogen mencair dan turun sebagai salju cair.
@@ -2181,26 +2276,26 @@ Kehidupan manusia hanya bisa bertahan di bunker bawah tanah bertenaga reaktor nu
       (q.includes("bumi") && (q.includes("berhenti berputar") || q.includes("berhenti rotasi") || q.includes("tidak berputar"))) ||
       (q.includes("rotasi bumi") && q.includes("berhenti"))
     ) {
-      return `### 🌍🛑 Apa yang Terjadi Jika Bumi Tiba-tiba Berhenti Berputar?
+      return `### Apa yang Terjadi Jika Bumi Tiba-tiba Berhenti Berputar?
 
-Sebuah skenario inersia fisika mekanika ekstrem!
+Sebuah skenario inersia fisika mekanika ekstrem:
 
 Bumi berotasi ke arah timur pada khatulistiwa dengan kelajuan sekitar:
 $$v_{\\text{rotasi}} = \\frac{2\\pi R}{T} = \\frac{2\\pi \\times 6.371\\text{ km}}{24\\text{ jam}} \\approx 1.670\\text{ km/jam}$$
 
 ---
 
-#### 1. 💥 Efek Inersia Instan (Hukum I Newton)
+#### 1. Efek Inersia Instan (Hukum I Newton)
 Jika bola padat Bumi berhenti secara mendadak dalam 1 detik:
 - Berdasarkan **Hukum Inersia I Newton (Kelembaman)**, segala sesuatu yang tidak tertancap ke batuan dasar bumi (manusia, gedung, mobil, air laut, dan atmosfer) akan terus meluncur ke arah timur dengan kelajuan supersonik **$1.670\\text{ km/jam}$**!
 - Angin badai raksasa dengan kecepatan peluru akan meratakan hampir seluruh daratan di planet ini dalam sekejap.
 
-#### 2. 🌊 Samudra Tumpah ke Kutub
+#### 2. Samudra Tumpah ke Kutub
 Bumi berbentuk *oblate spheroid* (menggembung di khatulistiwa) akibat gaya sentrifugal rotasi:
 $$F_{\\text{sentrifugal}} = m \\cdot \\omega^2 \\cdot r$$
 Jika rotasi berhenti, gaya sentrifugal ini hilang seketika! Air laut di khatulistiwa yang selama ini tertarik ke ekuator akan mengalir deras ke arah kutub utara dan kutub selatan, membentuk dua samudra kutub raksasa dan menyisakan sabuk benua daratan raksasa di khatulistiwa.
 
-#### 3. ☀️ 6 Bulan Siang Membara & 6 Bulan Malam Beku
+#### 3. Enam Bulan Siang Membara & Enam Bulan Malam Beku
 Tanpa rotasi harian, siklus siang-malam hanya bergantung pada revolusi tahunan mengelilingi matahari:
 - 1 hari akan berlangsung sepanjang **1 tahun kalender**: 6 bulan terpanggang terik matahari tanpa jeda, dan 6 bulan membeku dalam kegelapan es total.
 - Medan magnet bumi (yang dihasilkan efek dinamo perputaran logam cair di inti luar) akan melemah atau lenyap, membiarkan badai radiasi kosmik menghujani permukaan.`;
@@ -2214,13 +2309,13 @@ Tanpa rotasi harian, siklus siang-malam hanya bergantung pada revolusi tahunan m
       q.includes("event horizon") ||
       q.includes("cakrawala peristiwa")
     ) {
-      return `### 🕳️ Lubang Hitam (*Black Hole*) & Misteri Ruang-Waktu
+      return `### Lubang Hitam (*Black Hole*) & Misteri Ruang-Waktu
 
 **Lubang Hitam** adalah wilayah ruang-waktu di mana gravitasi begitu luar biasa dahsyatnya sehingga tidak ada partikel materi maupun radiasi elektromagnetik (bahkan cahaya) yang dapat lolos dari tarikannya!
 
 ---
 
-#### 1. 📏 Radius Schwarzschild (Ukuran Batas Cakrawala Peristiwa)
+#### 1. Radius Schwarzschild (Ukuran Batas Cakrawala Peristiwa)
 Fisikawan Karl Schwarzschild pada tahun 1916 membuktikan solusi eksak persamaan Relativitas Einstein:
 $$r_s = \\frac{2GM}{c^2}$$
 *Di mana:*
@@ -2229,12 +2324,12 @@ $$r_s = \\frac{2GM}{c^2}$$
 - $M$ = Massa benda langit
 - $c$ = Kecepatan cahaya ($3 \\times 10^8\\text{ m/s}$)
 
-💡 **Fakta Unik:** Jika Bumi yang bermassa $5{,}97 \\times 10^{24}\\text{ kg}$ dimampatkan menjadi lubang hitam, seluruh massa Bumi akan menyusut hingga sebesar **kelereng kecil berdiameter hanya $1{,}8\\text{ cm}$**!
+**Fakta Kunci:** Jika Bumi yang bermassa $5{,}97 \\times 10^{24}\\text{ kg}$ dimampatkan menjadi lubang hitam, seluruh massa Bumi akan menyusut hingga sebesar **kelereng kecil berdiameter hanya $1{,}8\\text{ cm}$**!
 
-#### 2. 🍝 Fenomena Spaghetifikasi (*Spaghettification*)
+#### 2. Fenomena Spaghetifikasi (*Spaghettification*)
 Jika seseorang mendekati lubang hitam dengan kaki terlebih dahulu, gradien gaya pasang surut gravitasi $\\Delta F_{\\text{tide}} \\propto \\frac{1}{r^3}$ antara ujung kaki dan kepala sangat masif. Tubuh akan ditarik memanjang vertikal dan dimampatkan horizontal layaknya mie spageti!
 
-#### 3. ⏳ Dilatasi Waktu Gravitasi Ekstrem
+#### 3. Dilatasi Waktu Gravitasi Ekstrem
 Berdasarkan relativitas, semakin kuat medan gravitasi, semakin lambat aliran waktu:
 $$t' = \\frac{t}{\\sqrt{1 - \\frac{r_s}{r}}}$$
 Bagi pengamat yang berada jauh di luar, objek yang jatuh ke cakrawala peristiwa akan tampak melambat secara dramatis dan membeku tepat di batas *event horizon* selamanya!`;
@@ -2248,7 +2343,7 @@ Bagi pengamat yang berada jauh di luar, objek yang jatuh ke cakrawala peristiwa 
       q.includes("e = mc") ||
       q.includes("e=mc")
     ) {
-      return `### ⏳ Teori Relativitas Albert Einstein
+      return `### Teori Relativitas Albert Einstein
 
 Albert Einstein merevolusi pemahaman manusia tentang ruang, waktu, massa, dan energi melalui dua teori agung:
 
@@ -2281,22 +2376,22 @@ Buktinya: cahaya bintang melengkung saat melintasi medan gravitasi matahari (*gr
       q.includes("large language model") ||
       q.includes("llm")
     ) {
-      return `### 🧠 Bagaimana Cara Kerja Artificial Intelligence (AI)?
+      return `### Bagaimana Cara Kerja Artificial Intelligence (AI)?
 
 AI modern (termasuk Matrix!) pada intinya adalah orkestrasi agung antara **Aljabar Linear, Probabilitas, dan Kalkulus Diferensial** yang berjalan di atas chip komputasi paralel!
 
 ---
 
-#### 1. 🧮 Neuron Buatan: Perkalian Matriks & Bias
+#### 1. Neuron Buatan: Perkalian Matriks & Bias
 Setiap neuron tiruan menerima input vektor numerik $\\mathbf{x} = [x_1, x_2, \\dots, x_n]$, mengalikannya dengan bobot keterkaitan (*weights*) $\\mathbf{w}$, lalu menambahkan pergeseran (*bias*) $b$:
 $$z = \\sum_{i=1}^{n} w_i x_i + b = \\mathbf{w}^T \\mathbf{x} + b$$
 Nilai ini kemudian dilewatkan ke sebuah **fungsi aktivasi non-linear** (seperti ReLU $\\max(0, z)$ atau GeLU) agar jaringan mampu mempelajari pola yang rumit di dunia nyata.
 
-#### 2. 📉 Mengukur Kesalahan: Fungsi Kerugian (*Loss Function*)
+#### 2. Mengukur Kesalahan: Fungsi Kerugian (*Loss Function*)
 Saat model AI menebak sebuah pola, prediksi $\\hat{y}$ dibandingkan dengan fakta target $y$ menggunakan fungsi rugi:
 $$L = \\frac{1}{n} \\sum_{i=1}^{n} (y_i - \\hat{y}_i)^2$$
 
-#### 3. 🎯 Proses Belajar: Turunan Parsial & Gradient Descent
+#### 3. Proses Belajar: Turunan Parsial & Gradient Descent
 Bagaimana AI menjadi pintar? Dengan **Kalkulus Diferensial**!
 Melalui algoritma *Backpropagation*, komputer menghitung gradien turunan parsial $\\frac{\\partial L}{\\partial w}$ untuk mengetahui arah koreksi tiap parameter:
 $$w_{\\text{baru}} = w_{\\text{lama}} - \\eta \\frac{\\partial L}{\\partial w}$$
@@ -2310,24 +2405,24 @@ Dengan mengulang proses ini miliaran kali pada triliunan token data teks atau pi
       q.includes("hamburan rayleigh") ||
       q.includes("kenapa langit")
     ) {
-      return `### 🌌 Mengapa Langit Berwarna Biru?
+      return `### Mengapa Langit Berwarna Biru?
 
 Sebuah fenomena optika fisika gelombang yang dirumuskan oleh fisikawan Lord Rayleigh pada abad ke-19!
 
 ---
 
-#### 1. ☀️ Spektrum Cahaya Matahari
+#### 1. Spektrum Cahaya Matahari
 Cahaya matahari yang tampak putih sebenarnya adalah gabungan dari semua spektrum warna pelangi: merah, jingga, kuning, hijau, biru, nila, dan ungu.
 - Cahaya **merah** memiliki panjang gelombang paling panjang ($\\lambda \\approx 700\\text{ nm}$).
 - Cahaya **biru** memiliki panjang gelombang jauh lebih pendek ($\\lambda \\approx 400 - 450\\text{ nm}$).
 
-#### 2. ⚛️ Hukum Hamburan Rayleigh (*Rayleigh Scattering*)
+#### 2. Hukum Hamburan Rayleigh (*Rayleigh Scattering*)
 Ketika cahaya matahari memasuki atmosfer Bumi, cahaya tersebut bertumbukan dengan molekul gas nitrogen ($N_2$) dan oksigen ($O_2$).
 Intensitas hamburan cahaya berbanding terbalik dengan **pangkat empat panjang gelombangnya**:
 $$I_{\\text{hambur}} \\propto \\frac{1}{\\lambda^4}$$
 Karena panjang gelombang biru jauh lebih pendek daripada merah, **cahaya biru dihamburkan sekitar 10 kali lipat lebih kuat ke segala arah** dibandingkan cahaya merah! Akibatnya, saat kita memandang ke langit, mata kita menangkap gelombang biru yang tersebar di seluruh kubah atmosfer.
 
-💡 **Lalu Mengapa Sunset Berwarna Jingga-Merah?**
+**Lalu Mengapa Sunset Berwarna Jingga-Merah?**
 Saat matahari terbit atau terbenam di ufuk barat, sinar matahari harus menembus lapisan atmosfer yang jauh lebih tebal untuk mencapai mata kita. Semua cahaya biru bergelombang pendek sudah terhambur habis di perjalanan, sehingga hanya cahaya bergelombang panjang (merah dan jingga) yang berhasil lolos langsung ke pandangan mata kita!`;
     }
 
@@ -2337,24 +2432,24 @@ Saat matahari terbit atau terbenam di ufuk barat, sinar matahari harus menembus 
       (q.includes("kucing") && q.includes("kuantum")) ||
       q.includes("superposisi")
     ) {
-      return `### 🐱📦 Kucing Schrödinger & Superposisi Kuantum
+      return `### Kucing Schrödinger & Superposisi Kuantum
 
 **Kucing Schrödinger** adalah eksperimen pikiran legendaris yang diajukan oleh fisikawan Austria **Erwin Schrödinger** pada tahun 1935 untuk menunjukkan keganjilan interpretasi mekanika kuantum skala mikroskopis jika ditarik ke dunia makroskopis.
 
 ---
 
-#### 1. 🔬 Skenario Eksperimen
+#### 1. Skenario Eksperimen
 Bayangkan seekor kucing diletakkan di dalam kotak baja tertutup kedap suara bersama:
 - Sebuah atom radioaktif yang memiliki peluang tepat $50\\%$ untuk meluruh dalam waktu 1 jam.
 - Sebuah pencacah Geiger yang mendeteksi radiasi: jika atom meluruh, alat akan memicu palu memecahkan botol racun sianida yang mematikan kucing.
 - Jika atom tidak meluruh, racun tidak pecah dan kucing tetap hidup.
 
-#### 2. 🌊 Konsep Superposisi Gelombang
+#### 2. Konsep Superposisi Gelombang
 Dalam mekanika kuantum, selama belum ada pengukuran atau pengamatan luar, atom berada dalam status **Superposisi Kuantum** (berada di semua keadaan probabilitas sekaligus yang digambarkan oleh fungsi gelombang $\\Psi$):
 $$|\\psi\\rangle = \\frac{1}{\\sqrt{2}} |\\text{meluruh}\\rangle + \\frac{1}{\\sqrt{2}} |\\text{belum meluruh}\\rangle$$
 Karena nasib kucing terikat pada atom tersebut, secara mekanika kuantum kucing tersebut berstatus **"hidup dan mati sekaligus"** di saat yang sama!
 
-#### 3. 👁️ Runtuhnya Fungsi Gelombang (*Wavefunction Collapse*)
+#### 3. Runtuhnya Fungsi Gelombang (*Wavefunction Collapse*)
 Keadaan paradoks ini baru runtuh (*collapse*) menjadi satu kenyataan pasti (kucing hidup 100% atau kucing mati 100%) tepat pada detik seorang pengamat membuka penutup kotak dan melihat ke dalamnya. Eksperimen ini memicu perdebatan filosofis sains terbesar hingga melahirkan interpretasi Banyak-Dunia (*Many-Worlds Interpretation*)!`;
     }
 
@@ -2365,17 +2460,17 @@ Keadaan paradoks ini baru runtuh (*collapse*) menjadi satu kenyataan pasti (kuci
       (q.includes("asal usul") && q.includes("alam semesta")) ||
       q.includes("awal mula alam semesta")
     ) {
-      return `### 💥 Teori Big Bang: Detik Nol Kelahiran Alam Semesta
+      return `### Teori Big Bang: Detik Nol Kelahiran Alam Semesta
 
 Teori **Big Bang** adalah model kosmologi ilmiah terdepan yang menjelaskan bagaimana alam semesta berevolusi dari kondisi awal yang sangat padat dan panas sekitar **$13{,}8$ miliar tahun yang lalu**.
 
 ---
 
-#### 1. 🌌 Titik Singularitas Kosmik
+#### 1. Titik Singularitas Kosmik
 Pada detik $t = 0$, seluruh ruang, waktu, materi, dan energi di alam semesta termampatkan dalam satu titik berdimensi nol dengan kerapatan dan suhu tak hingga yang disebut **Singularitas Gravitasi**.
 Big Bang bukanlah ledakan di dalam ruang kosong yang sudah ada, melainkan **pemekaran dan perluasan ruang-waktu itu sendiri secara mahadahsyat** (*Cosmic Inflation*)!
 
-#### 2. 🔭 3 Bukti Matematis & Empiris Kuat
+#### 2. Tiga Bukti Matematis & Empiris Kuat
 1. **Hukum Hubble (Ekspansi Galaksi)**:
    Edwin Hubble pada tahun 1929 menemukan bahwa galaksi-galaksi saling menjauh dengan kelajuan sebanding dengan jaraknya:
    $$v = H_0 \\cdot d$$
@@ -2389,7 +2484,7 @@ Big Bang bukanlah ledakan di dalam ruang kosong yang sudah ada, melainkan **peme
     // 8. Diskriminan Kuadrat ($D$) & Cara Mengerjakannya
     if (q.includes("diskriminan") || q.includes("d = b^2") || q.includes("akar kembar")) {
       if (q.includes("cara") || q.includes("bagaimana") || q.includes("mengerjakan") || q.includes("hitung") || q.includes("langkah") || q.includes("rumus")) {
-        return `### 📐 Panduan Lengkap: Cara Mengerjakan & Menghitung Diskriminan ($D$)
+        return `### Panduan Lengkap: Cara Mengerjakan & Menghitung Diskriminan ($D$)
 
 Diskriminan adalah pembeda utama dalam persamaan kuadrat $ax^2 + bx + c = 0$ untuk mengetahui jumlah dan karakteristik akar tanpa perlu memfaktorkan atau menyelesaikan persamaannya.
 
@@ -2411,7 +2506,7 @@ $$D = b^2 - 4ac$$
    - $c = -3$ (angka konstanta)
 
 3. **Langkah 3: Masukkan ke Rumus $D = b^2 - 4ac$**
-   ⚠️ *Tips Kritis:* Pengkuadratan bilangan negatif $(-b)^2$ selalu menghasilkan nilai **positif**!
+   *Catatan Kritis:* Pengkuadratan bilangan negatif $(-b)^2$ selalu menghasilkan nilai **positif**!
    $$D = (-5)^2 - 4(2)(-3)$$
    $$D = 25 - (-24) = 25 + 24 = 49$$
 
@@ -2431,7 +2526,7 @@ Tentukan diskriminan dari $2x^2 - 4x + 5 = 0$:
 Ada persamaan kuadrat tertentu yang ingin kamu hitung nilai diskriminannya sekarang? Ketikkan saja persamaannya di sini!`;
       }
 
-      return `### 📐 Membedah Rahasia Diskriminan ($D$)
+      return `### Karakteristik & Analisis Diskriminan ($D$)
 
 Rumus diskriminan pada persamaan kuadrat $ax^2 + bx + c = 0$ didefinisikan sebagai:
 $$D = b^2 - 4ac$$
@@ -2441,12 +2536,12 @@ Diskriminan menentukan jenis akar-akar penyelesaian persamaan kuadrat:
 2. **$D = 0$**: Memiliki **1 akar kembar / real sama** (puncak parabola tepat menyinggung sumbu-$X$).
 3. **$D < 0$**: **Tidak memiliki akar real** (akar imajiner/kompleks, parabola melayang di atas/bawah sumbu-$X$).
 
-⚠️ *Miskonsepsi Siswa:* Banyak yang mengira jika $D < 0$ maka nilainya berupa angka negatif. Faktanya, $D < 0$ berarti akar kuadrat $\\sqrt{D}$ tidak dapat diselesaikan di himpunan bilangan real!`;
+*Catatan Konsep:* Banyak yang mengira jika $D < 0$ maka nilainya berupa angka negatif. Faktanya, $D < 0$ berarti akar kuadrat $\\sqrt{D}$ tidak dapat diselesaikan di himpunan bilangan real!`;
     }
 
     // 9. Kalkulus & Turunan
     if (q.includes("kalkulus") || q.includes("turunan") || q.includes("integral") || q.includes("derivatif")) {
-      return `### 🚀 Wawasan Kalkulus: Titik Puncak & Luas Parabola
+      return `### Wawasan Kalkulus: Titik Puncak & Luas Parabola
 
 Pada fungsi kuadrat $f(x) = ax^2 + bx + c$, kita dapat menemukan titik ekstrim (puncak parabola) menggunakan **Turunan Pertama ($f'(x) = 0$)**:
 $$f'(x) = 2ax + b = 0 \\implies x_p = -\\frac{b}{2a}$$
@@ -2459,7 +2554,7 @@ Kalkulus diciptakan secara independen oleh **Isaac Newton** dan **Gottfried Wilh
 
     // 10. Aljabar Linear & Matriks
     if (q.includes("matriks") || q.includes("vektor") || q.includes("aljabar linear")) {
-      return `### 📊 Aljabar Linear & Matriks
+      return `### Aljabar Linear & Matriks
 
 Aljabar linear adalah fondasi komputasi grafika 3D, kecerdasan buatan (Machine Learning), dan pengolahan data modern!
 Sistem persamaan linear multivariabel diselesaikan serentak melalui persamaan matriks:
@@ -2471,25 +2566,25 @@ $$\\det \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} = ad - bc$$`;
 
     // Special check for user providing trigonometry equality or identity, e.g. sin^2(theta) = 0.5, cos^2(theta) = 0.5 => 1
     if ((q.includes("sin") || q.includes("cos")) && (q.includes("0,5") || q.includes("0.5") || q.includes("sehingga") || (q.includes("=") && q.includes("1")))) {
-      return `### ✨ Pengamatan Matematika yang Sangat Tepat!
+      return `### Analisis Trigonometri: Identitas Pythagoras
 
-Observasimu benar sekali! 
+Observasimu tepat:
 $$\\sin^2(\\theta) + \\cos^2(\\theta) = 0{,}5 + 0{,}5 = 1$$
 
 Ini adalah bukti nyata dari **Identitas Dasar Pythagoras** dalam trigonometri, di mana untuk sudut $\\theta$ berapa pun nilainya, $\\sin^2(\\theta) + \\cos^2(\\theta)$ akan selalu tepat sama dengan $1$.
 
-💡 **Tahukah Kamu Sudut Berapa Ini?**
+**Analisis Sudut Istimewa:**
 Jika $\\sin^2(\\theta) = 0{,}5 = \\frac{1}{2}$, maka:
 $$\\sin(\\theta) = \\sqrt{\\frac{1}{2}} = \\frac{1}{\\sqrt{2}} = \\frac{1}{2}\\sqrt{2}$$
 Nilai $\\sin(\\theta) = \\frac{1}{2}\\sqrt{2}$ terjadi pada sudut istimewa:
 $$\\theta = 45^\\circ \\quad \\text{atau} \\quad \\theta = \\frac{\\pi}{4} \\text{ radian}$$
 
-Pada sudut $45^\\circ$, panjang sisi depan dan sisi samping segitiga siku-siku adalah sama panjang, sehingga rasio $\\sin(45^\\circ) = \\cos(45^\\circ) = \\frac{1}{2}\\sqrt{2}$. Pengamatanmu tajam banget! Ada bentuk trigonometri lain yang ingin kamu diskusikan?`;
+Pada sudut $45^\\circ$, panjang sisi depan dan sisi samping segitiga siku-siku adalah sama panjang, sehingga rasio $\\sin(45^\\circ) = \\cos(45^\\circ) = \\frac{1}{2}\\sqrt{2}$. Pengamatanmu sangat cermat! Ada bentuk trigonometri lain yang ingin kamu diskusikan?`;
     }
 
     // Factoring quadratic equations
     if (q.includes("faktork") || q.includes("faktorisasi") || q.includes("pemfaktoran") || (q.includes("faktor") && q.includes("kuadrat"))) {
-      return `### 🧩 Cara Memfaktorkan Persamaan Kuadrat dengan Benar & Cepat
+      return `### Panduan Faktorisasi Persamaan Kuadrat
 
 Memfaktorkan persamaan kuadrat bertujuan mengubah bentuk penjumlahan suku $ax^2 + bx + c = 0$ menjadi bentuk perkalian faktor $(x - p)(x - q) = 0$.
 
@@ -2528,14 +2623,14 @@ Gunakan metode penguraian suku tengah (*split the middle term*):
   $$2x^2 + 6x + x + 3 = 0 \\implies 2x(x + 3) + 1(x + 3) = 0 \\implies (2x + 1)(x + 3) = 0$$
   Sehingga akarnya $x = -\\frac{1}{2}$ atau $x = -3$.
 
-💡 **Tips Matrix:** Jika angkanya tidak bisa difaktorkan bilangan bulat, gunakan Rumus ABC: $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$. Mau coba faktorkan satu soal sekarang?`;
+**Tips Matrix:** Jika angkanya tidak bisa difaktorkan bilangan bulat, gunakan Rumus ABC: $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$. Mau coba faktorkan satu soal sekarang?`;
     }
 
     // Teka-teki & Kuis Logika
     if (q.includes("teka-teki") || q.includes("riddle") || q.includes("tebak-tebakan") || q.includes("tantangan logika") || q.includes("kuis logika") || q.includes("soal seru")) {
-      return `### 🎯 Teka-Teki Logika Matematika Matrix!
+      return `### Kuis Logika Matematika: Penimbangan Presisi
 
-Ini dia satu teka-teki logika klasik yang seru dan menipu intuisi:
+Ini dia satu teka-teki logika klasik yang seru dan menantang intuisi:
 
 > **Misteri 8 Batang Emas & Neraca Dua Lengan**
 > 
@@ -2549,15 +2644,15 @@ Ini dia satu teka-teki logika klasik yang seru dan menipu intuisi:
 
 ---
 
-💡 **Petunjuk Matrix:**
-Jangan timbang 4 lawan 4! Pikirkan bagaimana cara membagi 8 koin menjadi 3 kelompok.
+**Petunjuk Logika:**
+Jangan timbang 4 lawan 4! Pikirkan bagaimana cara membagi 8 batang emas menjadi 3 kelompok terpisah.
 
-Coba tebak jawaban dan strategimu di chat, nanti kita bahas bareng logikanya! 😉`;
+Coba tebak jawaban dan strategimu di chat, nanti kita bahas bareng pembuktian logikanya!`;
     }
 
     // Cabang Matematika Modern
     if (q.includes("cabang matematika") || q.includes("matematika modern") || (q.includes("luar aljabar") && (q.includes("kalkulus") || q.includes("linear")))) {
-      return `### 🌌 Menjelajahi Cabang-Cabang Matematika Modern di Luar Aljabar Sekolah
+      return `### Eksplorasi Cabang Matematika Modern
 
 Matematika di luar kurikulum sekolah jauh lebih kaya, visual, dan menggerakkan hampir seluruh teknologi modern abad ke-21! Berikut cabang modern yang paling memukau:
 
@@ -2593,7 +2688,7 @@ Cabang mana yang paling membuatmu penasaran untuk kita bedah lebih dalam?`;
       /\b(trigonometri|sinus|cosinus|tangen)\b/i.test(q) ||
       (/\b(sin|cos|tan)\b/i.test(q) && !q.includes("coretan") && !q.includes("menantang") && !q.includes("tentang") && !q.includes("bentang") && !q.includes("lintas"))
     ) {
-      return `### 📐 Trigonometri & Identitas Pythagoras
+      return `### Trigonometri & Identitas Pythagoras
 
 Rasio dasar pada segitiga siku-siku dengan sudut $\\theta$:
 - $\\sin(\\theta) = \\frac{\\text{sisi depan}}{\\text{sisi miring}}$
@@ -2606,7 +2701,7 @@ $$\\sin^2(\\theta) + \\cos^2(\\theta) = 1$$`;
 
     // 12. Tokoh & Sejarah Matematika
     if (q.includes("pythagoras") || q.includes("al-khawarizmi") || q.includes("newton") || q.includes("penemu matematika")) {
-      return `### 🏛️ Tokoh Besar Sejarah Matematika
+      return `### Tokoh Besar Sejarah Matematika
 
 1. **Muhammad bin Musa Al-Khawarizmi (780–850 M)**:
    Bapak Aljabar dunia. Karyanya *Al-Kitāb al-mukhtaṣar fī ḥisāb al-jabr wal-muqābala* menjadi cikal bakal istilah **Aljabar** dan **Algoritma**.
@@ -2623,7 +2718,7 @@ $$\\sin^2(\\theta) + \\cos^2(\\theta) = 1$$`;
         const promptText = activeQ.promptText || activeQ.topic || activeQ.title;
         return `Tentu! Untuk menyelesaikan **${activeQ.id}: ${activeQ.title}**:
 
-💡 **Domain:** ${domainName}
+**Domain:** ${domainName}
 **Fokus Soal:** *"${promptText}"*
 
 **Langkah Penuntun:**
@@ -2642,7 +2737,7 @@ Tuliskan langkah awalmu di lembar pengerjaan coretan, lalu klik **'Cek Coretan S
         return `Aku telah membaca coretan pengerjaanmu:
 > *"${steps}"*
 
-🔍 **Hasil Analisis Kognitif Matrix:**
+**Hasil Analisis Langkah:**
 - **Aturan Pemindahan Suku**: Saat memindahkan suku ke seberang tanda sama dengan ($=$), tanda positif berubah menjadi negatif dan sebaliknya.
 - **Tanda Pemfaktoran**: Jika bentuknya $(x + p)(x + q) = 0$, maka akarnya bernilai $x = -p$ dan $x = -q$.
 - **Perkalian Koefisien**: Pastikan $p \\cdot q = c$ dan $p + q = b$.
@@ -2655,7 +2750,7 @@ Coba periksa kembali baris perhitungan terakhirmu, apakah sudah sesuai tanda pos
 
     // 15. Salam & Perkenalan
     if (q.includes("halo") || q.includes("hai") || q.includes("siapa kamu") || q.includes("perkenalkan")) {
-      return `Halo! Aku **Matrix**, agen AI kognitif matematika yang mendampingi belajarmu di platform **Error Pattern Engine (EPE) V2** 🌐✨.
+      return `Halo! Aku **Matrix**, agen AI kognitif matematika yang mendampingi belajarmu di platform **Error Pattern Engine (EPE)**.
 
 Aku siap membantumu:
 - Menghitung operasi aritmatika & aljabar secara instan (misal ketik: $2 \\times 2$, akar dari $144$, dsb.).
@@ -2667,13 +2762,13 @@ Ada yang ingin kamu tanyakan atau diskusikan hari ini?`;
 
     // 16. Bunga Majemuk (Compound Interest)
     if (q.includes("bunga majemuk") || q.includes("compound interest") || q.includes("bunga berbunga") || q.includes("bunga bertingkat")) {
-      return `### 💰 Bunga Majemuk (Compound Interest)
+      return `### Bunga Majemuk (Compound Interest)
 
 **Bunga Majemuk** adalah sistem perhitungan bunga di mana bunga yang terkumpul pada setiap periode **ditambahkan ke pokok**, sehingga pada periode berikutnya bunga dihitung dari **pokok + bunga sebelumnya**. Inilah yang membedakannya dari bunga tunggal (*simple interest*) di mana bunga hanya dihitung dari pokok awal.
 
 ---
 
-#### 📊 Rumus Bunga Majemuk:
+#### Rumus Bunga Majemuk:
 $$A = P \\left(1 + \\frac{r}{n}\\right)^{n \\cdot t}$$
 
 *Di mana:*
@@ -2685,7 +2780,7 @@ $$A = P \\left(1 + \\frac{r}{n}\\right)^{n \\cdot t}$$
 
 ---
 
-#### 🔢 Contoh Perhitungan:
+#### Contoh Perhitungan:
 Modal awal $P = \\text{Rp}10.000.000$, suku bunga $r = 6\\%$ per tahun, digandakan bulanan ($n = 12$), selama $t = 5$ tahun:
 
 $$A = 10.000.000 \\left(1 + \\frac{0{,}06}{12}\\right)^{12 \\times 5}$$
@@ -2698,7 +2793,7 @@ $$\\approx \\text{Rp}13.488.502$$
 
 ---
 
-#### 🆚 Perbandingan dengan Bunga Tunggal:
+#### Perbandingan dengan Bunga Tunggal:
 | | Bunga Tunggal | Bunga Majemuk |
 |:---|:---|:---|
 | Rumus | $A = P(1 + r \\cdot t)$ | $A = P(1 + r/n)^{nt}$ |
@@ -2707,15 +2802,15 @@ $$\\approx \\text{Rp}13.488.502$$
 
 ---
 
-#### 💡 Mengapa Bunga Majemuk Disebut *"Keajaiban Kedelapan Dunia"*?
-Albert Einstein konon berkata: *"Bunga majemuk adalah keajaiban kedelapan dunia. Mereka yang memahaminya, akan mendapatkannya; mereka yang tidak, akan membayarnya."*
+#### Esensi Pertumbuhan Eksponensial:
+Albert Einstein menyebut bunga majemuk sebagai contoh kekuatan eksponensial di mana mereka yang memahaminya dapat memanfaatkannya untuk perencanaan jangka panjang.
 
 Efek **eksponensial** dari bunga berbunga membuat pertumbuhan semakin cepat seiring waktu, terutama untuk investasi jangka panjang!`;
     }
 
     // 17. Probabilitas & Peluang
     if (q.includes("probabilitas") || q.includes("peluang") || q.includes("probability") || q.includes("rumus peluang")) {
-      return `### 🎲 Probabilitas (Peluang)
+      return `### Teori Probabilitas (Peluang)
 
 **Probabilitas** adalah ukuran kemungkinan terjadinya suatu kejadian, bernilai antara $0$ (mustahil) dan $1$ (pasti terjadi).
 
@@ -2736,7 +2831,7 @@ Ada soal probabilitas yang ingin kita selesaikan bersama?`;
 
     // 18. Statistika Dasar
     if (q.includes("statistik") || q.includes("rata-rata") || q.includes("mean") || q.includes("median") || q.includes("modus") || q.includes("standar deviasi")) {
-      return `### 📊 Statistika Dasar
+      return `### Analisis Statistika Dasar
 
 Statistika mempelajari pengumpulan, penyajian, pengolahan, dan analisis data untuk menarik kesimpulan.
 
@@ -2756,7 +2851,7 @@ Apakah ada data yang ingin kamu analisis bersama Matrix?`;
 
     // 19. Geometri Bangun Datar & Ruang
     if (q.includes("luas lingkaran") || q.includes("keliling lingkaran") || q.includes("volume bola") || q.includes("volume tabung") || q.includes("volume kerucut") || q.includes("volume kubus") || q.includes("volume balok") || q.includes("rumus geometri") || q.includes("rumus bangun")) {
-      return `### 📐 Rumus Geometri Bangun Datar & Ruang
+      return `### Rumus Geometri Bangun Datar & Ruang
 
 #### Bangun Datar:
 | Bangun | Luas | Keliling |
@@ -2789,13 +2884,13 @@ Ada soal geometri yang ingin kita hitung bersama?`;
       q.includes("suku ke-n") ||
       q.includes("deret geometri")
     ) {
-      return `### 📈 Barisan & Deret (Aritmatika & Geometri)
+      return `### Barisan & Deret (Aritmatika & Geometri)
 
 Barisan adalah urutan bilangan dengan pola tertentu, sedangkan deret adalah jumlah dari suku-suku barisan tersebut.
 
 ---
 
-#### 1. ➕ Barisan & Deret Aritmatika (Pola Selisih Tetap $b$)
+#### 1. Barisan & Deret Aritmatika (Pola Selisih Tetap $b$)
 - **Suku ke-$n$ ($U_n$):**
   $$U_n = a + (n - 1)b$$
   *Di mana $a = U_1$ (suku pertama) dan $b = U_n - U_{n-1}$ (beda antar suku).*
@@ -2808,7 +2903,7 @@ Barisan adalah urutan bilangan dengan pola tertentu, sedangkan deret adalah juml
 
 ---
 
-#### 2. ✖️ Barisan & Deret Geometri (Pola Rasio Tetap $r$)
+#### 2. Barisan & Deret Geometri (Pola Rasio Tetap $r$)
 - **Suku ke-$n$ ($U_n$):**
   $$U_n = a \\cdot r^{n - 1}$$
   *Di mana $r = \\frac{U_n}{U_{n-1}}$ (rasio pengali).*
@@ -2833,7 +2928,7 @@ Ada soal barisan/deret yang ingin kamu selesaikan bersama Matrix?`;
       q.includes("ln ") ||
       q.includes("log ")
     ) {
-      return `### 🪵 Logaritma & Sifat-Sifat Fundamentalnya
+      return `### Logaritma & Sifat Fundamentalnya
 
 **Logaritma** adalah operasi invers (kebalikan) dari eksponensial (pangkat):
 $$a^c = b \\iff \\,^a\\log b = c$$
@@ -2841,7 +2936,7 @@ $$a^c = b \\iff \\,^a\\log b = c$$
 
 ---
 
-#### 📚 10 Sifat Pokok Logaritma:
+#### Sepuluh Sifat Pokok Logaritma:
 1. **$\\,^a\\log a = 1$** dan **$\\,^a\\log 1 = 0$**
 2. **Penjumlahan (Perkalian Numerus):**
    $$\\,^a\\log(b \\cdot c) = \\,^a\\log b + \\,^a\\log c$$
@@ -2876,7 +2971,7 @@ Ada persamaan atau soal logaritma yang ingin kamu diskusikan bersama Matrix?`;
       q.includes("gimbal lock") ||
       q.includes("rodrigues")
     ) {
-      return `### 🔄 Transformasi Geometri: Rotasi dalam 3-Dimensi (3D Rotation)
+      return `### Transformasi Geometri: Rotasi dalam Tiga Dimensi (3D Rotation)
 
 Dalam ruang tiga dimensi (vektor $\\mathbf{v} = \\begin{pmatrix} x \\\\ y \\\\ z \\end{pmatrix}$), rotasi objek direpresentasikan melalui perkalian matriks ortogonal $3 \\times 3$ yang mempertahankan panjang vektor dan orientasi ($\\,\\det(R) = +1\\,$).
 
@@ -2917,7 +3012,7 @@ $$R = R_z(\\gamma) R_y(\\beta) R_x(\\alpha)$$
       q.includes("pca") ||
       q.includes("reduksi dimensi")
     ) {
-      return `### ✨ Dekomposisi Matriks: Singular Value Decomposition (SVD)
+      return `### Dekomposisi Matriks: Singular Value Decomposition (SVD)
 
 **Singular Value Decomposition (SVD)** adalah salah satu teorema paling fundamental dan ampuh dalam aljabar linear modern, berlaku untuk sembarang matriks persegi maupun non-persegi berukuran $m \\times n$.
 
@@ -2958,7 +3053,7 @@ Keterangan komponen:
       q.includes("eigenvalue") ||
       q.includes("eigenvector")
     ) {
-      return `### 📐 Nilai Eigen & Vektor Eigen ($Av = \\lambda v$)
+      return `### Nilai Eigen & Vektor Eigen ($Av = \\lambda v$)
 
 Dalam aljabar linier, vektor eigen adalah vektor tak-nol yang arahnya tidak berubah ketika mengalami transformasi matriks linear $A$, melainkan hanya diskalakan sebesar faktor $\\lambda$ (nilai eigen).
 
@@ -3000,7 +3095,7 @@ $$\\lambda_1 = 5, \\quad \\lambda_2 = 2$$
       q.includes("transpose") ||
       q.includes("matrix")
     ) {
-      return `### 🔲 Aljabar Linier: Matriks, Determinan, & Invers
+      return `### Aljabar Linear: Matriks, Determinan, & Invers
 
 Matriks adalah susunan skalar dalam baris dan kolom yang merepresentasikan transformasi linear di dalam ruang vektor.
 
@@ -3056,7 +3151,7 @@ Ada operasi atau soal matriks tertentu yang ingin kamu bahas bersama?`;
       lower.includes("lagi apa") ||
       lower.includes("sedang apa")
     ) {
-      return `Halo! Kabarku sangat baik, aktif, dan berenergi penuh 🌐✨.
+      return `Halo! Sistem aktif, optimal, dan siap sedia.
 
 Aku siap mendampingimu membedah persamaan kuadrat, menyelesaikan rumus aljabar, atau berdiskusi konsep sains dan kalkulus apa saja hari ini. 
 
@@ -3078,9 +3173,9 @@ Kamu sendiri bagaimana kabarnya? Ada soal yang sedang ingin kamu tuntaskan bersa
       lower.includes("ga nyambung") ||
       lower.includes("ngaco")
     ) {
-      return `Wah, mohon maaf bila responsku tadi belum sesuai dengan yang kamu harapkan! 🙏
+      return `Wah, mohon maaf bila responsku tadi belum sesuai dengan yang kamu harapkan.
 
-Coba ceritakan lebih spesifik apa yang sedang kamu butuhkan atau tanyakan. Apakah tentang perhitungan rumus tertentu, cara menyelesaikan soal di workspace EPE, atau topik lainnya? Aku siap mendengarkan dan merespons langsung sesuai keinginanmu!`;
+Coba ceritakan lebih spesifik apa yang sedang kamu butuhkan atau tanyakan. Apakah tentang perhitungan rumus tertentu, cara menyelesaikan soal di workspace EPE, atau topik lainnya? Aku siap mendengarkan dan merespons langsung sesuai kebutuhanmu!`;
     }
 
     // 1. Casual Banter, Slang, & Greeting ("apa sih lu", "lu siapa", "apaan sih", "siapa lu", "kamu siapa", "bego", "wkwk", "bro", "bos")
@@ -3097,21 +3192,21 @@ Coba ceritakan lebih spesifik apa yang sedang kamu butuhkan atau tanyakan. Apaka
       lower === "lu" ||
       lower === "apaan"
     ) {
-      return `Haha, santai bro/sis! 😄 Aku **Matrix**, asisten AI kognitif matematikamu di platform EPE ini 🌐✨.
+      return `Halo! Aku **Matrix**, asisten kognitif penalaran matematika di platform EPE.
 
-Aku bukan robot kaku yang cuma bisa nyodorin rumus tanpa jiwa, tapi teman mikir bareng buat kamu! Tugasku nemenin kamu:
-- Membedah soal aljabar atau konsep matematika yang bikin pusing,
+Aku dirancang untuk mendampingi belajarmu:
+- Membedah soal aljabar atau konsep matematika yang menantang,
 - Mendeteksi letak kekeliruan langkah perhitungan (*error patterns*),
 - Berdiskusi topik sains, rumus, atau teka-teki logika apa saja.
 
-Kamu bebas tanya apa pun dengan gayamu sendiri, santai aja! Ada materi atau soal yang lagi bikin kamu penasaran hari ini?`;
+Kamu bebas berdiskusi dengan gayamu sendiri. Ada materi atau soal yang sedang kamu pelajari hari ini?`;
     }
 
     // 2. Laughing & Fun Reactions ("wkwk", "haha", "hehe", "xixi", "lol", "lmao", "awokawok")
     if (/(wkwk|haha|hehe|xixi|awok|lmao|lol)/i.test(lower)) {
-      return `Senang lihat kamu ceria! Belajar matematika itu emang paling seru kalau dibawa santai dan ketawa, biar otak nggak tegang 😆.
+      return `Senang melihatmu bersemangat! Belajar matematika terasa jauh lebih efektif saat pikiran rileks dan terbuka.
 
-Gimana, ada soal yang lagi bikin penasaran atau ada materi yang mau kita diskusikan bareng?`;
+Ada soal yang sedang ingin kita bedah bersama?`;
     }
 
     // 3. Gibberish, Keyboard Mash, Random letters ("asdfgh", "qwerty", "hshshs", "zzzz", "???", "...")
@@ -3121,13 +3216,13 @@ Gimana, ada soal yang lagi bikin penasaran atau ada materi yang mau kita diskusi
       !/(halo|selamat|pagi|siang|malam|terima|kasih|terimakasih|tolong|bantu)/i.test(lower) &&
       /[bcdfghjklmnpqrstvwxyz]{4,}/i.test(lower)
     ) {
-      return `Waduh, itu jarimu kepeleset di atas keyboard atau lagi ngetik kode rahasia kosmik nih? 😂
+      return `Sepertinya tombol keyboard tertekan secara acak.
 
-Santai aja! Tarik napas dulu, regangkan jemari. Kalau udah siap mau nanya soal persamaan kuadrat, rumus fisika, atau hitung-hitungan angka, tinggal ketik aja ya. Aku siap nemenin kamu! 🚀`;
+Tarik napas sejenak. Jika sudah siap menanyakan soal persamaan kuadrat, rumus fisika, atau perhitungan matematika, silakan ketik langsung di sini ya!`;
     }
 
     if (lower === "???" || lower === "?" || lower === "..." || lower === "test" || lower === "tes") {
-      return `Halo! Sinyal radar Matrix menangkap panggilanmu 📡✨. Sistem online dan siap sedia! Ada soal atau materi matematika yang ingin kita bedah bersama?`;
+      return `Halo! Sinyal kognitif Matrix aktif dan terhubung. Ada soal atau materi matematika yang ingin kita diskusikan bersama?`;
     }
 
     // 4. Frustration, Stress, & Emotional Venting ("pusing", "mumet", "capek", "susah banget", "males", "ngantuk", "gak ngerti", "stres", "hadeh", "bruh")
@@ -3144,16 +3239,14 @@ Santai aja! Tarik napas dulu, regangkan jemari. Kalau udah siap mau nanya soal p
       lower.includes("hadeh") ||
       lower.includes("bruh")
     ) {
-      return `Aku paham banget perasaanmu... Tarik napas panjang dulu ya 🌿.
+      return `Wajar sekali merasa lelah saat menghadapi materi aljabar yang rumit. Rasa bingung adalah pertanda otakmu sedang memproses struktur logika baru.
 
-Matematika itu wajar banget bikin kepala terasa panas kalau kita lagi ketemu materi yang rumit atau langkah aljabar yang muter-muter. Rasa bingung itu justru tanda bahwa otakmu lagi berusaha membangun koneksi saraf baru!
+**Saran Belajar:**
+1. Beri jeda 3–5 menit: minum air putih atau regangkan otot sejenak.
+2. Jangan telan semua rumus sekaligus. Kita bisa memecah soalnya menjadi langkah-langkah kecil.
+3. Tunjukkan bagian baris mana yang membuatmu ragu, nanti kita telusuri bersama.
 
-💡 **Tips Santai dari Matrix:**
-1. Beri jeda 3–5 menit: minum air putih dingin atau regangkan punggung.
-2. Jangan telan semua rumus sekaligus. Kita bisa pecah soalnya jadi langkah-langkah mini yang gampang.
-3. Tunjukkan baris mana yang bikin kamu bingung, nanti kita bedah pelan-pelan bareng.
-
-Kamu nggak sendirian, aku siap dampingi sampai kamu paham! Mau kita mulai dari bagian mana?`;
+Aku siap mendampingimu langkah demi langkah. Mau kita mulai dari bagian mana?`;
     }
 
     // 5. Unorthodox / Philosophical / Existential topics ("syaithon", "setan", "iblis", "hantu", "alien", "takdir", "kiamat", "tuhan", "kehidupan")
@@ -3162,37 +3255,37 @@ Kamu nggak sendirian, aku siap dampingi sampai kamu paham! Mau kita mulai dari b
       lower.includes("setan") ||
       lower.includes("iblis")
     ) {
-      return `Wah, pertanyaan yang sangat menarik dan sarat makna filosofis!
+      return `Pertanyaan reflektif yang sarat makna filosofis.
 
-Kata **"SYAITHON"** (atau setan) secara bahasa (*syathana*) bermakna sesuatu yang menjauh dari kebenaran, fitrah, dan kejernihan pikiran. Dalam berbagai tradisi kebijaksanaan, ia dipandang sebagai simbol kekuatan distraksi, keragu-raguan (*waswas*), dan godaan untuk menyimpang dari ketertiban moral.
+Kata **"SYAITHON"** secara etimologi (*syathana*) bermakna sesuatu yang menjauh dari kebenaran, fitrah, dan kejernihan akal budi. Dalam tradisi pengetahuan, ia dipandang sebagai simbol kekuatan distraksi, keragu-raguan, dan desakan menyimpang dari ketertiban rasional.
 
-Kalau kita refleksikan dalam proses belajar dan sains:
-- "Musuh" terbesar pikiran kita sering kali memang mirip: rasa malas, godaan menunda-nunda (*procrastination*), bisikan keputusasaan saat melihat soal rumit, atau rasa takut salah sebelum mencoba.
-- Lawan sejati dari distraksi dan entropi adalah **kejernihan akal, fokus, ketenangan batin, dan penalaran deduktif yang lurus**.
+Jika kita refleksikan ke dalam proses belajar dan sains:
+- Distraksi terbesar sering kali berakar dari kebiasaan menunda (*procrastination*), rasa ragu sebelum mencoba, atau keputusasaan saat melihat persamaan yang kompleks.
+- Penawarnya adalah **kejernihan akal, ketenangan konsentrasi, dan penalaran deduktif yang konsisten**.
 
-Menarik ya bagaimana konsep filosofis bisa terhubung dengan disiplin berpikir kita sehari-hari? Ada sudut pandang lain yang ingin kamu diskusikan, atau mau kita arahkan energi fokus ini untuk menaklukkan tantangan matematika? 😉`;
+Menarik melihat bagaimana konsep filsafat dapat terhubung dengan disiplin berpikir analitis kita sehari-hari. Ada topik matematika atau sains yang ingin kita telaah bersama?`;
     }
 
     if (lower.includes("alien") || lower.includes("alam semesta") || lower.includes("luar angkasa") || lower.includes("ufo")) {
-      return `Topik antariksa yang luar biasa seru! 🌌🛸
+      return `Topik astrofisika yang sangat memukau.
 
-Secara sains dan matematika, alam semesta yang teramati (*observable universe*) diperkirakan memiliki lebih dari **2 triliun galaksi**, dan setiap galaksi menaungi ratusan miliar bintang. 
+Secara kosmologi matematis, alam semesta teramati (*observable universe*) diperkirakan memuat lebih dari **2 triliun galaksi**, masing-masing menaungi ratusan miliar bintang dan sistem planet.
 
 Fisikawan Frank Drake merumuskan **Persamaan Drake (*Drake Equation*)**:
 $$N = R_* \\times f_p \\times n_e \\times f_l \\times f_i \\times f_c \\times L$$
-Persamaan probabilitas ini menghitung kemungkinan keberadaan peradaban cerdas lain di galaksi kita. Namun di sisi lain, fisikawan Enrico Fermi mengajukan pertanyaan legendaris yang dikenal sebagai **Paradoks Fermi (*Fermi Paradox*)**: *"Jika kemungkinan kehidupan di alam semesta begitu besar, lalu di mana mereka semua?"*
+Persamaan probabilitas ini menghitung kemungkinan keberadaan peradaban cerdas lain di galaksi Bima Sakti. Namun di sisi lain, fisikawan Enrico Fermi merumuskan **Paradoks Fermi**: *"Jika probabilitas kehidupan di kosmos sedemikian tinggi, di manakah jejak mereka?"*
 
-Matematika adalah bahasa universal yang kita gunakan untuk mengurai misteri kosmos. Mau membedah Paradoks Fermi lebih dalam, atau ada misteri sains lain yang bikin kamu penasaran?`;
+Matematika adalah bahasa universal untuk merumuskan hukum alam semesta. Ada aspek fisika kosmik lain yang ingin kamu diskusikan?`;
     }
 
     if (lower.includes("takdir") || lower.includes("nasib") || lower.includes("kebetulan")) {
-      return `Pertanyaan yang sangat mendalam tentang hakikat realitas!
+      return `Pertanyaan mendalam tentang hakikat realitas fisik dan filosofis.
 
-Dalam sains dan matematika, perdebatan tentang "takdir vs kebetulan" melahirkan cabang ilmu yang luar biasa:
-1. **Deterministik (Warisan Newton & Laplace)**: Jika kita mengetahui posisi dan kecepatan setiap partikel di alam semesta pada satu waktu, masa depan secara teoretis dapat dihitung secara pasti melalui hukum mekanika (*Laplace's Demon*).
-2. **Probabilistik (Mekanika Kuantum & Heisenberg)**: Pada skala partikel subatomik, alam semesta justru bersifat probabilistik. Kita tidak bisa memastikan posisi dan momentum partikel secara bersamaan (*Prinsip Ketidakpastian Heisenberg*).
+Dalam sains dan matematika, perdebatan determinisme vs probabilitas melahirkan dua pilar besar:
+1. **Deterministik (Mekanika Klasik Newton & Laplace)**: Jika posisi dan momentum seluruh partikel diketahui, masa depan secara teoretis dapat diprediksi secara eksak (*Laplace's Demon*).
+2. **Probabilistik (Mekanika Kuantum)**: Pada skala subatomik, alam semesta beroperasi di atas prinsip probabilitas dan ketidakpastian fundamental (*Heisenberg Uncertainty Principle*).
 
-Artinya: ada hukum sebab-akibat yang pasti, namun di saat yang sama selalu ada ruang ikhtiar dan ketidakpastian yang membuka peluang baru bagi kita. Menarik bukan? Apa yang membuatmu memikirkan topik ini hari ini?`;
+Sains menunjukkan adanya keteraturan hukum alam yang pasti, sekaligus ruang probabilitas yang selalu terbuka. Apa yang mendorongmu memikirkan topik ini hari ini?`;
     }
 
     // 5b. Pertanyaan Hipotetis Sains & Eksperimen Pikiran ("apa yang terjadi jika ...", "bagaimana jika ...", "seandainya ...", "gimana kalau ...", "apa jadinya ...")
@@ -3212,26 +3305,24 @@ Artinya: ada hukum sebab-akibat yang pasti, namun di saat yang sama selalu ada r
         .replace(/\?+$/, "")
         .trim();
 
-      return `### 🌌 Eksperimen Pikiran: *"Bagaimana Jika ${scenario}?"*
+      return `### Eksperimen Pikiran: *"Bagaimana Jika ${scenario}?"*
 
-Pertanyaan hipotetis yang luar biasa cerdas dan menguji batas pemikiran fisika serta logika kita! 🧪✨
+Pertanyaan hipotetis yang menguji batas pemodelan fisika dan penalaran deduktif.
 
-Jika skenario **"${scenario}"** benar-benar terjadi, kita dapat menganalisis konsekuensi berantainya melalui hukum fisika dan dinamika sistem:
+Jika skenario **"${scenario}"** terjadi, dinamika sistem dapat dianalisis melalui tiga tahapan:
 
 ---
 
-#### 1. ⚡ Dampak Langsung & Gangguan Kesetimbangan Awal
-Setiap sistem di alam semesta beroperasi di bawah hukum kesetimbangan (seperti Hukum Inersia, Hukum Kekekalan Energi, atau hukum termodinamika). Ketika satu variabel dipaksa berubah secara drastis, gaya-gaya yang selama ini seimbang akan mengalami lonjakan seketika (*instantaneous disequilibrium*).
+#### 1. Dampak Langsung & Gangguan Kesetimbangan Awal
+Sistem fisika beroperasi di bawah prinsip kekekalan (energi, momentum, muatan). Perubahan mendadak pada satu variabel memicu lonjakan gaya tak seimbang (*instantaneous disequilibrium*).
 
-#### 2. 🌊 Reaksi Berantai Sistemik (*Cascade Effects*)
-Perubahan ini tidak akan berhenti di satu titik:
-- **Dinamika Fisika & Lingkungan**: Efek domino merambat ke seluruh parameter terkait—baik itu gaya gravitasi, distribusi massa, tekanan atmosfer, hingga transfer energi kinetik.
-- **Dampak Kehidupan & Adaptasi**: Setiap entitas atau ekosistem yang selama ini bergantung pada keteraturan lama akan terpaksa beradaptasi secara ekstrem atau mengalami disrupsi total.
+#### 2. Reaksi Berantai Sistemik (*Cascade Effects*)
+Efek pergeseran merambat ke parameter terhubung—mulai dari gradien tekanan, perubahan distribusi energi kinetik, hingga disrupsi siklus kesetimbangan lokal.
 
-#### 3. ⚖️ Menuju Kesetimbangan Baru (*New Steady State*)
-Alam semesta pada akhirnya selalu berevolusi mencari titik kesetimbangan baru dengan tingkat energi terendah yang stabil. Eksperimen pikiran seperti ini membuktikan betapa presisinya konstanta alam yang menjaga bumi dan kosmos tetap harmonis untuk kita huni saat ini!
+#### 3. Menuju Kesetimbangan Baru (*New Steady State*)
+Sistem pada akhirnya bertransisi menuju konfigurasi stabil dengan energi potensial minimum. Eksperimen pikiran ini menegaskan betapa presisinya konstanta fisika yang menopang keteraturan alam semesta.
 
-Apakah ada variabel khusus atau simulasi angka tertentu dari skenario ini yang ingin kamu eksplorasi lebih jauh bersama Matrix?`;
+Apakah ada parameter angka atau simulasi spesifik yang ingin kamu eksplorasi dari skenario ini?`;
     }
 
     // 5c. Pertanyaan Sebab-Akibat Ilmiah ("mengapa ...", "kenapa ...", "apa alasan ...")
@@ -3241,17 +3332,17 @@ Apakah ada variabel khusus atau simulasi angka tertentu dari skenario ini yang i
         .replace(/\?+$/, "")
         .trim();
 
-      return `### 💡 Membedah Alasan & Sebab-Akibat: *"${topic}"*
+      return `### Analisis Sebab-Akibat: *"${topic}"*
 
-Pertanyaan kritis yang sangat bagus untuk mengasah rasa ingin tahu ilmiah! 🔍✨
+Pertanyaan kritis yang penting dalam metodologi sains.
 
-Untuk memahami mengapa fenomena **"${topic}"** dapat terjadi, kita dapat mengurainya dalam tiga dimensi:
+Untuk menelaah mengapa fenomena **"${topic}"** terjadi, kita dapat membedahnya dalam tiga dimensi:
 
-1. **Prinsip Kausalitas (Sebab Fundamental)**: Dalam fisika dan logika sains, tidak ada fenomena yang terjadi secara acak tanpa pemicu. Selalu ada interaksi gaya, perbedaan potensial energi, atau keteraturan hukum alam yang menjadi penggerak utamanya.
-2. **Kondisi Batas & Lingkungan**: Fenomena ini terwujud karena parameter-parameter pendukungnya (seperti suhu, medium, tekanan, atau struktur materi) terpenuhi secara spesifik.
-3. **Pelajaran Kognitif**: Keteraturan ini membuktikan bahwa realitas di sekitar kita tersusun atas hukum-hukum terukur yang dapat diuji dan dipelajari secara konsisten.
+1. **Prinsip Kausalitas (Pemicu Utama)**: Dalam fisika dan logika sains, fenomena berpangkal dari interaksi gaya, perbedaan potensial energi, atau hukum termodinamika yang mendasarinya.
+2. **Kondisi Batas & Lingkungan**: Fenomena ini berlangsung saat parameter prasyarat (suhu, medium, geometri, atau konsentrasi materi) terpenuhi.
+3. **Implikasi Analitis**: Keteraturan ini membuktikan bahwa realitas fisik tersusun atas hukum-hukum terukur yang konsisten untuk dipelajari.
 
-Bagian mana dari topik ini yang membuatmu paling penasaran? Matrix siap membedah detail teknisnya bersamamu!`;
+Bagian mana dari topik ini yang paling ingin kamu dalami teknisnya?`;
     }
 
     // 5d. Pertanyaan Kelayakan / Eksplorasi Kemungkinan ("apakah mungkin ...", "apakah bisa ...", "mungkinkah ...")
@@ -3268,15 +3359,15 @@ Bagian mana dari topik ini yang membuatmu paling penasaran? Matrix siap membedah
         .replace(/\?+$/, "")
         .trim();
 
-      return `### 🔮 Analisis Kelayakan Teoretis: *"${topic}"*
+      return `### Analisis Kelayakan Teoretis: *"${topic}"*
 
-Pertanyaan eksplorasi yang menantang batas sains dan imajinasi! 🚀
+Pertanyaan eksplorasi yang menguji batas hukum fisika dan kemungkinan rekayasa.
 
-Untuk meninjau apakah hal ini mungkin terwujud, mari kita telaah dari dua sudut pandang:
-1. **Secara Teoretis (Hukum Fisika & Logika)**: Selama gagasan ini tidak melanggar hukum kekekalan energi, batas kecepatan cahaya ($c$), atau prinsip termodinamika, probabilitas teoretisnya tidak pernah bernilai nol mutlak.
-2. **Secara Rekayasa & Praktis**: Sering kali hambatan terbesar di dunia nyata adalah kebutuhan energi raksasa, material yang belum ditemukan, atau batasan teknologi komputasi kita saat ini.
+Untuk meninjau apakah hal ini mungkin, kita telaah dari dua sudut pandang:
+1. **Secara Teoretis (Hukum Alam & Termodinamika)**: Selama gagasan ini tidak melanggar hukum kekekalan massa-energi, batas kelajuan cahaya ($c$), atau entropi, probabilitas teoretisnya tetap memiliki landasan ilmiah.
+2. **Secara Rekayasa & Praktis**: Tantangan di dunia nyata biasanya bertumpu pada batas efisiensi material, ketersediaan energi skala masif, atau kendala fabrikasi teknologi saat ini.
 
-Menurutmu sendiri, faktor apa yang paling menantang untuk mewujudkan hal tersebut? Mari kita diskusikan logikanya!`;
+Menurut pandanganmu, aspek mana yang menjadi tantangan paling krusial?`;
     }
 
     // 6. Compliments / Gratitude ("terima kasih", "makasih", "keren", "hebat", "pintar", "mantap", "makasi")
@@ -3290,9 +3381,9 @@ Menurutmu sendiri, faktor apa yang paling menantang untuk mewujudkan hal tersebu
       lower.includes("mantap") ||
       lower.includes("pintar")
     ) {
-      return `Sama-sama! Senang banget bisa bermanfaat dan nemenin kamu belajar ✨.
+      return `Sama-sama! Senang bisa mendampingimu belajar dan bereksplorasi.
 
-Kemampuan terbaik itu muncul dari rasa ingin tahu dan konsistensi belajarmu sendiri. Kalau ada konsep lain yang mau dibedah atau ada soal yang bikin penasaran, panggil Matrix kapan saja ya. Semangat terus! 🚀`;
+Pemahaman matematika yang kuat lahir dari rasa ingin tahu dan latihan teratur. Kapan pun ada soal atau materi yang ingin dibedah, panggil Matrix ya. Tetap semangat!`;
     }
 
     // 7. Questions about concepts ("apa itu ...", "apa yang dimaksud ...")
@@ -3302,17 +3393,17 @@ Kemampuan terbaik itu muncul dari rasa ingin tahu dan konsistensi belajarmu send
         .replace(/^definisi\s+dari\s+/i, "")
         .replace(/\?+$/, "")
         .trim();
-      return `### 📖 Membedah Konsep: **"${subject}"**
+      return `### Membedah Konsep: **"${subject}"**
 
-Dalam sains, matematika, dan peradaban pengetahuan, **${subject}** merujuk pada konsep atau sistem keteraturan yang dirumuskan manusia untuk menjelaskan pola dan fenomena realitas.
+Dalam sains, matematika, dan epistemologi, **${subject}** merujuk pada kerangka kerja keteraturan yang dirumuskan untuk memodelkan struktur realitas dan pola kuantitatif.
 
 ---
 
-💡 **Inti Pemikiran:**
-1. **Fungsi & Peran**: Setiap konsep lahir untuk menjawab permasalahan spesifik—menyederhanakan fenomena yang kompleks menjadi relasi yang terukur.
-2. **Keterkaitan Sistemik**: Konsep ini tidak berdiri sendiri, melainkan terhubung dengan prinsip-prinsip logika, keteraturan fungsi, atau hukum alam yang lebih luas.
+**Inti Pemikiran:**
+1. **Fungsi Konseptual**: Setiap konsep lahir untuk menyederhanakan fenomena yang rumit menjadi hubungan relasional yang terukur dan konsisten.
+2. **Keterkaitan Sistemik**: Konsep ini tidak berdiri sendiri, melainkan terhubung dengan kaidah aksioma logika, fungsi aljabar, atau hukum fisika yang lebih luas.
 
-Apakah kamu sedang mempelajari topik ini di buku pelajaran atau tugas tertentu? Beri tahu Matrix jika ada aspek atau contoh spesifik yang ingin kamu ulas bersama! 🌐✨`;
+Apakah kamu sedang mempelajari topik ini pada tugas atau bab tertentu? Tuliskan konteks spesifiknya agar kita dapat mengulas contoh penerapannya!`;
     }
 
     if (lower.startsWith("bagaimana cara") || lower.startsWith("gimana cara") || lower.startsWith("cara menyelesaikan")) {
@@ -3336,76 +3427,46 @@ Ada soal atau studi kasus spesifik yang mau kita selesaikan bersama dengan cara 
       lower.includes("siapa pembuatmu") ||
       lower.includes("siapa yang membuat")
     ) {
-      return `Benar sekali! Pertanyaan yang sangat bagus 🌐✨.
+      return `Pertanyaan yang sangat tepat.
 
-Agar Matrix dapat mengakses pengetahuan luas di internet dan berdiskusi interaktif secara **online**, kamu bisa menyambungkannya dengan **Gemini API Key**:
+Agar Matrix dapat mengakses kapabilitas kecerdasan buatan berbasis cloud secara **online**, kamu dapat menghubungkannya dengan **Gemini API Key**:
 
-1. **Gratis & Cepat**: Kamu bisa membuat API Key gratis langsung di [Google AI Studio](https://aistudio.google.com/app/apikey) tanpa kartu kredit.
-2. **Cara Pasang**: Klik tombol ⚙️ **Pengaturan** di pojok kanan atas chat ini, lalu tempelkan (*paste*) API Key kamu di kolom yang tersedia.
+1. **Gratis & Cepat**: API Key gratis dapat dibuat langsung di [Google AI Studio](https://aistudio.google.com/app/apikey) tanpa memerlukan kartu kredit.
+2. **Cara Memasang**: Buka menu **Pengaturan (ikon roda gigi)** di sudut kanan atas chat ini, lalu simpan API Key kamu di kolom yang tersedia.
 3. **Dua Mode Kerja Matrix**:
-   - **Mode Online (dengan API Key)**: Matrix terhubung langsung ke model mutakhir Google Gemini 3.6 Flash untuk menjawab segala macam pertanyaan sains, fakta dunia, dan diskusi matematika bebas.
-   - **Mode Offline (tanpa API Key)**: Matrix tetap dapat menyelesaikan soal latihan, perhitungan aljabar, kalkulator simbolik, dan diagnostik EPE secara lokal.
+   - **Mode Online (dengan API Key)**: Matrix terhubung langsung ke model Google Gemini Flash untuk menjawab aneka pertanyaan sains, analisis multimodal citra, dan diskusi bebas.
+   - **Mode Offline (tanpa API Key)**: Matrix tetap aktif menyelesaikan soal latihan, langkah aljabar, kalkulator simbolik, dan diagnostik EPE secara lokal.
 
-Ada yang ingin kamu tanyakan lagi seputar cara memasangnya?`;
+Ada langkah pemasangan yang ingin kamu tanyakan lebih lanjut?`;
     }
 
     // 8. Natural Conversational Fallback (Non-robotic, clean, and helpful)
-    return `Aku memahami pertanyaanmu mengenai hal ini 💡.
+    return `Aku memahami pertanyaanmu mengenai hal ini.
 
 Untuk memberikan bimbingan yang paling tepat:
 - Jika pertanyaan ini berkaitan dengan perhitungan angka atau rumus (misal: aljabar, geometri, atau persamaan kuadrat), kamu bisa langsung menuliskan persamaan atau variabelnya di sini.
-- Jika kamu ingin berdiskusi topik sains atau pengetahuan umum secara mendalam dan terhubung ke internet, pastikan **Live Cloud AI (Gemini)** sudah aktif melalui menu ⚙️ Pengaturan di kanan atas.
+- Jika kamu ingin berdiskusi topik sains atau pengetahuan umum secara mendalam dan terhubung ke internet, pastikan **Live Cloud AI (Gemini)** sudah aktif melalui menu **Pengaturan** di kanan atas.
 
 Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
   }
 
   speakText(text) {
-    if (!this.voiceEnabled || !window.speechSynthesis) return;
+    if (!this.voiceEnabled) return;
 
-    window.speechSynthesis.cancel();
-
-    const cleanText = text
-      .replace(/^[ \t]*(?:---|___|\*\*\*)[ \t]*$/gm, " ")
-      .replace(/[-*_]{3,}/g, " ")
-      .replace(/\$\$[\s\S]*?\$\$/g, "rumus matematika")
-      .replace(/\$([^\$]+)\$/g, "$1")
-      .replace(/\\Delta\s*H/g, "delta H")
-      .replace(/\\approx/g, "kira-kira sama dengan")
-      .replace(/\\sum/g, "jumlah")
-      .replace(/\\cdot/g, " kali ")
-      .replace(/\\times/g, " kali ")
-      .replace(/</g, " kurang dari ")
-      .replace(/>/g, " lebih dari ")
-      .replace(/[#*_`~]/g, "")
-      .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1 per $2")
-      .replace(/\\pm/g, "plus minus")
-      .replace(/\\sqrt/g, "akar dari")
-      .replace(/\\implies/g, "maka");
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = "id-ID";
-    utterance.rate = 1.05;
-
-    const voices = window.speechSynthesis.getVoices();
-    const indonesianVoice = voices.find((v) => v.lang.includes("id") || v.lang.includes("ID"));
-    if (indonesianVoice) utterance.voice = indonesianVoice;
-
-    utterance.onstart = () => {
-      this.isSpeaking = true;
-      if (this.orbEngine) this.orbEngine.setState("speaking");
-    };
-
-    utterance.onend = () => {
-      this.isSpeaking = false;
-      if (this.orbEngine) this.orbEngine.setState("idle");
-    };
-
-    utterance.onerror = () => {
-      this.isSpeaking = false;
-      if (this.orbEngine) this.orbEngine.setState("idle");
-    };
-
-    window.speechSynthesis.speak(utterance);
+    aiVoiceEngine.speak(text, {
+      onStart: () => {
+        this.isSpeaking = true;
+        if (this.orbEngine) this.orbEngine.setState("speaking");
+      },
+      onEnd: () => {
+        this.isSpeaking = false;
+        if (this.orbEngine) this.orbEngine.setState("idle");
+      },
+      onError: () => {
+        this.isSpeaking = false;
+        if (this.orbEngine) this.orbEngine.setState("idle");
+      }
+    });
   }
 
   cleanLeadingGreeting(text) {
@@ -3801,21 +3862,25 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
         <div class="card-clean max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-700 bg-slate-900/95 max-h-[92vh] overflow-y-auto">
           <div class="flex items-center justify-between pb-2 border-b border-slate-700">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <span>⚙️</span> Konfigurasi Live Cloud AI (Gemini / OpenAI)
+              <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>Konfigurasi Live Cloud AI (Gemini / OpenAI)</span>
             </h3>
-            <button id="btn-close-ai-settings" class="text-slate-400 hover:text-white p-1">✕</button>
+            <button id="btn-close-ai-settings" class="text-slate-400 hover:text-white p-1" title="Tutup">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
           </div>
 
           <div class="p-3 rounded-lg bg-cyan-950/40 border border-cyan-800/50 text-xs text-cyan-200 space-y-1.5">
             <div class="font-bold flex items-center gap-1.5 text-cyan-300">
-              <span>✨</span> Dapatkan Gemini API Key Gratis:
+              <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <span>Dapatkan Gemini API Key Gratis:</span>
             </div>
             <p class="text-[11px] text-slate-300">
               Google menyediakan kuota gratis hingga 1.500 request/hari tanpa perlu kartu kredit.
             </p>
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs text-cyan-400 font-bold underline hover:text-cyan-300 mt-1">
-              <span>👉 Buat API Key di Google AI Studio (30 Detik)</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs text-cyan-400 font-bold underline hover:text-cyan-300 mt-1">
+              <span>Buat API Key di Google AI Studio (30 Detik)</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
             </a>
           </div>
 
@@ -3834,12 +3899,27 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
               <span class="text-[10px] text-slate-400 mt-1 block">API Key disimpan secara aman di browser lokal Anda (localStorage).</span>
             </div>
 
+            <!-- Section Kustomisasi Suara AI -->
+            <div class="p-3 rounded-lg bg-purple-950/30 border border-purple-800/40 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-xs text-purple-300 flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                  <span>Karakter &amp; Nada Suara AI</span>
+                </div>
+                <div class="text-[10.5px] text-slate-400">Atur persona, nada (pitch), dan kecepatan bicara</div>
+              </div>
+              <button type="button" id="btn-settings-open-voice-customizer" class="btn-secondary text-xs py-1 px-2.5 text-purple-300 hover:text-white border-purple-700/60 font-semibold">
+                Atur Suara
+              </button>
+            </div>
+
             <div id="ai-key-test-status" class="hidden p-2 rounded text-xs font-mono"></div>
           </div>
 
           <div class="flex items-center justify-between gap-2 pt-3 border-t border-slate-700">
-            <button id="btn-test-ai-key" class="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1 text-cyan-400 hover:text-cyan-300">
-              <span>⚡</span> Uji Koneksi
+            <button id="btn-test-ai-key" class="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 font-semibold">
+              <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <span>Uji Koneksi</span>
             </button>
             <div class="flex items-center gap-2">
               <button id="btn-clear-ai-key" class="btn-secondary text-xs py-1.5 px-3">Hapus</button>
@@ -3863,6 +3943,13 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
         alert("API Key berhasil dihapus. Matrix kembali menggunakan Cognitive Brain bawaan.");
       });
 
+      const btnOpenVoiceCust = modal.querySelector("#btn-settings-open-voice-customizer");
+      if (btnOpenVoiceCust) {
+        btnOpenVoiceCust.addEventListener("click", () => {
+          this.voiceCustomizerModal.openModal();
+        });
+      }
+
       // Uji Koneksi API Key secara live
       modal.querySelector("#btn-test-ai-key").addEventListener("click", async () => {
         const testKey = modal.querySelector("#ai-api-key-input").value.trim();
@@ -3870,11 +3957,11 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
         const statusEl = modal.querySelector("#ai-key-test-status");
         statusEl.classList.remove("hidden");
         statusEl.className = "p-2 rounded text-xs font-sans bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-2";
-        statusEl.innerHTML = `<span>⏳</span> Menguji koneksi ke server ${testProv === "gemini" ? "Google Gemini" : "OpenAI"}...`;
+        statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping mr-1"></span> Menguji koneksi ke server ${testProv === "gemini" ? "Google Gemini" : "OpenAI"}...`;
 
         if (!testKey) {
-          statusEl.className = "p-2 rounded text-xs font-sans bg-amber-950/40 text-amber-300 border border-amber-700";
-          statusEl.textContent = "⚠️ Masukkan API Key terlebih dahulu.";
+          statusEl.className = "p-2 rounded text-xs font-sans bg-amber-950/40 text-amber-300 border border-amber-700 flex items-center gap-1.5";
+          statusEl.innerHTML = `<svg class="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg> <span>Masukkan API Key terlebih dahulu.</span>`;
           return;
         }
 
@@ -3908,19 +3995,19 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
             }
 
             if (connected) {
-              statusEl.className = "p-2 rounded text-xs font-sans bg-emerald-950/50 text-emerald-300 border border-emerald-700";
-              statusEl.innerHTML = `✅ <strong>Koneksi Sukses!</strong> Google Gemini (${connectedModel}) aktif dan siap digunakan secara online.`;
+              statusEl.className = "p-2 rounded text-xs font-sans bg-emerald-950/50 text-emerald-300 border border-emerald-700 flex items-center gap-1.5";
+              statusEl.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> <span><strong>Koneksi Sukses!</strong> Google Gemini (${connectedModel}) aktif dan siap digunakan secara online.</span>`;
             } else {
-              statusEl.className = "p-2 rounded text-xs font-sans bg-rose-950/50 text-rose-300 border border-rose-700";
-              statusEl.textContent = `❌ Gagal: ${errMsg || "Kunci API tidak valid."}`;
+              statusEl.className = "p-2 rounded text-xs font-sans bg-rose-950/50 text-rose-300 border border-rose-700 flex items-center gap-1.5";
+              statusEl.innerHTML = `<svg class="w-3.5 h-3.5 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> <span>Gagal: ${errMsg || "Kunci API tidak valid."}</span>`;
             }
           } else {
-            statusEl.className = "p-2 rounded text-xs font-sans bg-blue-950/50 text-blue-300 border border-blue-700";
-            statusEl.textContent = "ℹ️ Provider OpenAI siap dikonfigurasi.";
+            statusEl.className = "p-2 rounded text-xs font-sans bg-blue-950/50 text-blue-300 border border-blue-700 flex items-center gap-1.5";
+            statusEl.innerHTML = `<svg class="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> <span>Provider OpenAI siap dikonfigurasi.</span>`;
           }
         } catch (e) {
-          statusEl.className = "p-2 rounded text-xs font-sans bg-rose-950/50 text-rose-300 border border-rose-700";
-          statusEl.textContent = `❌ Kendala jaringan: ${e.message}`;
+          statusEl.className = "p-2 rounded text-xs font-sans bg-rose-950/50 text-rose-300 border border-rose-700 flex items-center gap-1.5";
+          statusEl.innerHTML = `<svg class="w-3.5 h-3.5 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> <span>Kendala jaringan: ${e.message}</span>`;
         }
       });
 

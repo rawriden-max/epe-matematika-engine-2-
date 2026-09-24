@@ -117,39 +117,94 @@ export class SpeechMathParser {
   }
 
   /**
-   * Jalankan perekaman pengenal suara via Web Speech API
+   * Jalankan perekaman pengenal suara matematika via Web Speech API
    * @param {Object} callbacks
-   * @param {Function} callbacks.onResult - Dipanggil saat hasil pengenalan ucapan tersedia
+   * @param {Function} callbacks.onResult - Dipanggil saat hasil pengenalan ucapan final tersedia
+   * @param {Function} callbacks.onInterim - Dipanggil saat ada transkrip sementara secara live
    * @param {Function} callbacks.onError - Dipanggil saat terjadi kesalahan
    * @param {Function} callbacks.onEnd - Dipanggil saat perekaman selesai
    * @returns {Object} Kontrol { stop: Function }
    */
-  static startSpeechRecognition({ onResult, onError, onEnd } = {}) {
+  static startSpeechRecognition({ onResult, onInterim, onError, onEnd } = {}) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       if (onError) onError(new Error("Browser ini belum mendukung Web Speech Recognition API."));
       return null;
     }
 
+    let fullTranscript = "";
+    let silenceTimer = null;
+    let intentionalStop = false;
+
     const recognition = new SpeechRecognition();
     recognition.lang = "id-ID";
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
-      if (event.results && event.results.length > 0) {
-        const transcript = event.results[0][0].transcript;
-        const confidence = event.results[0][0].confidence || 0.85;
-        const parsed = SpeechMathParser.parseSpokenMath(transcript);
-        if (onResult) onResult({ ...parsed, confidence });
+      let interim = "";
+      let finalSegment = "";
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        const res = event.results[i];
+        if (res.isFinal) {
+          finalSegment += res[0].transcript + " ";
+        } else {
+          interim += res[0].transcript;
+        }
+      }
+
+      if (finalSegment) {
+        fullTranscript += finalSegment;
+      }
+
+      const currentLive = (fullTranscript + interim).trim();
+
+      if (onInterim && currentLive) {
+        onInterim(currentLive);
+      }
+
+      // Deteksi jeda hening 2.2 detik untuk auto-finalize
+      if (silenceTimer) clearTimeout(silenceTimer);
+      if (currentLive.length > 0) {
+        silenceTimer = setTimeout(() => {
+          if (!intentionalStop && currentLive.trim().length > 0) {
+            const parsed = SpeechMathParser.parseSpokenMath(currentLive.trim());
+            if (onResult) onResult({ ...parsed, confidence: 0.90 });
+            try { recognition.stop(); } catch (e) {}
+          }
+        }, 2200);
       }
     };
 
     recognition.onerror = (err) => {
-      if (onError) onError(err);
+      const errCode = err.error || "unknown";
+      if (errCode === "no-speech") {
+        // Jangan matikan sesi saat jeda hening awal
+        return;
+      }
+
+      let errorMsg = "Gagal merekam suara.";
+      if (errCode === "not-allowed" || errCode === "service-not-allowed") {
+        errorMsg = "Izin akses mikrofon ditolak oleh browser. Silakan izinkan mikrofon di pengaturan browser.";
+      } else if (errCode === "audio-capture") {
+        errorMsg = "Mikrofon tidak terdeteksi. Pastikan perangkat input terpasang.";
+      } else if (errCode === "network") {
+        errorMsg = "Kendala jaringan saat menghubungi server pengenal suara.";
+      }
+
+      const errorObj = new Error(errorMsg);
+      errorObj.code = errCode;
+      if (onError) onError(errorObj);
     };
 
     recognition.onend = () => {
+      if (silenceTimer) clearTimeout(silenceTimer);
+      if (!intentionalStop && fullTranscript.trim().length > 0) {
+        const parsed = SpeechMathParser.parseSpokenMath(fullTranscript.trim());
+        if (onResult) onResult({ ...parsed, confidence: 0.88 });
+      }
       if (onEnd) onEnd();
     };
 
@@ -161,9 +216,15 @@ export class SpeechMathParser {
 
     return {
       stop: () => {
+        intentionalStop = true;
+        if (silenceTimer) clearTimeout(silenceTimer);
         try {
           recognition.stop();
         } catch (e) {}
+        if (fullTranscript.trim().length > 0) {
+          const parsed = SpeechMathParser.parseSpokenMath(fullTranscript.trim());
+          if (onResult) onResult({ ...parsed, confidence: 0.88 });
+        }
       }
     };
   }
