@@ -1,11 +1,25 @@
 $port = 8080
-$prefix = "http://127.0.0.1:$port/"
+$prefix1 = "http://127.0.0.1:$port/"
+$prefix2 = "http://localhost:$port/"
 $root = $PSScriptRoot
 
 $listener = New-Object System.Net.HttpListener
-$listener.Prefixes.Add($prefix)
-$listener.Start()
-Write-Host "Server listening at $prefix"
+$listener.Prefixes.Add($prefix1)
+try {
+    $listener.Prefixes.Add($prefix2)
+} catch {
+    Write-Host "Catatan: Prefiks localhost memerlukan reservasi khusus, server aktif di 127.0.0.1"
+}
+
+try {
+    $listener.Start()
+} catch {
+    # Jika gagal dengan kedua prefiks, coba hanya dengan 127.0.0.1
+    $listener = New-Object System.Net.HttpListener
+    $listener.Prefixes.Add($prefix1)
+    $listener.Start()
+}
+Write-Host "Server listening at $prefix1 and $prefix2"
 
 $mimeTypes = @{
     ".html" = "text/html; charset=utf-8"
@@ -16,6 +30,7 @@ $mimeTypes = @{
     ".jpg"  = "image/jpeg"
     ".jpeg" = "image/jpeg"
     ".svg"  = "image/svg+xml"
+    ".ico"  = "image/x-icon"
     ".webm" = "audio/webm"
     ".mp3"  = "audio/mpeg"
     ".wav"  = "audio/wav"
@@ -81,7 +96,9 @@ try {
                         $activeQ = $reqObj.activeQuestion
                         $sAnswer = $reqObj.studentAnswer
 
-                        $systemInstruction = "Kamu adalah Matrix, Asisten AI Cerdas di platform Error Pattern Engine (EPE). Berikan penjelasan edukatif, akurat, santun, dan lengkap. Format rumus matematika dengan KaTeX LaTeX `$..$`."
+                        $systemInstruction = "Kamu adalah Matrix, Asisten AI Cerdas di platform Error Pattern Engine (EPE). Berikan penjelasan edukatif, akurat, santun, dan lengkap. Format rumus matematika dengan KaTeX LaTeX `$..$` atau `$$..$$`."
+                        $systemInstruction += "`n`nATURAN FORMAT RUMUS & TAUTAN INTERAKTIF:`n- SANGAT DIANJURKAN menyertakan tautan referensi belajar Markdown interaktif menggunakan format [Nama Materi/Sumber](https://url-valid) (misal: 3Blue1Brown, Khan Academy, Brilliant, MIT OpenCourseWare, Wikipedia).`n- DILARANG KERAS membuat disclaimer seperti 'Sebagai AI saya tidak dapat menulis tautan dengan href dalam mode plaintext' atau meminta siswa menyalin-tempel manual! Web EPE telah memiliki parser link interaktif penuh yang otomatis merender tautan menjadi tombol/link klik aktif."
+                        $systemInstruction += "`n`nPENGEMBANGAN CATATAN EDUKATIF ('Catatan dari AI'):`n- Di akhir penjelasan konsep, berikan bagian '> [!NOTE] Catatan Pendalaman Konsep' yang kaya, terstruktur, dan aplikatif!`n- Jika topik menyangkut aljabar/matriks/geometri, perluas ke topik mendalam: Rotasi dalam 3-Dimensi (Euler angles, keterbatasan Gimbal Lock, Quaternions pada game 3D & robotika), Dekomposisi SVD ($A = U \Sigma V^T$) pada Machine Learning & kompresi gambar, Nilai Eigen ($Av = \lambda v$) pada PageRank, serta aplikasi diskriminan pada lintasan gerak kuadratik."
                         $systemInstruction += "`n`nPRINSIP UTAMA CONTEXT ROUTING & HISTORY:`nMatrix mengingat seluruh alur percakapan sebelumnya bersama siswa.`n1. CONVERSATIONAL CONTEXT: Percakapan bebas, sains umum, astronomi, video game, pop culture, transportasi publik (MRT), rumus umum, atau pertanyaan sehari-hari.`n2. APPLICATION / LEARNING CONTEXT: Latihan soal aktif di aplikasi."
                         $systemInstruction += "`n`nATURAN CONTEXT ROUTING (CONTEXT AWARENESS != CONTEXT FORCING):`n- Sambungkan jawabanmu secara logis dengan pertanyaan atau topik di riwayat percakapan sebelumnya!`n- JANGAN OTOMATIS MEMAKSAKAN atau mengarahkan siswa kembali ke soal aktif jika siswa bertanya tentang topik umum, sains, game, astronomi, transportasi, atau rumus umum!`n- Gunakan konteks Soal Aktif HANYA JIKA siswa menanyakan jawaban mereka ('kenapa jawaban saya salah?', 'kenapa B?'), meminta petunjuk soal aktif, atau berkata 'balik ke soal tadi'."
                         $systemInstruction += "`n`nATURAN SAPAAN (PERCAKAPAN BERJALAN):`nIni adalah percakapan chat yang SEDANG BERLANGSUNG. JANGAN mengulang kata sapaan ('Halo!', 'Halo Siswa!') atau memperkenalkan diri ('Saya Matrix...') di awal jawaban setiap respon baru! Langsung jawab ke inti pertanyaan atau topik secara natural dan mengalir."
