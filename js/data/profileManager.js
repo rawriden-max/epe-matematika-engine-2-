@@ -91,6 +91,14 @@ export class ProfileManager {
     // 8. Sidebar Student Name Tag
     const sidebarName = document.getElementById("sidebar-student-name");
     if (sidebarName) sidebarName.textContent = studentName;
+
+    // 9. Floating Student Avatar Name Tag (Pojok Kanan Atas Melayang)
+    const floatingName = document.getElementById("floating-student-name");
+    if (floatingName) floatingName.textContent = studentName;
+
+    // 10. Settings Hub Student Name Tag
+    const settingsName = document.getElementById("settings-student-name");
+    if (settingsName) settingsName.textContent = studentName;
   }
 
   /**

@@ -4,46 +4,47 @@
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Neutral Surface Tokens - Light Mode */
-  --bg-app: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-subtle: #f1f5f9;
-  --bg-subtle-hover: #e2e8f0;
-  --border-color: #e2e8f0;
-  --border-hover: #cbd5e1;
-  --text-main: #0f172a;
-  --text-muted: #475569;
-  --text-light: #64748b;
+  /* Luxury Warm Color Palette - Light Mode (Cream, Pure White, Mocha Brown, Emerald Accent) */
+  --bg-app: #fcf9f5; /* Warm refined ivory cream */
+  --bg-surface: #ffffff; /* Crisp pure white */
+  --bg-subtle: #f5eee6; /* Soft warm sand */
+  --bg-subtle-hover: #ece3d8;
+  --border-color: #e8ded3;
+  --border-hover: #d4c4b2;
+  --text-main: #1f140e; /* Deep rich dark espresso */
+  --text-muted: #5e4c40; /* Warm mocha slate */
+  --text-light: #8e7a6c;
 
-  /* Theme Dynamic Accent (Default: Electric Blue) */
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-subtle: rgba(37, 99, 235, 0.1);
-  --accent-text: #1e40af;
-  --accent-glow: rgba(37, 99, 235, 0.35);
-  --accent-border: rgba(37, 99, 235, 0.25);
+  /* Theme Dynamic Accent (Warm Amber / Caramel & Emerald per Color Theory) */
+  --accent: #d97706;
+  --accent-hover: #b45309;
+  --accent-subtle: rgba(217, 119, 6, 0.12);
+  --accent-text: #92400e;
+  --accent-glow: rgba(217, 119, 6, 0.35);
+  --accent-border: rgba(217, 119, 6, 0.25);
+  --accent-emerald: #10b981;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
-  --shadow-glow: 0 0 20px var(--accent-glow);
+  --shadow-sm: 0 1px 3px 0 rgba(43, 29, 21, 0.05);
+  --shadow-md: 0 8px 24px -4px rgba(43, 29, 21, 0.08);
+  --shadow-glow: 0 0 25px var(--accent-glow);
 }
 
-/* Dark Mode Tokens */
+/* Dark Mode Tokens - Deep Rich Espresso Mocha */
 .dark,
 body.theme-dark {
-  --bg-app: #080c14;
-  --bg-surface: #0f172a;
-  --bg-subtle: #17223b;
-  --bg-subtle-hover: #1e2c4c;
-  --border-color: #1e293d;
-  --border-hover: #334155;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-light: #64748b;
+  --bg-app: #120b08; /* Deep rich espresso */
+  --bg-surface: #1c130e; /* Rich mocha surface */
+  --bg-subtle: #291c15; /* Subtle coffee card */
+  --bg-subtle-hover: #36261d;
+  --border-color: #3b281e;
+  --border-hover: #52382b;
+  --text-main: #fbf7f2;
+  --text-muted: #c4b3a7;
+  --text-light: #8f7d73;
 
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 6px 20px -3px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 28px -3px rgba(0, 0, 0, 0.7);
 }
 
 /* Base Global Reset */
@@ -1046,7 +1047,7 @@ body {
   display: block;
 }
 
-/* Floating AI Orb Action Button */
+/* Floating AI Orb Action Button - Mini Saturn Planet Style */
 .floating-ai-trigger {
   position: fixed;
   bottom: 1.5rem;
@@ -1057,10 +1058,10 @@ body {
   gap: 0.5rem;
   padding: 0.5rem 0.85rem;
   border-radius: 9999px;
-  background: rgba(15, 23, 42, 0.88);
-  backdrop-filter: blur(12px);
-  border: 1.5px solid var(--accent);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 0 15px var(--accent-glow);
+  background: rgba(35, 22, 14, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(217, 119, 6, 0.65);
+  box-shadow: 0 8px 25px rgba(20, 10, 5, 0.6), 0 0 16px rgba(245, 158, 11, 0.35);
   color: #ffffff;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1068,21 +1069,37 @@ body {
 
 .floating-ai-trigger:hover {
   transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px var(--accent-glow);
+  box-shadow: 0 12px 30px rgba(20, 10, 5, 0.7), 0 0 25px rgba(245, 158, 11, 0.6);
+  border-color: rgba(245, 158, 11, 0.9);
 }
 
 .floating-ai-mini-orb {
+  position: relative;
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, var(--accent-text), var(--accent));
-  box-shadow: 0 0 10px var(--accent-glow);
+  background: radial-gradient(circle at 35% 35%, #fde68a, #d97706 60%, #78350f 95%);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
   animation: orb-pulse 2s infinite ease-in-out;
 }
 
+.floating-ai-mini-orb::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.1rem;
+  height: 0.75rem;
+  transform: translate(-50%, -50%) rotate(-25deg);
+  border: 1.5px solid rgba(253, 230, 138, 0.85);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+  pointer-events: none;
+}
+
 @keyframes orb-pulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 10px var(--accent-glow); }
-  50% { transform: scale(1.15); box-shadow: 0 0 20px var(--accent-glow); }
+  0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); }
+  50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(245, 158, 11, 0.85); }
 }
 
 /* ========================================================================= */
@@ -1095,10 +1112,11 @@ body {
   bottom: 0 !important;
   width: 100% !important;
   max-width: 440px !important;
-  background: rgba(15, 23, 42, 0.97) !important;
-  backdrop-filter: blur(20px) !important;
-  border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: -15px 0 50px rgba(0, 0, 0, 0.75) !important;
+  background: rgba(24, 15, 10, 0.98) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-left: 1px solid rgba(138, 77, 36, 0.45) !important;
+  box-shadow: -15px 0 50px rgba(10, 5, 2, 0.85) !important;
   z-index: 99999 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -1122,15 +1140,16 @@ body {
   transform: translateX(0) !important;
 }
 
-/* AI History Slide-Over Panel (Gemini / ChatGPT / Claude Style) */
+/* AI History Slide-Over Panel (Warm Espresso Mocha Style) */
 #ai-history-panel {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  background: rgba(10, 15, 29, 0.98) !important;
+  background: rgba(20, 12, 8, 0.98) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
+  border-left: 1px solid rgba(120, 68, 33, 0.45) !important;
   z-index: 50 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -1151,8 +1170,8 @@ body {
 .ai-chat-header,
 .ai-chat-header-container {
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid rgba(120, 68, 33, 0.4) !important;
+  background: rgba(35, 21, 14, 0.97) !important;
   flex-shrink: 0;
 }
 
@@ -1175,7 +1194,7 @@ body {
   word-break: break-word;
 }
 
-/* Markdown Table Styling in Chat Bubbles */
+/* Markdown Table Styling in Chat Bubbles (Warm Chocolate & Amber) */
 .ai-msg-bubble table {
   width: 100%;
   border-collapse: collapse;
@@ -1183,17 +1202,17 @@ body {
   font-size: 0.76rem;
   border-radius: 0.5rem;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(120, 68, 33, 0.45) !important;
+  background: rgba(28, 17, 11, 0.85) !important;
 }
 
 .ai-msg-bubble th {
-  background: rgba(30, 41, 59, 0.95);
-  color: #67e8f9;
+  background: rgba(55, 34, 23, 0.96) !important;
+  color: #fde68a !important;
   font-weight: 700;
   padding: 0.5rem 0.7rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(120, 68, 33, 0.4) !important;
+  border-right: 1px solid rgba(120, 68, 33, 0.25) !important;
   text-align: left;
   white-space: nowrap;
 }
@@ -1204,9 +1223,9 @@ body {
 
 .ai-msg-bubble td {
   padding: 0.5rem 0.7rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
+  border-bottom: 1px solid rgba(120, 68, 33, 0.15) !important;
+  border-right: 1px solid rgba(120, 68, 33, 0.15) !important;
+  color: #f5eedc !important;
   line-height: 1.5;
   vertical-align: top;
 }
@@ -1220,25 +1239,25 @@ body {
 }
 
 .ai-msg-bubble tr:hover td {
-  background: rgba(51, 65, 85, 0.35);
+  background: rgba(74, 46, 31, 0.35) !important;
 }
 
 .ai-msg-assistant {
   align-self: flex-start;
-  background: rgba(30, 41, 59, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #f1f5f9;
+  background: rgba(43, 27, 18, 0.95) !important;
+  border: 1px solid rgba(138, 77, 36, 0.45) !important;
+  color: #fdfaf7 !important;
   border-bottom-left-radius: 0.25rem;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 18px rgba(10, 5, 2, 0.4) !important;
 }
 
 .ai-msg-assistant strong {
-  color: var(--accent-text);
+  color: #fbbf24 !important;
 }
 
 /* AI Chat Links & Callouts */
 .ai-chat-link {
-  color: #38bdf8;
+  color: #fbbf24;
   text-decoration: underline;
   text-underline-offset: 3px;
   font-weight: 600;
@@ -1332,16 +1351,16 @@ body:not(.theme-dark) .ai-msg-assistant .ai-markdown-bullet {
   color: #2563eb !important;
 }
 
-/* Code & Pre Blocks */
+/* Code & Pre Blocks (Warm Chocolate Mocha) */
 .ai-markdown-code {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(51, 65, 85, 0.7);
-  color: #67e8f9;
+  background: rgba(26, 16, 10, 0.92);
+  border: 1px solid rgba(120, 68, 33, 0.5);
+  color: #fde68a;
 }
 .ai-markdown-pre {
-  background: rgba(2, 6, 23, 0.95);
-  border-color: rgba(30, 41, 59, 0.8);
-  color: #34d399;
+  background: rgba(18, 11, 7, 0.96);
+  border-color: rgba(120, 68, 33, 0.45);
+  color: #a7f3d0;
 }
 
 body:not(.theme-dark) .ai-msg-assistant .ai-markdown-code,
@@ -1357,11 +1376,11 @@ body:not(.theme-dark) .ai-msg-assistant pre {
   color: #0f172a !important;
 }
 
-/* Blockquotes */
+/* Blockquotes (Warm Amber Chocolate Accent) */
 .ai-markdown-quote {
-  background: rgba(30, 41, 59, 0.6);
-  border-left: 4px solid #38bdf8;
-  color: #e2e8f0;
+  background: rgba(45, 28, 18, 0.65);
+  border-left: 4px solid #d97706;
+  color: #f5eedc;
 }
 
 body:not(.theme-dark) .ai-msg-assistant .ai-markdown-quote,
@@ -1513,9 +1532,9 @@ body:not(.theme-dark) .ai-msg-assistant tr:hover td {
   gap: 0.35rem;
   padding: 0.35rem 0.75rem;
   border-radius: 9999px;
-  background: rgba(30, 41, 59, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #cbd5e1;
+  background: rgba(45, 29, 20, 0.92) !important;
+  border: 1px solid rgba(120, 68, 33, 0.5) !important;
+  color: #fde68a !important;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
@@ -1525,10 +1544,11 @@ body:not(.theme-dark) .ai-msg-assistant tr:hover td {
 }
 
 .ai-quick-chip:hover {
-  background: var(--accent-subtle);
-  border-color: var(--accent-border);
-  color: var(--accent-text);
+  background: rgba(74, 46, 31, 0.95) !important;
+  border-color: #f59e0b !important;
+  color: #ffffff !important;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25) !important;
 }
 
 .ai-typing-indicator {
@@ -1599,7 +1619,7 @@ body:not(.theme-dark) .card-clean {
 }
 
 /* ========================================================================= */
-/* ULTRA-SMOOTH LIGHTWEIGHT CIRCULAR WAVE & BUBBLE TRANSITION (BALANCED BLUE) */
+/* ULTRA-FUTURISTIC QUANTUM CYBER LASER & HUD RETICLE PAGE TRANSITION       */
 /* ========================================================================= */
 .page-transition-overlay {
   position: fixed;
@@ -1609,66 +1629,115 @@ body:not(.theme-dark) .card-clean {
   overflow: hidden;
 }
 
-/* Single Ultra-Smooth Expanding Circular Wave (Balanced Blue: Visible on White & Dark) */
+/* 1. Anamorphic Cyber Light Flare (Suar Kilau Cahaya Tajam Horizontal - Tanpa Lingkaran Bulat) */
+.cyber-light-flare,
+.cyber-quantum-reticle,
 .smooth-circular-wave {
   position: absolute;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid rgba(37, 99, 235, 0.65);
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.16) 0%, rgba(59, 130, 246, 0.05) 45%, rgba(37, 99, 235, 0) 70%);
-  box-shadow: 0 0 20px rgba(37, 99, 235, 0.35), inset 0 0 12px rgba(37, 99, 235, 0.2);
-  transform: translate(-50%, -50%) scale(0.1);
+  width: 140px;
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.9) 25%, #ffffff 50%, rgba(245, 158, 11, 0.95) 75%, transparent);
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.9), 0 0 50px rgba(56, 189, 248, 0.7);
+  transform: translate(-50%, -50%) scaleX(0.1) scaleY(0.5);
   will-change: transform, opacity;
-  animation: smooth-circle-expand 0.62s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: cyber-flare-flash 0.46s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes smooth-circle-expand {
+.cyber-light-flare::before,
+.cyber-quantum-reticle::before,
+.smooth-circular-wave::before {
+  content: '';
+  position: absolute;
+  inset: -8px -20px;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at center, rgba(254, 240, 138, 0.8) 0%, rgba(245, 158, 11, 0.3) 40%, transparent 75%);
+  filter: blur(4px);
+}
+
+@keyframes cyber-flare-flash {
   0% {
-    transform: translate(-50%, -50%) scale(0.1);
+    transform: translate(-50%, -50%) scaleX(0.05) scaleY(0.4);
+    opacity: 1;
+  }
+  35% {
+    transform: translate(-50%, -50%) scaleX(3.5) scaleY(1.8);
     opacity: 0.95;
   }
-  50% {
-    opacity: 0.55;
-  }
   100% {
-    transform: translate(-50%, -50%) scale(115);
+    transform: translate(-50%, -50%) scaleX(8) scaleY(0.1);
     opacity: 0;
   }
 }
 
-/* 5 Subtle Micro-Bubbles (Crystalline Sapphire Blue: Crisp on White, Sleek on Dark) */
-.smooth-micro-bubble {
-  position: absolute;
-  border-radius: 50%;
-  border: 1.5px solid rgba(37, 99, 235, 0.65);
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95) 0%, rgba(191, 219, 254, 0.55) 30%, rgba(37, 99, 235, 0.15) 70%, rgba(37, 99, 235, 0.4) 100%);
-  box-shadow: inset 1px 1px 3px rgba(255, 255, 255, 0.8), 0 3px 10px rgba(37, 99, 235, 0.25);
-  transform: translate(0, 0) scale(0.3);
-  will-change: transform, opacity;
-  animation: smooth-bubble-float 0.65s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+/* Compatibility aliases */
+@keyframes cyber-reticle-warp {
+  0% { transform: translate(-50%, -50%) scaleX(0.1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scaleX(6); opacity: 0; }
 }
 
-@keyframes smooth-bubble-float {
+/* 2. Cyber Laser Sweep Beam across screen */
+.cyber-laser-sweep {
+  position: absolute;
+  left: 0;
+  width: 100vw;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 5%, rgba(56, 189, 248, 0.8) 30%, rgba(254, 240, 138, 1) 50%, rgba(245, 158, 11, 0.9) 70%, transparent 95%);
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.8), 0 0 35px rgba(56, 189, 248, 0.6);
+  transform: translateY(-50%) scaleX(0.05);
+  will-change: transform, opacity;
+  animation: cyber-laser-flash 0.44s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cyber-laser-flash {
   0% {
-    transform: translate(0, 0) scale(0.3);
-    opacity: 0.95;
+    transform: translateY(-50%) scaleX(0.05);
+    opacity: 1;
   }
-  60% {
+  40% {
+    transform: translateY(-50%) scaleX(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-50%) scaleX(1.1);
+    opacity: 0;
+  }
+}
+
+/* 3. Cyber Quantum Laser Streaks (High-Speed Directional Light Rays) */
+.cyber-laser-streak,
+.smooth-micro-bubble {
+  position: absolute;
+  width: 55px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(254, 240, 138, 1), rgba(245, 158, 11, 0.6), transparent);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+  border-radius: 9999px;
+  transform-origin: left center;
+  will-change: transform, opacity;
+  animation: cyber-streak-dash 0.48s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+@keyframes cyber-streak-dash {
+  0% {
+    transform: rotate(var(--angle, 0deg)) translateX(0) scaleX(0.2);
+    opacity: 1;
+  }
+  70% {
     opacity: 0.85;
   }
   100% {
-    transform: translate(var(--drift-x, 15px), var(--float-y, -65px)) scale(1.1);
+    transform: rotate(var(--angle, 0deg)) translateX(var(--dist, 150px)) scaleX(2.5);
     opacity: 0;
   }
 }
 
 /* Compatibility aliases */
 .water-ripple-ring, .wave-ripple-ring {
-  composes: smooth-circular-wave;
+  composes: cyber-quantum-reticle;
 }
 .water-liquid-bubble, .floating-transition-bubble {
-  composes: smooth-micro-bubble;
+  composes: cyber-laser-streak;
 }
 
 /* Tab Page Transition Wave-Wash Entry */
@@ -1903,9 +1972,9 @@ body:not(.theme-dark) [data-jump-idx].bg-amber-500 {
   height: 520px;
   overflow: hidden;
   border-radius: 1.5rem;
-  background: radial-gradient(ellipse at 50% 12%, rgba(13, 27, 42, 0.98), rgba(2, 6, 23, 0.99) 85%);
-  border: 1px solid rgba(56, 189, 248, 0.22);
-  box-shadow: inset 0 0 80px rgba(6, 182, 212, 0.12), 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  background: radial-gradient(ellipse at 50% 12%, rgba(38, 24, 16, 0.98), rgba(18, 11, 8, 0.99) 75%, #0d0705 100%);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  box-shadow: inset 0 0 80px rgba(180, 83, 9, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.7);
   user-select: none;
   cursor: grab;
 }
@@ -1925,7 +1994,7 @@ body:not(.theme-dark) [data-jump-idx].bg-amber-500 {
   z-index: 1;
 }
 
-/* Core Vortex Ambient Beam */
+/* Core Vortex Ambient Beam (Golden / Amber Pillar of Light) */
 .tornado-core-beam {
   position: absolute;
   top: 10%;
@@ -1933,9 +2002,9 @@ body:not(.theme-dark) [data-jump-idx].bg-amber-500 {
   left: 50%;
   width: 8px;
   transform: translateX(-50%);
-  background: linear-gradient(180deg, rgba(56, 189, 248, 0.8), rgba(6, 182, 212, 0.5) 45%, rgba(139, 92, 246, 0.85));
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.85), rgba(217, 119, 6, 0.6) 45%, rgba(180, 83, 9, 0.85));
   filter: blur(4px);
-  box-shadow: 0 0 30px rgba(56, 189, 248, 0.85), 0 0 70px rgba(6, 182, 212, 0.5);
+  box-shadow: 0 0 30px rgba(251, 191, 36, 0.85), 0 0 70px rgba(217, 119, 6, 0.55);
   pointer-events: none;
   z-index: 2;
   border-radius: 9999px;
@@ -2066,11 +2135,11 @@ body:not(.theme-dark) [data-jump-idx].bg-amber-500 {
   gap: 0.4rem;
   padding: 0.28rem 0.7rem;
   border-radius: 9999px;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(35, 22, 14, 0.88);
+  border: 1px solid rgba(245, 158, 11, 0.4);
   font-size: 0.7rem;
   font-weight: 600;
-  color: #38bdf8;
+  color: #fde68a;
   backdrop-filter: blur(8px);
 }
 
@@ -2078,8 +2147,8 @@ body:not(.theme-dark) [data-jump-idx].bg-amber-500 {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #22d3ee;
-  box-shadow: 0 0 8px #22d3ee;
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
   animation: pulse 1.5s infinite;
 }
 
@@ -2091,19 +2160,19 @@ body:not(.theme-dark) [data-jump-idx].bg-amber-500 {
 .tornado-hud-btn {
   padding: 0.28rem 0.65rem;
   border-radius: 9999px;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(35, 22, 14, 0.82);
+  border: 1px solid rgba(217, 119, 6, 0.35);
   font-size: 0.7rem;
   font-weight: 600;
-  color: #cbd5e1;
+  color: #fde68a;
   cursor: pointer;
   transition: all 0.2s ease;
   backdrop-filter: blur(8px);
 }
 .tornado-hud-btn:hover {
-  background: rgba(30, 41, 59, 0.95);
-  border-color: #38bdf8;
-  color: #38bdf8;
+  background: rgba(58, 36, 22, 0.95);
+  border-color: #f59e0b;
+  color: #ffffff;
 }
 
 /* Tornado Search & Filters */
@@ -3018,66 +3087,101 @@ body.nav-pos-bottom .floating-ai-trigger {
   transform: scale(0.95);
 }
 
-/* Light Mode: Bottom Dock */
+/* Light Mode: Modern Futuristic Transparent Bottom Dock */
 body:not(.theme-dark) #epe-bottom-dock {
-  background: rgba(255, 255, 255, 0.96) !important;
-  border: 1px solid rgba(226, 232, 240, 0.95) !important;
-  box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.08) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(28px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 0 16px 48px -8px rgba(35, 20, 12, 0.14), 0 0 25px rgba(217, 119, 6, 0.08) !important;
 }
 body:not(.theme-dark) #epe-bottom-dock .bottom-dock-btn {
-  color: #475569 !important;
+  color: #5c4a3e !important;
 }
 body:not(.theme-dark) #epe-bottom-dock .bottom-dock-btn:hover {
-  background: #f1f5f9 !important;
-  color: #0f172a !important;
+  background: rgba(245, 238, 230, 0.85) !important;
+  color: #1f140e !important;
   transform: translateY(-2px);
 }
 body:not(.theme-dark) #epe-bottom-dock .bottom-dock-btn.active {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(6, 182, 212, 0.10) 100%) !important;
-  border: 1px solid rgba(2, 132, 199, 0.35) !important;
-  color: #0369a1 !important;
-  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.12) !important;
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.16) 0%, rgba(16, 185, 129, 0.12) 100%) !important;
+  border: 1px solid rgba(217, 119, 6, 0.35) !important;
+  color: #92400e !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.15) !important;
 }
 body:not(.theme-dark) #epe-bottom-dock .bottom-dock-btn.active svg {
-  color: #0284c7 !important;
+  color: #d97706 !important;
 }
 
-/* Dark Mode: Bottom Dock */
+/* Dark Mode: Modern Futuristic Transparent Bottom Dock */
 body.theme-dark #epe-bottom-dock,
 .dark #epe-bottom-dock {
-  background: rgba(7, 13, 24, 0.95) !important;
-  border: 1px solid rgba(30, 41, 59, 0.8) !important;
-  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.6) !important;
+  background: rgba(7, 13, 24, 0.75) !important;
+  backdrop-filter: blur(28px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 16px 48px -8px rgba(0, 0, 0, 0.75), 0 0 25px rgba(217, 119, 6, 0.15) !important;
 }
 body.theme-dark #epe-bottom-dock .bottom-dock-btn,
 .dark #epe-bottom-dock .bottom-dock-btn {
-  color: #94a3b8 !important;
+  color: #c4b3a7 !important;
 }
 body.theme-dark #epe-bottom-dock .bottom-dock-btn:hover,
 .dark #epe-bottom-dock .bottom-dock-btn:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
   transform: translateY(-2px);
 }
 body.theme-dark #epe-bottom-dock .bottom-dock-btn.active {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.35) 0%, rgba(6, 182, 212, 0.25) 100%) !important;
-  border: 1px solid rgba(56, 189, 248, 0.45);
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.35) 0%, rgba(16, 185, 129, 0.25) 100%) !important;
+  border: 1px solid rgba(245, 158, 11, 0.45);
   color: #ffffff !important;
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
 }
 body.theme-dark #epe-bottom-dock .bottom-dock-btn.active svg,
 .dark #epe-bottom-dock .bottom-dock-btn.active svg {
   color: #38bdf8 !important;
 }
 
-/* Nav Layout Dropdown animations */
-#nav-layout-menu {
-  animation: layoutDropdownIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* Nav Layout Modal (Centered on Screen with Backdrop - Mobile & Desktop) */
+#nav-layout-menu.nav-layout-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1rem !important;
+  background-color: rgba(7, 12, 22, 0.78) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  animation: navBackdropFadeIn 0.2s ease forwards !important;
 }
-@keyframes layoutDropdownIn {
+
+#nav-layout-menu.hidden {
+  display: none !important;
+}
+
+.nav-layout-modal-card {
+  width: 100% !important;
+  max-width: 440px !important;
+  margin: auto !important;
+  animation: navModalScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes navBackdropFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes navModalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
   }
   to {
     opacity: 1;
@@ -3092,7 +3196,8 @@ body.theme-dark #epe-bottom-dock .bottom-dock-btn.active svg,
 .creative-header-card:hover {
   transform: translateY(-1px);
 }
-body:not(.theme-dark) .creative-header-card#widget-live-clock-card {
+body:not(.theme-dark) .creative-header-card#widget-live-clock-card,
+body:not(.theme-dark) .creative-header-card#sidebar-live-clock-card {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(226, 232, 240, 0.95);
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
@@ -3102,7 +3207,9 @@ body:not(.theme-dark) .creative-header-card#widget-learning-stats-card {
   border: 1px solid rgba(186, 230, 253, 0.9);
 }
 body.theme-dark .creative-header-card#widget-live-clock-card,
-.dark .creative-header-card#widget-live-clock-card {
+.dark .creative-header-card#widget-live-clock-card,
+body.theme-dark .creative-header-card#sidebar-live-clock-card,
+.dark .creative-header-card#sidebar-live-clock-card {
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(51, 65, 85, 0.7);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
@@ -3112,6 +3219,18 @@ body.theme-dark .creative-header-card#widget-learning-stats-card,
   background: rgba(8, 24, 46, 0.7);
   border: 1px solid rgba(30, 58, 102, 0.7);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.creative-header-card#widget-live-clock-card,
+.creative-header-card#sidebar-live-clock-card {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.creative-header-card#widget-live-clock-card:active,
+.creative-header-card#sidebar-live-clock-card:active {
+  transform: scale(0.97);
 }
 
 /* Header Action Tools & Avatar Pill Layout Constraints */
@@ -3129,47 +3248,39 @@ body.theme-dark .creative-header-card#widget-learning-stats-card,
   flex-shrink: 0 !important;
 }
 
-#main-header-inner,
-#main-header > div {
+#main-header-inner {
   width: 100% !important;
   max-width: 80rem !important;
   margin-left: auto !important;
   margin-right: auto !important;
   display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 0.35rem !important;
-}
-
-#header-top-row {
-  display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
   justify-content: space-between !important;
-  flex-wrap: nowrap !important;
-  width: 100% !important;
-  gap: 0.5rem !important;
+}
+
+#header-top-row,
+#header-top-nav-row {
+  display: none !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
 }
 
 #header-creative-left {
+  display: none !important;
+}
+
+#header-action-tools {
+  flex-wrap: nowrap !important;
+}
+
+#header-avatar-pill {
   flex-shrink: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.5rem !important;
-}
-
-#header-top-nav-row {
-  width: 100% !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  overflow-x: auto !important;
-}
-
-#main-top-nav {
-  max-width: 100% !important;
-  overflow-x: auto !important;
-  scrollbar-width: thin;
 }
 
 body.nav-pos-sidebar #header-action-tools,
@@ -3244,5 +3355,737 @@ body.theme-dark #header-quote-banner,
     display: none;
   }
 }
+
+/* ========================================================================= */
+/* LUXURY EPE V3 DESIGN SYSTEM: CREAM, WHITE, MOCHA CHOCOLATE & EMERALD      */
+/* ========================================================================= */
+
+/* 1. Dynamic Luxury White Scroll Transition */
+#main-header {
+  transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              backdrop-filter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body:not(.theme-dark) #main-header.scrolled-luxury-white {
+  background-color: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(232, 222, 211, 0.85) !important;
+  box-shadow: 0 4px 20px -2px rgba(43, 29, 21, 0.06), 0 1px 3px rgba(43, 29, 21, 0.04) !important;
+}
+
+body.theme-dark #main-header.scrolled-luxury-white,
+.dark #main-header.scrolled-luxury-white {
+  background-color: rgba(22, 14, 10, 0.95) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(59, 40, 30, 0.8) !important;
+  box-shadow: 0 4px 25px -2px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 2. Floating Top Notification Capsule (Inspirational Motivation) */
+#top-notification-strip {
+  pointer-events: auto;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, visibility 0.35s ease;
+}
+
+#top-notification-strip.dismissed {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translate(-50%, -24px) scale(0.92) !important;
+  visibility: hidden !important;
+}
+
+#top-notification-strip.modal-open-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+body:not(.theme-dark) #top-notification-strip #header-quote-banner {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(232, 222, 211, 0.95) !important;
+  box-shadow: 0 6px 20px -4px rgba(43, 29, 21, 0.08), 0 1px 3px rgba(43, 29, 21, 0.04) !important;
+}
+
+body.theme-dark #top-notification-strip #header-quote-banner,
+.dark #top-notification-strip #header-quote-banner {
+  background: rgba(28, 19, 14, 0.92) !important;
+  border: 1px solid rgba(64, 43, 32, 0.8) !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 3. WayGO Style Hero Section & Scroll Transformation */
+.waygo-hero-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 36px !important;
+  background: linear-gradient(135deg, #2b1a12 0%, #3e251a 50%, #20130d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 50px -12px rgba(25, 14, 8, 0.35);
+}
+
+.waygo-hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: radial-gradient(circle at 50% 0%, rgba(217, 119, 6, 0.18), transparent 70%);
+  pointer-events: none;
+}
+
+.waygo-hero-card::after {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+/* WayGO Search Bar (Initial State) */
+.waygo-search-bar {
+  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center;
+}
+
+/* Transformed Squircle/Oval Feature Cards:
+   "berbentuk kotak tapi pinggirannya tidak lancip kayak membentuk oval gitu deh pokoknya" */
+.waygo-squircle-card {
+  border-radius: 28px !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+body:not(.theme-dark) .waygo-squircle-card {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border: 1px solid rgba(232, 222, 211, 0.9) !important;
+  box-shadow: 0 10px 30px -6px rgba(43, 29, 21, 0.08), 0 2px 6px rgba(43, 29, 21, 0.04) !important;
+}
+
+body.theme-dark .waygo-squircle-card,
+.dark .waygo-squircle-card {
+  background: rgba(28, 19, 14, 0.94) !important;
+  border: 1px solid rgba(64, 43, 32, 0.75) !important;
+  box-shadow: 0 12px 36px -6px rgba(0, 0, 0, 0.5) !important;
+}
+
+.waygo-squircle-card:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 20px 40px -8px rgba(217, 119, 6, 0.15) !important;
+}
+
+/* Morphing Container Transitions */
+#waygo-pill-wrapper {
+  position: relative;
+  transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#waygo-search-pill {
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity, filter;
+}
+
+#waygo-transformed-cards {
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity, filter;
+}
+
+#waygo-pill-wrapper.is-transformed #waygo-search-pill {
+  opacity: 0 !important;
+  transform: translateY(-16px) scale(0.96) !important;
+  filter: blur(6px) !important;
+  pointer-events: none !important;
+  position: absolute !important;
+}
+
+#waygo-pill-wrapper.is-transformed #waygo-transformed-cards {
+  display: grid !important;
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+  filter: blur(0px) !important;
+  pointer-events: auto !important;
+}
+
+/* 4. Minimalist Matrix AI Card (Clean Header matching Image 2 & 4) */
+.minimal-matrix-ai-card {
+  border-radius: 28px !important;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s ease;
+}
+
+/* Subtle Soundwave Pulse Indicator */
+.ai-soundwave-bar {
+  width: 3px;
+  height: 14px;
+  background: #10b981;
+  border-radius: 3px;
+  animation: aiWave 1.4s ease-in-out infinite alternate;
+}
+.ai-soundwave-bar:nth-child(2) { animation-delay: 0.2s; height: 22px; }
+.ai-soundwave-bar:nth-child(3) { animation-delay: 0.4s; height: 16px; }
+.ai-soundwave-bar:nth-child(4) { animation-delay: 0.1s; height: 26px; }
+.ai-soundwave-bar:nth-child(5) { animation-delay: 0.3s; height: 18px; }
+
+@keyframes aiWave {
+  0% { transform: scaleY(0.4); opacity: 0.6; }
+  100% { transform: scaleY(1.2); opacity: 1; }
+}
+
+/* 5. Unified Settings Hub Modal - Efek Latar Belakang Kabur / Rabun (Deep Frosted Glass) */
+#unified-settings-modal {
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  background: rgba(20, 13, 9, 0.68) !important;
+}
+
+.unified-settings-card {
+  border-radius: 32px !important;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+body:not(.theme-dark) .unified-settings-card {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 222, 211, 0.95) !important;
+  box-shadow: 0 30px 80px -15px rgba(43, 29, 21, 0.35) !important;
+}
+
+body.theme-dark .unified-settings-card,
+.dark .unified-settings-card {
+  background: rgba(24, 16, 12, 0.98) !important;
+  border: 1px solid rgba(75, 48, 33, 0.9) !important;
+  box-shadow: 0 30px 90px -15px rgba(0, 0, 0, 0.85) !important;
+}
+
+/* 6. Canva Presentation Slide Page Transition (Flowing Horizontal Slide & Ease) */
+@keyframes canvaSlideRight {
+  0% {
+    opacity: 0;
+    transform: translate3d(55px, 0, 0) scale(0.985);
+    filter: blur(5px);
+  }
+  60% {
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes canvaSlideLeft {
+  0% {
+    opacity: 0;
+    transform: translate3d(-55px, 0, 0) scale(0.985);
+    filter: blur(5px);
+  }
+  60% {
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+.canva-slide-flow-right {
+  animation: canvaSlideRight 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  will-change: transform, opacity, filter;
+}
+
+.canva-slide-flow-left {
+  animation: canvaSlideLeft 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  will-change: transform, opacity, filter;
+}
+
+/* ========================================================================= */
+/* 7. SETTINGS ROLE BUTTON HIGH CONTRAST (RUANG SISWA TEXT VISIBILITY)       */
+/* ========================================================================= */
+body:not(.theme-dark) #settings-btn-mode-student {
+  background-color: #ecfdf5 !important;
+  border-color: #059669 !important;
+  color: #064e3b !important;
+  font-weight: 800 !important;
+}
+
+body:not(.theme-dark) #settings-btn-mode-student span {
+  color: #064e3b !important;
+  font-weight: 800 !important;
+}
+
+body:not(.theme-dark) #settings-btn-mode-student svg {
+  color: #059669 !important;
+}
+
+body.theme-dark #settings-btn-mode-student,
+.dark #settings-btn-mode-student {
+  background-color: rgba(6, 78, 59, 0.35) !important;
+  border-color: #10b981 !important;
+  color: #6ee7b7 !important;
+}
+
+body.theme-dark #settings-btn-mode-student span,
+.dark #settings-btn-mode-student span {
+  color: #6ee7b7 !important;
+}
+
+body.theme-dark #settings-btn-mode-student svg,
+.dark #settings-btn-mode-student svg {
+  color: #34d399 !important;
+}
+
+/* ========================================================================= */
+/* 8. PANDUAN PENGGUNAAN (GUIDE MODAL) DARK CHOCOLATE / LIGHT THEME STYLING   */
+/* ========================================================================= */
+body.theme-dark #guide-modal .card-clean,
+.dark #guide-modal .card-clean {
+  background: rgba(28, 17, 11, 0.98) !important;
+  border: 1px solid rgba(120, 68, 33, 0.6) !important;
+  box-shadow: 0 25px 65px rgba(10, 5, 2, 0.9), 0 0 30px rgba(120, 68, 33, 0.3) !important;
+}
+
+body.theme-dark #guide-modal .card-clean .p-3\.5,
+.dark #guide-modal .card-clean .p-3\.5 {
+  background: rgba(45, 27, 18, 0.92) !important;
+  border: 1px solid rgba(138, 77, 36, 0.5) !important;
+}
+
+body.theme-dark #guide-modal strong,
+.dark #guide-modal strong {
+  color: #fde68a !important; /* warm bright gold/amber */
+}
+
+body.theme-dark #guide-modal span,
+body.theme-dark #guide-modal em,
+.dark #guide-modal span,
+.dark #guide-modal em {
+  color: #ebdcd0 !important; /* soft cream readable text */
+}
+
+body:not(.theme-dark) #guide-modal .card-clean {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ========================================================================= */
+/* 9. CHAT AI LIGHT THEME OVERRIDES (CLEAN ADAPTIVE PALETTE)                 */
+/* ========================================================================= */
+body:not(.theme-dark) .ai-chat-drawer {
+  background: #ffffff !important;
+  border-left: 1px solid #e2e8f0 !important;
+  box-shadow: -15px 0 45px rgba(0, 0, 0, 0.12) !important;
+}
+
+body:not(.theme-dark) .ai-chat-header,
+body:not(.theme-dark) .ai-chat-header-container {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body:not(.theme-dark) #ai-history-panel {
+  background: #ffffff !important;
+  border-left: 1px solid #e2e8f0 !important;
+}
+
+body:not(.theme-dark) #ai-quick-chips-container {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+body:not(.theme-dark) .ai-quick-chip {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+body:not(.theme-dark) .ai-quick-chip:hover {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  color: #92400e !important;
+}
+
+/* ========================================================================= */
+/* 10. FLOATING STUDENT AVATAR / PROFILE (POJOK KANAN ATAS MELAYANG)         */
+/* ========================================================================= */
+.floating-student-avatar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.75rem 0.35rem 0.45rem;
+  border-radius: 9999px;
+  background: rgba(35, 22, 14, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(217, 119, 6, 0.65);
+  box-shadow: 0 8px 25px rgba(20, 10, 5, 0.6), 0 0 16px rgba(245, 158, 11, 0.25);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.floating-student-avatar:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 12px 30px rgba(20, 10, 5, 0.7), 0 0 24px rgba(245, 158, 11, 0.55);
+  border-color: rgba(245, 158, 11, 0.9);
+}
+
+.floating-student-avatar:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.floating-avatar-preview-badge {
+  position: relative;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fbbf24, #d97706 60%, #451a03 95%);
+  border: 1.5px solid rgba(253, 230, 138, 0.8);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+#settings-avatar-container svg,
+.floating-avatar-preview-badge svg,
+#header-avatar-container svg,
+#sidebar-avatar-render svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
+
+#settings-avatar-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-avatar-mini-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+body:not(.theme-dark) .floating-student-avatar {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1.5px solid rgba(217, 119, 6, 0.7);
+  box-shadow: 0 8px 24px rgba(180, 83, 9, 0.15), 0 0 12px rgba(245, 158, 11, 0.15);
+  color: #1e293b;
+}
+
+body:not(.theme-dark) .floating-student-avatar:hover {
+  background: #ffffff;
+  border-color: #d97706;
+  box-shadow: 0 12px 28px rgba(180, 83, 9, 0.22), 0 0 18px rgba(245, 158, 11, 0.3);
+}
+
+/* ========================================================================= */
+/* 11. UNIFIED SETTINGS HUB ANTI-LAG & RIGID ICON ANCHORING                   */
+/* ========================================================================= */
+#unified-settings-modal .unified-settings-card {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  max-height: 88vh !important;
+  transform: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  contain: layout !important;
+}
+
+#unified-settings-scroll-body {
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  transform: translate3d(0, 0, 0) !important;
+  will-change: scroll-position !important;
+  contain: content !important;
+  isolation: isolate !important;
+}
+
+.settings-section-card {
+  position: relative !important;
+  transform: translate3d(0, 0, 0) !important;
+  contain: paint !important;
+  isolation: isolate !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.settings-section-icon,
+#settings-avatar-container {
+  position: relative !important;
+  transform: none !important;
+  will-change: auto !important;
+  contain: paint !important;
+  flex-shrink: 0 !important;
+  z-index: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#settings-avatar-container svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  transform: none !important;
+  filter: none !important;
+  pointer-events: none !important;
+}
+
+/* ========================================================================= */
+/* 12. FLOATING INTERACTIVE MOTIVATION CRYSTAL (DRAGGABLE & PLAYABLE GEM)     */
+/* ========================================================================= */
+.floating-motivation-crystal {
+  position: fixed;
+  top: 72px;
+  right: 24px;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.4rem;
+  border-radius: 9999px;
+  background: rgba(30, 18, 11, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(245, 158, 11, 0.7);
+  box-shadow: 0 10px 30px rgba(15, 8, 4, 0.65), 0 0 20px rgba(245, 158, 11, 0.35);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  animation: crystal-float-idle 3.5s ease-in-out infinite, crystal-spawn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.floating-motivation-crystal:active,
+.floating-motivation-crystal.is-dragging {
+  cursor: grabbing !important;
+  transform: scale(1.12) !important;
+  box-shadow: 0 16px 40px rgba(10, 5, 2, 0.8), 0 0 35px rgba(245, 158, 11, 0.75) !important;
+  border-color: #fbbf24 !important;
+  animation: none !important;
+}
+
+.floating-motivation-crystal:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 12px 35px rgba(15, 8, 4, 0.75), 0 0 28px rgba(245, 158, 11, 0.55);
+}
+
+/* 3D Cosmic Holographic Prism */
+.crystal-core-wrapper {
+  position: relative;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.crystal-prism {
+  position: relative;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 36% 64% 48% 52% / 40% 45% 55% 60%;
+  background: radial-gradient(circle at 30% 30%, #fef08a 0%, #f59e0b 45%, #10b981 85%, #064e3b 100%);
+  border: 1.5px solid rgba(254, 240, 138, 0.9);
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.8), 0 0 14px rgba(16, 185, 129, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: crystal-prism-spin 8s linear infinite;
+  overflow: hidden;
+}
+
+.crystal-facet.facet-front {
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.crystal-facet.facet-glow {
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle, rgba(254, 240, 138, 0.7) 10%, transparent 60%);
+  animation: crystal-facet-shimmer 2.8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.crystal-rune {
+  position: relative;
+  z-index: 2;
+  font-size: 0.95rem;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
+  pointer-events: none;
+  line-height: 1;
+}
+
+.crystal-energy-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px dashed rgba(245, 158, 11, 0.6);
+  animation: crystal-ring-rotate 6s linear infinite;
+  pointer-events: none;
+}
+
+.crystal-pulse-wave {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  animation: crystal-pulse-ring 2.4s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+  pointer-events: none;
+}
+
+/* Crystal Mini Tab Pill */
+.crystal-mini-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding-right: 0.45rem;
+  white-space: nowrap;
+}
+
+.crystal-tab-badge {
+  font-size: 9px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.crystal-tab-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fef3c7;
+  letter-spacing: -0.01em;
+}
+
+.crystal-drag-handle {
+  font-size: 12px;
+  color: rgba(245, 158, 11, 0.7);
+  letter-spacing: -2px;
+  line-height: 1;
+  padding: 0 0.15rem;
+  cursor: grab;
+}
+
+/* Light Theme Styling for Crystal */
+body:not(.theme-dark) .floating-motivation-crystal {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(217, 119, 6, 0.8);
+  box-shadow: 0 10px 30px rgba(180, 83, 9, 0.2), 0 0 18px rgba(245, 158, 11, 0.2);
+}
+
+body:not(.theme-dark) .crystal-tab-text {
+  color: #78350f;
+}
+
+body:not(.theme-dark) .crystal-tab-badge {
+  background: rgba(5, 150, 105, 0.12);
+  color: #047857;
+  border-color: rgba(5, 150, 105, 0.3);
+}
+
+/* Animations */
+@keyframes crystal-spawn {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-15deg);
+  }
+  60% {
+    transform: scale(1.08) rotate(3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes crystal-float-idle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes crystal-prism-spin {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes crystal-facet-shimmer {
+  0% {
+    transform: translate(-30%, -30%) rotate(0deg);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(30%, 30%) rotate(180deg);
+    opacity: 0.9;
+  }
+}
+
+@keyframes crystal-ring-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes crystal-pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+
 
 

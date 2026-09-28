@@ -227,6 +227,14 @@ class EpeAppV2 {
       console.warn("Peringatan inisialisasi Nav Layout:", err);
     }
 
+    // 6g. Inisialisasi Unified Settings Hub & WayGO Scroll Transformation
+    try {
+      this.initUnifiedSettingsHub();
+      this.initWayGOScrollTransform();
+    } catch (err) {
+      console.warn("Peringatan inisialisasi Unified Settings / WayGO:", err);
+    }
+
     // 7. Binding Event Handlers
     this.bindEvents();
 
@@ -520,32 +528,72 @@ class EpeAppV2 {
   // NAVIGATION LAYOUT MANAGER (ATAS, POJOK/SIDEBAR, BAWAH/DOCK)
   // =========================================================================
   initNavLayout() {
-    const savedLayout = localStorage.getItem("epe_nav_layout") || "top";
+    let savedLayout = localStorage.getItem("epe_nav_layout");
+    if (!savedLayout) {
+      savedLayout = "bottom";
+      localStorage.setItem("epe_nav_layout", "bottom");
+    }
     this.setNavLayout(savedLayout, false);
 
-    // Toggle dropdown menu
+    // Toggle navigation layout modal (centered on screen for mobile & desktop)
     const btnToggle = document.getElementById("btn-toggle-nav-layout");
     const menu = document.getElementById("nav-layout-menu");
+    const btnClose = document.getElementById("btn-close-nav-layout");
+    const btnCancel = document.getElementById("btn-cancel-nav-layout");
+
+    const openNavLayoutModal = () => {
+      if (menu) {
+        menu.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+      }
+    };
+
+    const closeNavLayoutModal = () => {
+      if (menu) {
+        menu.classList.add("hidden");
+        document.body.style.overflow = "";
+      }
+    };
+
     if (btnToggle && menu) {
       btnToggle.addEventListener("click", (e) => {
         e.stopPropagation();
-        menu.classList.toggle("hidden");
+        if (menu.classList.contains("hidden")) {
+          openNavLayoutModal();
+        } else {
+          closeNavLayoutModal();
+        }
       });
 
-      document.addEventListener("click", (e) => {
-        if (!menu.contains(e.target) && e.target !== btnToggle && !btnToggle.contains(e.target)) {
-          menu.classList.add("hidden");
+      // Close when tapping outside the modal card (on the backdrop)
+      menu.addEventListener("click", (e) => {
+        if (e.target === menu) {
+          closeNavLayoutModal();
+        }
+      });
+
+      if (btnClose) {
+        btnClose.addEventListener("click", closeNavLayoutModal);
+      }
+      if (btnCancel) {
+        btnCancel.addEventListener("click", closeNavLayoutModal);
+      }
+
+      // Close on Escape key
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !menu.classList.contains("hidden")) {
+          closeNavLayoutModal();
         }
       });
     }
 
-    // Dropdown options
+    // Modal layout options
     document.querySelectorAll(".nav-layout-option").forEach((opt) => {
       opt.addEventListener("click", () => {
         const layout = opt.dataset.layout;
         if (layout) {
           this.setNavLayout(layout, true);
-          if (menu) menu.classList.add("hidden");
+          closeNavLayoutModal();
         }
       });
     });
@@ -653,6 +701,11 @@ class EpeAppV2 {
       }
     });
 
+    // Synchronize live clock & session stopwatch immediately in new layout
+    if (this.headerCreativeWidget && typeof this.headerCreativeWidget.tick === "function") {
+      this.headerCreativeWidget.tick();
+    }
+
     // Trigger canvas & 3D re-adaptation
     if (triggerResize) {
       setTimeout(() => {
@@ -663,6 +716,328 @@ class EpeAppV2 {
           this.cubeEngine.resize();
         }
       }, 100);
+    }
+  }
+
+  // =========================================================================
+  // UNIFIED SETTINGS HUB (SATU TEMPAT SETTING TERPADU)
+  // Menyatukan Mode Guru/Murid, Timer, Jam, Panduan, Profil Siswa & Avatar Lab
+  // =========================================================================
+  initUnifiedSettingsHub() {
+    const modal = document.getElementById("unified-settings-modal");
+    const openBtnHeader = document.getElementById("btn-open-settings-hub");
+    const openBtnDock = document.getElementById("dock-btn-open-settings");
+    const closeBtn = document.getElementById("btn-close-settings-hub");
+    const closeBtnFooter = document.getElementById("btn-close-settings-hub-footer");
+
+    const openModal = () => {
+      if (!modal) return;
+      this.syncSettingsHubUI();
+      modal.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+      const topStrip = document.getElementById("top-notification-strip");
+      if (topStrip) topStrip.classList.add("modal-open-hidden");
+    };
+
+    const closeModal = () => {
+      if (!modal) return;
+      modal.classList.add("hidden");
+      document.body.style.overflow = "";
+      const topStrip = document.getElementById("top-notification-strip");
+      if (topStrip) topStrip.classList.remove("modal-open-hidden");
+    };
+
+    if (openBtnHeader) openBtnHeader.addEventListener("click", openModal);
+    if (openBtnDock) openBtnDock.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    if (closeBtnFooter) closeBtnFooter.addEventListener("click", closeModal);
+
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+          closeModal();
+        }
+      });
+    }
+
+    // Role Switch Buttons (Guru / Murid)
+    const btnModeStudent = document.getElementById("settings-btn-mode-student");
+    const btnModeTeacher = document.getElementById("settings-btn-mode-teacher");
+
+    if (btnModeStudent) {
+      btnModeStudent.addEventListener("click", () => {
+        sessionStorage.removeItem("epe_educator_unlocked");
+        this.setMode("student");
+        this.updateEducatorStatusUI();
+        this.syncSettingsHubUI();
+        if (typeof NotificationToast !== "undefined") {
+          NotificationToast.show("Mode Siswa Aktif (Fokus Belajar).", "info");
+        }
+      });
+    }
+
+    if (btnModeTeacher) {
+      btnModeTeacher.addEventListener("click", () => {
+        if (this.isEducatorUnlocked()) {
+          this.setMode("research");
+          this.syncSettingsHubUI();
+        } else {
+          closeModal();
+          this.openEducatorAuthModal("research");
+        }
+      });
+    }
+
+    // Student Profile & Avatar Lab Triggers
+    const btnEditName = document.getElementById("settings-btn-edit-name");
+    if (btnEditName) {
+      btnEditName.addEventListener("click", () => {
+        closeModal();
+        const trigger = document.getElementById("btn-edit-student-name") || document.getElementById("sidebar-btn-edit-name");
+        if (trigger) trigger.click();
+        else {
+          const editModal = document.getElementById("modal-edit-student-nickname");
+          if (editModal) editModal.classList.remove("hidden");
+        }
+      });
+    }
+
+    const btnAvatarLab = document.getElementById("settings-btn-avatar-lab");
+    if (btnAvatarLab) {
+      btnAvatarLab.addEventListener("click", () => {
+        closeModal();
+        const trigger = document.getElementById("btn-header-avatar") || document.getElementById("sidebar-btn-avatar-lab");
+        if (trigger) trigger.click();
+      });
+    }
+
+    // Floating Student Avatar Trigger (Pojok Kanan Atas Melayang)
+    const floatingProfileTrigger = document.getElementById("floating-student-profile-trigger");
+    if (floatingProfileTrigger) {
+      floatingProfileTrigger.addEventListener("click", () => {
+        const trigger = document.getElementById("btn-header-avatar") || document.getElementById("sidebar-btn-avatar-lab");
+        if (trigger) trigger.click();
+        else {
+          const avatarModal = document.getElementById("avatar-lab-modal");
+          if (avatarModal) avatarModal.classList.remove("hidden");
+        }
+      });
+    }
+
+    // Panduan Belajar EPE
+    const btnOpenGuide = document.getElementById("settings-btn-open-guide");
+    if (btnOpenGuide) {
+      btnOpenGuide.addEventListener("click", () => {
+        closeModal();
+        const trigger = document.getElementById("btn-open-guide");
+        if (trigger) trigger.click();
+        else {
+          const guideModal = document.getElementById("guide-modal");
+          if (guideModal) guideModal.classList.remove("hidden");
+        }
+      });
+    }
+
+    // Theme & Graphics Toggles
+    const btnThemeToggle = document.getElementById("settings-theme-toggle");
+    if (btnThemeToggle) {
+      btnThemeToggle.addEventListener("click", () => {
+        const themeBtn = document.getElementById("theme-toggle-btn");
+        if (themeBtn) themeBtn.click();
+        else if (this.themeManager && typeof this.themeManager.toggleTheme === "function") {
+          this.themeManager.toggleTheme();
+        }
+        setTimeout(() => this.syncSettingsHubUI(), 50);
+      });
+    }
+
+    const btnPerfToggle = document.getElementById("settings-perf-toggle");
+    if (btnPerfToggle) {
+      btnPerfToggle.addEventListener("click", () => {
+        const perfBtn = document.getElementById("btn-toggle-graphics");
+        if (perfBtn) perfBtn.click();
+        setTimeout(() => this.syncSettingsHubUI(), 50);
+      });
+    }
+
+    // Dengarkan event pembaruan profil & ekonomi
+    window.addEventListener("epe-profile-updated", () => this.syncSettingsHubUI());
+    window.addEventListener("epe-cubic-updated", () => this.syncSettingsHubUI());
+  }
+
+  syncSettingsHubUI() {
+    // 1. Sync Student Info
+    const nameEl = document.getElementById("settings-student-name");
+    const gradeEl = document.getElementById("settings-student-grade");
+    const cubesEl = document.getElementById("settings-student-cubes");
+    const avatarContainer = document.getElementById("settings-avatar-container");
+
+    let profile = { name: "Siswa Berbakat", grade: "Kelas 7 / SMP" };
+    try {
+      if (typeof ProfileManager !== "undefined" && typeof ProfileManager.getProfile === "function") {
+        profile = ProfileManager.getProfile();
+      }
+    } catch (e) {}
+
+    if (nameEl) nameEl.textContent = profile.name || "Siswa Berbakat";
+    if (gradeEl) gradeEl.textContent = profile.grade || "Kelas 7 / SMP";
+
+    let cubicBalance = 0;
+    try {
+      cubicBalance = parseInt(localStorage.getItem("epe_cubic_coins") || "150", 10);
+    } catch (e) {}
+    if (cubesEl) cubesEl.textContent = `${cubicBalance} CUBIC`;
+
+    // Sync Floating Student Avatar in Header (Melayang ala Matrix AI)
+    const floatingName = document.getElementById("floating-student-name");
+    if (floatingName) floatingName.textContent = profile.name || "Siswa Berbakat";
+
+    const floatingCubes = document.getElementById("floating-student-cubic-val");
+    if (floatingCubes) floatingCubes.textContent = `${cubicBalance}`;
+
+    // Render active dynamic student avatars in Settings modal & Floating Header badge
+    this.renderAllStudentAvatars();
+
+    // 2. Sync Mode Button Visuals
+    const isTeacher = this.isEducatorUnlocked() || this.currentMode === "research";
+    const btnStudent = document.getElementById("settings-btn-mode-student");
+    const btnTeacher = document.getElementById("settings-btn-mode-teacher");
+
+    if (btnStudent && btnTeacher) {
+      if (isTeacher) {
+        btnStudent.className = "py-2.5 px-3 rounded-xl border border-slate-300 dark:border-amber-900/40 font-bold text-xs flex items-center justify-center gap-2 transition-all bg-white dark:bg-[#1a110b] text-slate-700 dark:text-slate-300 hover:border-amber-500 cursor-pointer";
+        btnTeacher.className = "py-2.5 px-3 rounded-xl border-2 border-purple-500 font-bold text-xs flex items-center justify-center gap-2 transition-all bg-purple-50 dark:bg-purple-950/30 text-purple-900 dark:text-purple-300 shadow-sm cursor-pointer";
+      } else {
+        btnTeacher.className = "py-2.5 px-3 rounded-xl border border-slate-300 dark:border-amber-900/40 font-bold text-xs flex items-center justify-center gap-2 transition-all bg-white dark:bg-[#1a110b] text-slate-700 dark:text-slate-300 hover:border-amber-500 cursor-pointer";
+        btnStudent.className = "py-2.5 px-3 rounded-xl border-2 border-emerald-500 font-bold text-xs flex items-center justify-center gap-2 transition-all bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 shadow-sm cursor-pointer";
+      }
+    }
+
+    // 3. Sync Theme & Anti-Lag Text
+    const themeStatus = document.getElementById("settings-theme-status");
+    if (themeStatus) {
+      const isDark = document.body.classList.contains("theme-dark") || document.documentElement.classList.contains("dark");
+      themeStatus.textContent = isDark ? "Gelap (Cyber Dark)" : "Terang (Warm Luxury Cream)";
+    }
+
+    const perfStatus = document.getElementById("settings-perf-status");
+    if (perfStatus) {
+      const isLow = localStorage.getItem("epe_perf_mode") === "low" || document.body.classList.contains("perf-mode-low");
+      perfStatus.textContent = isLow ? "Hemat Daya (Low Animation)" : "Optimal (Smooth 60 FPS)";
+    }
+  }
+
+  /**
+   * Render avatar siswa dinamis berkualitas tinggi di seluruh tampilan UI:
+   * 1. Settings Hub Modal (#settings-avatar-container)
+   * 2. Floating Avatar Badge di Pojok Kanan Atas (#floating-avatar-badge)
+   * 3. Header Mini Avatar Box (#header-avatar-container)
+   * 4. Sidebar Mini Avatar Box (#sidebar-avatar-render)
+   */
+  renderAllStudentAvatars() {
+    try {
+      if (typeof AvatarEngine === "undefined" || typeof AvatarEngine.renderInto !== "function") return;
+
+      const settingsAvatar = document.getElementById("settings-avatar-container");
+      if (settingsAvatar) {
+        AvatarEngine.renderInto(settingsAvatar, null, 40);
+      }
+
+      const floatingBadge = document.getElementById("floating-avatar-badge");
+      if (floatingBadge) {
+        AvatarEngine.renderInto(floatingBadge, null, 28);
+      }
+
+      const headerAvatarBox = document.getElementById("header-avatar-container");
+      if (headerAvatarBox) {
+        AvatarEngine.renderInto(headerAvatarBox, null, 24);
+      }
+
+      const sidebarAvatarRender = document.getElementById("sidebar-avatar-render");
+      if (sidebarAvatarRender) {
+        AvatarEngine.renderInto(sidebarAvatarRender, null, 36);
+      }
+    } catch (err) {
+      console.warn("Gagal merender avatar siswa:", err);
+    }
+  }
+
+  // =========================================================================
+  // WAYGO HERO & HOPE RISE SCROLL TRANSFORMATION
+  // Berubah dari kapsul Type: One Way menjadi 3 fitur oval squircle saat di-scroll
+  // Serta transisi header ke warna putih mewah
+  // =========================================================================
+  initWayGOScrollTransform() {
+    const pillWrapper = document.getElementById("waygo-pill-wrapper");
+    const header = document.getElementById("main-header");
+
+    const onScroll = () => {
+      const scrolled = window.scrollY > 60;
+      if (pillWrapper) {
+        if (scrolled) {
+          pillWrapper.classList.add("is-transformed");
+        } else {
+          pillWrapper.classList.remove("is-transformed");
+        }
+      }
+      if (header) {
+        if (scrolled) {
+          header.classList.add("scrolled-luxury-white");
+        } else {
+          header.classList.remove("scrolled-luxury-white");
+        }
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    // Jalankan sekali saat inisialisasi awal
+    onScroll();
+
+    // Event listener untuk 3 Kartu Oval Squircle Ter-transformasi
+    const cardTeacher = document.getElementById("card-feature-teacher");
+    if (cardTeacher) {
+      cardTeacher.addEventListener("click", () => {
+        if (this.isEducatorUnlocked()) {
+          this.switchTab("research");
+        } else {
+          this.openEducatorAuthModal("research");
+        }
+      });
+    }
+
+    const cardStudent = document.getElementById("card-feature-student");
+    if (cardStudent) {
+      cardStudent.addEventListener("click", () => {
+        const btnEdit = document.getElementById("btn-edit-student-name") || document.getElementById("sidebar-btn-edit-name");
+        if (btnEdit) btnEdit.click();
+        else {
+          const modal = document.getElementById("modal-edit-student-nickname");
+          if (modal) modal.classList.remove("hidden");
+        }
+      });
+    }
+
+    const cardGuide = document.getElementById("card-feature-guide");
+    if (cardGuide) {
+      cardGuide.addEventListener("click", () => {
+        const btnGuide = document.getElementById("btn-open-guide");
+        if (btnGuide) btnGuide.click();
+        else {
+          const guideModal = document.getElementById("guide-modal");
+          if (guideModal) guideModal.classList.remove("hidden");
+        }
+      });
+    }
+
+    // WayGO Search Bar Action: Mulai Diagnostik Langsung
+    const btnStartDiag = document.getElementById("waygo-btn-start-diag");
+    if (btnStartDiag) {
+      btnStartDiag.addEventListener("click", () => {
+        this.switchTab("diagnostic");
+      });
     }
   }
 
@@ -815,6 +1190,28 @@ class EpeAppV2 {
       } else if (this.activeResearchSubtab === "integrity") {
         this.integrityDashboardUI?.render();
       }
+    }
+
+    // Efek Transisi Canva Presentation Slide Flow (Geser Mulus Horizontal)
+    const tabOrder = ["dashboard", "pretest", "diagnostic", "practice", "posttest", "error-profile", "research"];
+    const prevIdx = tabOrder.indexOf(previousTab);
+    const newIdx = tabOrder.indexOf(tabName);
+    const flowClass = (newIdx >= prevIdx) ? "canva-slide-flow-right" : "canva-slide-flow-left";
+
+    const sectionMap = {
+      dashboard: this.elements.sectionDashboard,
+      pretest: this.elements.sectionPretest,
+      diagnostic: this.elements.sectionDiagnostic,
+      practice: this.elements.sectionPractice,
+      posttest: this.elements.sectionPosttest,
+      "error-profile": this.elements.sectionErrorProfile,
+      research: this.elements.sectionResearch
+    };
+    const activeSection = sectionMap[tabName];
+    if (activeSection) {
+      activeSection.classList.remove("canva-slide-flow-right", "canva-slide-flow-left");
+      void activeSection.offsetWidth;
+      activeSection.classList.add(flowClass);
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1474,13 +1871,10 @@ class EpeAppV2 {
     try {
       this.avatarLab = new AvatarLab();
 
-      // Render Header Mini Avatar
-      const headerAvatarBox = document.getElementById("header-avatar-container");
-      if (headerAvatarBox) {
-        AvatarEngine.renderInto(headerAvatarBox, null, 24);
-      }
+      // Render All Dynamic Student Avatars
+      this.renderAllStudentAvatars();
 
-      // Update Header Balance
+      // Update Header & Floating Badges Balance
       const balanceEl = document.getElementById("header-cubic-balance");
       if (balanceEl) {
         balanceEl.textContent = CubicWallet.getBalance().toLocaleString("id-ID");
@@ -1488,6 +1882,10 @@ class EpeAppV2 {
       const sidebarBalanceEl = document.getElementById("sidebar-cubic-balance");
       if (sidebarBalanceEl) {
         sidebarBalanceEl.textContent = CubicWallet.getBalance().toLocaleString("id-ID");
+      }
+      const floatingCubicVal = document.getElementById("floating-student-cubic-val");
+      if (floatingCubicVal) {
+        floatingCubicVal.textContent = CubicWallet.getBalance().toLocaleString("id-ID");
       }
 
       // Bind Header Avatar Click -> Open Avatar Lab
@@ -1508,20 +1906,22 @@ class EpeAppV2 {
 
       // React to Avatar Update
       window.addEventListener("epe-avatar-updated", () => {
-        if (headerAvatarBox) {
-          AvatarEngine.renderInto(headerAvatarBox, null, 24);
-        }
+        this.renderAllStudentAvatars();
+      });
+
+      // React to Profile Update
+      window.addEventListener("epe-profile-updated", () => {
+        this.syncSettingsHubUI();
       });
 
       // React to Cubic Balance Update
       window.addEventListener("epe-cubic-balance-updated", (e) => {
-        if (balanceEl && e.detail) {
-          balanceEl.textContent = Number(e.detail.balance).toLocaleString("id-ID");
-        }
+        const valStr = Number(e.detail?.balance || 0).toLocaleString("id-ID");
+        if (balanceEl) balanceEl.textContent = valStr;
         const sidebarBal = document.getElementById("sidebar-cubic-balance");
-        if (sidebarBal && e.detail) {
-          sidebarBal.textContent = Number(e.detail.balance).toLocaleString("id-ID");
-        }
+        if (sidebarBal) sidebarBal.textContent = valStr;
+        const floatingCubes = document.getElementById("floating-student-cubic-val");
+        if (floatingCubes) floatingCubes.textContent = valStr;
       });
 
       // Initial check for achievements based on existing data

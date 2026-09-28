@@ -86,24 +86,17 @@ export class AvatarEngine {
     const blushColor = faceItem?.blushColor || "rgba(244, 63, 94, 0.25)";
     const hairColor = hairItem?.hairColor || "#1e293b";
 
+    const clipId = `avatar-clip-${size}-${Math.random().toString(36).slice(2, 7)}`;
+
     return `
       <svg class="epe-avatar-svg" viewBox="0 0 100 100" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" style="border-radius: inherit; display: block;">
         <defs>
-          <clipPath id="avatar-clip-${size}">
+          <clipPath id="${clipId}">
             <circle cx="50" cy="50" r="48" />
           </clipPath>
-          
-          <filter id="avatar-glow-${size}" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="3.5" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-
-          <filter id="avatar-shadow-${size}" x="-10%" y="-10%" width="120%" height="120%">
-            <feDropShadow dx="0" dy="1.8" stdDeviation="1.5" flood-opacity="0.3"/>
-          </filter>
         </defs>
 
-        <g clip-path="url(#avatar-clip-${size})">
+        <g clip-path="url(#${clipId})">
           <!-- 1. BACKGROUND LAYER -->
           ${this._renderBackgroundLayer(bgItem)}
 
