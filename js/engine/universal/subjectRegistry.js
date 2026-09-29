@@ -152,12 +152,31 @@ export const SUBJECTS = {
   }
 };
 
+const STORAGE_KEY_CUSTOM_SUBJECTS = "epe_custom_subjects";
+const STORAGE_KEY_CUSTOM_TOPICS = "epe_custom_topics";
+
 export class SubjectRegistry {
   /**
-   * Mengambil semua subjek terdaftar
+   * Mengambil semua subjek terdaftar (Bawaan + Kustom Guru)
    */
   static getAllSubjects() {
-    return Object.values(SUBJECTS);
+    const list = Object.values(SUBJECTS);
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_SUBJECTS);
+      if (stored) {
+        const custom = JSON.parse(stored);
+        if (Array.isArray(custom)) {
+          custom.forEach(cs => {
+            if (cs && cs.id && !list.find(item => item.id === cs.id)) {
+              list.push(cs);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("Gagal membaca subjek kustom:", e);
+    }
+    return list;
   }
 
   /**
@@ -166,7 +185,50 @@ export class SubjectRegistry {
   static getSubject(subjectId) {
     if (!subjectId) return SUBJECTS.mathematics;
     const cleanId = subjectId.toLowerCase().trim();
-    return SUBJECTS[cleanId] || SUBJECTS.mathematics;
+    const all = this.getAllSubjects();
+    return all.find(s => s.id === cleanId) || SUBJECTS[cleanId] || SUBJECTS.mathematics;
+  }
+
+  /**
+   * Menambahkan Bidang / Mata Pelajaran Baru Secara Dinamis
+   */
+  static addSubject({ id, name, code, icon = "📚", accentColor = "#6366f1", description = "", defaultTopics = [] }) {
+    if (!name || !name.trim()) throw new Error("Nama mata pelajaran/bidang wajib diisi.");
+    const cleanId = (id || name.toLowerCase().replace(/[^a-z0-9]/g, "_")).trim();
+    const cleanCode = (code || name.slice(0, 4).toUpperCase()).trim();
+
+    const newSubject = {
+      id: cleanId,
+      code: cleanCode,
+      name: name.trim(),
+      icon: icon || "📚",
+      svgIcon: `<svg class="w-3.5 h-3.5" style="color: ${accentColor}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+      accentColor: accentColor || "#6366f1",
+      badgeClass: `badge-${cleanId}`,
+      description: description || `Bidang studi ${name.trim()}`,
+      supportedQuestionTypes: ["multiple_choice", "numerical", "structured_response"],
+      defaultTopics: Array.isArray(defaultTopics) ? defaultTopics : [],
+      hasDiagnosticTaxonomy: false,
+      taxonomyName: null,
+      isCustom: true
+    };
+
+    try {
+      let customList = [];
+      const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_SUBJECTS);
+      if (stored) customList = JSON.parse(stored) || [];
+      const existIdx = customList.findIndex(c => c.id === cleanId);
+      if (existIdx >= 0) {
+        customList[existIdx] = newSubject;
+      } else {
+        customList.push(newSubject);
+      }
+      localStorage.setItem(STORAGE_KEY_CUSTOM_SUBJECTS, JSON.stringify(customList));
+    } catch (e) {
+      console.warn("Gagal menyimpan subjek kustom ke storage:", e);
+    }
+
+    return newSubject;
   }
 
   /**
@@ -178,11 +240,56 @@ export class SubjectRegistry {
   }
 
   /**
-   * Mengambil daftar topik standar berdasarkan subjek
+   * Mengambil daftar topik / sub-halaman berdasarkan subjek (bawaan + kustom)
    */
   static getTopicsForSubject(subjectId) {
     const s = this.getSubject(subjectId);
-    return s && Array.isArray(s.defaultTopics) ? [...s.defaultTopics] : [];
+    const topics = s && Array.isArray(s.defaultTopics) ? [...s.defaultTopics] : [];
+
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_TOPICS);
+      if (stored) {
+        const customMap = JSON.parse(stored) || {};
+        const subjectCustom = customMap[s.id];
+        if (Array.isArray(subjectCustom)) {
+          subjectCustom.forEach(top => {
+            if (top && !topics.includes(top)) {
+              topics.push(top);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("Gagal membaca topik kustom:", e);
+    }
+
+    return topics;
+  }
+
+  /**
+   * Menambahkan Sub-Halaman / Topik Baru ke Dalam Suatu Bidang (Misal: Persamaan Kuadrat)
+   */
+  static addTopicToSubject(subjectId, topicName) {
+    if (!topicName || !topicName.trim()) throw new Error("Nama sub-halaman / topik materi wajib diisi.");
+    const cleanTopic = topicName.trim();
+    const s = this.getSubject(subjectId);
+
+    try {
+      let customMap = {};
+      const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_TOPICS);
+      if (stored) customMap = JSON.parse(stored) || {};
+      if (!Array.isArray(customMap[s.id])) {
+        customMap[s.id] = [];
+      }
+      if (!customMap[s.id].includes(cleanTopic)) {
+        customMap[s.id].push(cleanTopic);
+        localStorage.setItem(STORAGE_KEY_CUSTOM_TOPICS, JSON.stringify(customMap));
+      }
+    } catch (e) {
+      console.warn("Gagal menyimpan topik kustom:", e);
+    }
+
+    return cleanTopic;
   }
 
   /**
@@ -190,7 +297,9 @@ export class SubjectRegistry {
    */
   static getSubjectSvg(subjectId, customClass = "w-3.5 h-3.5") {
     const s = this.getSubject(subjectId);
-    if (!s || !s.svgIcon) return "";
+    if (!s || !s.svgIcon) {
+      return `<svg class="${customClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>`;
+    }
     if (customClass) {
       return s.svgIcon.replace(/class="[^"]*"/, `class="${customClass}"`);
     }

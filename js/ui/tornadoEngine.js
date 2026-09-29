@@ -111,11 +111,11 @@ export class TornadoEngine {
   initParticles() {
     this.particles = [];
     const colors = [
-      "rgba(56, 189, 248, ",   // sky blue
-      "rgba(6, 182, 212, ",    // cyan
-      "rgba(139, 92, 246, ",   // purple
-      "rgba(255, 255, 255, ",  // white lightning
-      "rgba(245, 158, 11, "    // gold spark
+      "rgba(251, 191, 36, ",   // bright golden amber
+      "rgba(245, 158, 11, ",   // warm gold
+      "rgba(254, 240, 138, ",  // bright star yellow
+      "rgba(255, 255, 255, ",  // pure white star
+      "rgba(217, 119, 6, "     // bronze amber
     ];
 
     for (let i = 0; i < this.numParticles; i++) {
@@ -470,11 +470,11 @@ export class TornadoEngine {
     const tilt = 15 * (Math.PI / 180);
     const sinTilt = Math.sin(tilt);
 
-    // A. Center Vortex Atmospheric Glow Column
+    // A. Center Vortex Atmospheric Glow Column (Warm Golden Amber Space)
     const grad = ctx.createLinearGradient(cx, cy - 190, cx, cy + 180);
-    grad.addColorStop(0, "rgba(56, 189, 248, 0.12)");
-    grad.addColorStop(0.5, "rgba(6, 182, 212, 0.08)");
-    grad.addColorStop(1, "rgba(139, 92, 246, 0.18)");
+    grad.addColorStop(0, "rgba(251, 191, 36, 0.16)");
+    grad.addColorStop(0.5, "rgba(217, 119, 6, 0.09)");
+    grad.addColorStop(1, "rgba(180, 83, 9, 0.18)");
 
     ctx.fillStyle = grad;
     ctx.beginPath();
@@ -536,7 +536,7 @@ export class TornadoEngine {
         }
       }
 
-      ctx.strokeStyle = `rgba(56, 189, 248, ${0.12 + Math.sin(rotRad * 2 + band) * 0.05})`;
+      ctx.strokeStyle = `rgba(245, 158, 11, ${0.14 + Math.sin(rotRad * 2 + band) * 0.06})`;
       ctx.lineWidth = 1.5;
       ctx.setLineDash([12, 14]);
       ctx.stroke();

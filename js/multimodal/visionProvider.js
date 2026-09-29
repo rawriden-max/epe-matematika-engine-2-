@@ -143,66 +143,79 @@ export class VisionProvider {
     const mimeType = match[1];
     const base64Data = match[2];
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const modelsToTry = [
+      "gemini-3-flash-preview",
+      "gemini-3.8-flash",
+      "gemini-flash-latest",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash"
+    ];
 
-    const requestBody = {
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: VISION_SYSTEM_PROMPT },
-            {
-              inlineData: {
-                mimeType: mimeType,
-                data: base64Data
+    let lastError = null;
+    for (const modelName of modelsToTry) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+      const requestBody = {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: VISION_SYSTEM_PROMPT },
+              {
+                inlineData: {
+                  mimeType: mimeType,
+                  data: base64Data
+                }
               }
-            }
-          ]
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.1,  // Very low temperature for factual extraction
+          maxOutputTokens: 4096,
+          responseMimeType: "application/json"
         }
-      ],
-      generationConfig: {
-        temperature: 0.1,  // Very low temperature for factual extraction
-        maxOutputTokens: 4096,
-        responseMimeType: "application/json"
+      };
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMsg = errorData.error?.message || `HTTP ${response.status}`;
+          lastError = new Error(`Gemini Vision API error (${modelName}): ${errorMsg}`);
+          continue;
+        }
+
+        const data = await response.json();
+        const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!textContent) {
+          return ImageContentManifest.createError("Gemini Vision tidak mengembalikan konten.");
+        }
+
+        // Parse the JSON response from the model
+        return this._parseVisionResponse(textContent, "gemini");
+
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === "AbortError") {
+          throw new Error("Analisis gambar timeout setelah 30 detik. Coba lagi atau gunakan input teks.");
+        }
+        lastError = error;
       }
-    };
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMsg = errorData.error?.message || `HTTP ${response.status}`;
-        throw new Error(`Gemini Vision API error: ${errorMsg}`);
-      }
-
-      const data = await response.json();
-      const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!textContent) {
-        return ImageContentManifest.createError("Gemini Vision tidak mengembalikan konten.");
-      }
-
-      // Parse the JSON response from the model
-      return this._parseVisionResponse(textContent, "gemini");
-
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error.name === "AbortError") {
-        throw new Error("Analisis gambar timeout setelah 30 detik. Coba lagi atau gunakan input teks.");
-      }
-      throw error;
     }
+    throw lastError || new Error("Gagal terhubung ke model Gemini Vision.");
   }
 
   /**

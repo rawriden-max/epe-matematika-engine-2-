@@ -53,6 +53,8 @@ import { SubjectRegistry } from "./engine/universal/subjectRegistry.js";
 import { integrityService } from "./services/integrityDetector.js";
 import { saveIntegritySessionToSupabase } from "./data/supabaseClient.js";
 import { HeaderCreativeWidget } from "./ui/headerCreativeWidget.js";
+import { PhotoMathSolver } from "./ui/photoMathSolver.js";
+import { CustomCursor } from "./ui/customCursor.js";
 
 class EpeAppV2 {
   constructor() {
@@ -103,6 +105,7 @@ class EpeAppV2 {
     this.questionBankUI = null;
     this.integrityDashboardUI = null;
     this.activeResearchSubtab = "epe"; // 'epe' | 'qbank' | 'integrity'
+    this.photoMathSolver = null;
 
     this.elements = {};
   }
@@ -119,6 +122,13 @@ class EpeAppV2 {
 
     // 0b. Inisialisasi Transition Manager (Efek Gelombang & Gelembung)
     this.transitionManager = new TransitionManager();
+
+    // 0c. Inisialisasi Adaptive Inverted Circle Cursor (Hitam di Tema Putih, Putih di Tema Hitam)
+    try {
+      this.customCursor = new CustomCursor();
+    } catch (e) {
+      console.warn("CustomCursor init:", e);
+    }
 
     // 1. Inisialisasi Theme Manager & Radial Color Menu
     this.themeManager = new ThemeManager({
@@ -235,6 +245,14 @@ class EpeAppV2 {
       console.warn("Peringatan inisialisasi Unified Settings / WayGO:", err);
     }
 
+    // 6h. Inisialisasi Foto Soal AI Solver & Mode Soal
+    try {
+      this.photoMathSolver = new PhotoMathSolver({ appInstance: this });
+      this.photoMathSolver.init();
+    } catch (err) {
+      console.warn("Peringatan inisialisasi Foto Soal AI:", err);
+    }
+
     // 7. Binding Event Handlers
     this.bindEvents();
 
@@ -253,6 +271,7 @@ class EpeAppV2 {
       tabBtnPretest: document.getElementById("tab-btn-pretest"),
       tabBtnDiagnostic: document.getElementById("tab-btn-diagnostic"),
       tabBtnPractice: document.getElementById("tab-btn-practice"),
+      tabBtnPhotoSolver: document.getElementById("tab-btn-photo-solver"),
       tabBtnPosttest: document.getElementById("tab-btn-posttest"),
       tabBtnErrorProfile: document.getElementById("tab-btn-error-profile"),
       tabBtnResearch: document.getElementById("tab-btn-research"),
@@ -280,6 +299,7 @@ class EpeAppV2 {
       sectionPretest: document.getElementById("section-pretest-mode"),
       sectionDiagnostic: document.getElementById("section-diagnostic-mode"),
       sectionPractice: document.getElementById("section-practice-mode"),
+      sectionPhotoSolver: document.getElementById("section-photo-solver-mode"),
       sectionPosttest: document.getElementById("section-posttest-mode"),
       sectionErrorProfile: document.getElementById("section-error-profile"),
       sectionResearch: document.getElementById("section-research-mode"),
@@ -529,7 +549,7 @@ class EpeAppV2 {
   // =========================================================================
   initNavLayout() {
     let savedLayout = localStorage.getItem("epe_nav_layout");
-    if (!savedLayout) {
+    if (!savedLayout || savedLayout === "sidebar") {
       savedLayout = "bottom";
       localStorage.setItem("epe_nav_layout", "bottom");
     }
@@ -796,10 +816,10 @@ class EpeAppV2 {
     if (btnEditName) {
       btnEditName.addEventListener("click", () => {
         closeModal();
-        const trigger = document.getElementById("btn-edit-student-name") || document.getElementById("sidebar-btn-edit-name");
-        if (trigger) trigger.click();
-        else {
-          const editModal = document.getElementById("modal-edit-student-nickname");
+        if (typeof ProfileManager !== "undefined" && typeof ProfileManager.promptEditNickname === "function") {
+          ProfileManager.promptEditNickname();
+        } else {
+          const editModal = document.getElementById("edit-nickname-modal");
           if (editModal) editModal.classList.remove("hidden");
         }
       });
@@ -875,25 +895,50 @@ class EpeAppV2 {
     const cubesEl = document.getElementById("settings-student-cubes");
     const avatarContainer = document.getElementById("settings-avatar-container");
 
-    let profile = { name: "Siswa Berbakat", grade: "Kelas 7 / SMP" };
+    let activeStudentName = "Ilyas";
+    try {
+      if (typeof ProfileManager !== "undefined" && typeof ProfileManager.getStudentName === "function") {
+        activeStudentName = ProfileManager.getStudentName();
+      } else {
+        const stored = localStorage.getItem("epe_student_name");
+        if (stored && stored.trim() && stored !== "Siswa Berbakat") activeStudentName = stored.trim();
+      }
+    } catch (e) {}
+
+    let profile = { name: activeStudentName, grade: "Kelas 7 / SMP" };
     try {
       if (typeof ProfileManager !== "undefined" && typeof ProfileManager.getProfile === "function") {
         profile = ProfileManager.getProfile();
       }
     } catch (e) {}
 
-    if (nameEl) nameEl.textContent = profile.name || "Siswa Berbakat";
+    if (nameEl) nameEl.textContent = profile.name || activeStudentName;
     if (gradeEl) gradeEl.textContent = profile.grade || "Kelas 7 / SMP";
 
     let cubicBalance = 0;
     try {
       cubicBalance = parseInt(localStorage.getItem("epe_cubic_coins") || "150", 10);
     } catch (e) {}
-    if (cubesEl) cubesEl.textContent = `${cubicBalance} CUBIC`;
+    if (cubesEl) {
+      cubesEl.innerHTML = `
+        <span class="epe-cube-icon mr-1">
+          <svg class="w-3.5 h-3.5 epe-cube-svg" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L21 7.2L12 12.4L3 7.2Z" fill="#fde68a" stroke="#f59e0b" stroke-width="0.8" stroke-linejoin="round"/>
+            <path d="M3 7.2L12 12.4V22L3 16.8Z" fill="#f59e0b" stroke="#d97706" stroke-width="0.8" stroke-linejoin="round"/>
+            <path d="M12 12.4L21 7.2V16.8L12 22Z" fill="#d97706" stroke="#92400e" stroke-width="0.8" stroke-linejoin="round"/>
+            <circle cx="12" cy="12.2" r="1.3" fill="#ffffff" opacity="0.95"/>
+          </svg>
+        </span>
+        <span>${cubicBalance} CUBIC</span>
+      `;
+    }
+
+    const sidebarCubes = document.getElementById("sidebar-cubic-balance");
+    if (sidebarCubes) sidebarCubes.textContent = `${cubicBalance}`;
 
     // Sync Floating Student Avatar in Header (Melayang ala Matrix AI)
     const floatingName = document.getElementById("floating-student-name");
-    if (floatingName) floatingName.textContent = profile.name || "Siswa Berbakat";
+    if (floatingName) floatingName.textContent = profile.name || activeStudentName;
 
     const floatingCubes = document.getElementById("floating-student-cubic-val");
     if (floatingCubes) floatingCubes.textContent = `${cubicBalance}`;
@@ -924,9 +969,25 @@ class EpeAppV2 {
     }
 
     const perfStatus = document.getElementById("settings-perf-status");
+    const perfToggleBtn = document.getElementById("settings-perf-toggle");
+    const isLow = localStorage.getItem("epe_perf_mode") === "low" || document.body.classList.contains("perf-mode-low");
     if (perfStatus) {
-      const isLow = localStorage.getItem("epe_perf_mode") === "low" || document.body.classList.contains("perf-mode-low");
-      perfStatus.textContent = isLow ? "Hemat Daya (Low Animation)" : "Optimal (Smooth 60 FPS)";
+      perfStatus.textContent = isLow ? "Hemat Daya (Anti-Lag Aktif)" : "Optimal (Smooth 60 FPS)";
+    }
+    if (perfToggleBtn) {
+      if (isLow) {
+        perfToggleBtn.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981] inline-block shrink-0"></span>
+          <span class="text-emerald-600 dark:text-emerald-400 font-extrabold tracking-wide">⚡ Anti-Lag: AKTIF</span>
+        `;
+        perfToggleBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/70 border-2 border-emerald-500 text-emerald-700 dark:text-emerald-300 shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5 cursor-pointer";
+      } else {
+        perfToggleBtn.innerHTML = `
+          <span class="text-amber-500">⚡</span>
+          <span>Anti-Lag: Mati</span>
+        `;
+        perfToggleBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-[#1a110b] border border-slate-200 dark:border-amber-900/60 text-slate-800 dark:text-slate-200 hover:border-amber-500 transition-all flex items-center gap-1.5 cursor-pointer";
+      }
     }
   }
 
@@ -973,18 +1034,26 @@ class EpeAppV2 {
   initWayGOScrollTransform() {
     const pillWrapper = document.getElementById("waygo-pill-wrapper");
     const header = document.getElementById("main-header");
+    let isCurrentlyTransformed = false;
 
     const onScroll = () => {
-      const scrolled = window.scrollY > 60;
-      if (pillWrapper) {
-        if (scrolled) {
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+
+      // Hanya transformasikan WayGO pill pada tab dashboard agar tidak memicu jumping/flapping pada tab lain
+      if (this.activeTab === "dashboard" && pillWrapper) {
+        // Hysteresis: aktif di > 140px, non-aktif di < 45px untuk mencegah layout flapping & scroll bouncing
+        if (!isCurrentlyTransformed && scrollY > 140) {
+          isCurrentlyTransformed = true;
           pillWrapper.classList.add("is-transformed");
-        } else {
+        } else if (isCurrentlyTransformed && scrollY < 45) {
+          isCurrentlyTransformed = false;
           pillWrapper.classList.remove("is-transformed");
         }
       }
+
+      // Transisi header luxury white saat di-scroll
       if (header) {
-        if (scrolled) {
+        if (scrollY > 50) {
           header.classList.add("scrolled-luxury-white");
         } else {
           header.classList.remove("scrolled-luxury-white");
@@ -1050,6 +1119,11 @@ class EpeAppV2 {
       return;
     }
 
+    // Jika tab yang diminta sudah aktif, jangan lakukan apa-apa agar tidak memicu reset scroll ke atas
+    if (this.activeTab === tabName) {
+      return;
+    }
+
     const previousTab = this.activeTab;
     this.activeTab = tabName;
 
@@ -1079,6 +1153,7 @@ class EpeAppV2 {
       this.elements.tabBtnPretest,
       this.elements.tabBtnDiagnostic,
       this.elements.tabBtnPractice,
+      this.elements.tabBtnPhotoSolver,
       this.elements.tabBtnPosttest,
       this.elements.tabBtnErrorProfile,
       this.elements.tabBtnResearch
@@ -1114,6 +1189,7 @@ class EpeAppV2 {
       this.elements.sectionPretest,
       this.elements.sectionDiagnostic,
       this.elements.sectionPractice,
+      this.elements.sectionPhotoSolver,
       this.elements.sectionPosttest,
       this.elements.sectionErrorProfile,
       this.elements.sectionResearch
@@ -1170,6 +1246,9 @@ class EpeAppV2 {
       this.elements.tabBtnPractice?.classList.add("active");
       this.elements.sectionPractice?.classList.remove("hidden");
       this.renderPracticeQuestionList();
+    } else if (tabName === "photo-solver") {
+      this.elements.tabBtnPhotoSolver?.classList.add("active");
+      this.elements.sectionPhotoSolver?.classList.remove("hidden");
     } else if (tabName === "posttest") {
       this.elements.tabBtnPosttest?.classList.add("active");
       this.elements.sectionPosttest?.classList.remove("hidden");
@@ -1193,7 +1272,7 @@ class EpeAppV2 {
     }
 
     // Efek Transisi Canva Presentation Slide Flow (Geser Mulus Horizontal)
-    const tabOrder = ["dashboard", "pretest", "diagnostic", "practice", "posttest", "error-profile", "research"];
+    const tabOrder = ["dashboard", "pretest", "diagnostic", "practice", "photo-solver", "posttest", "error-profile", "research"];
     const prevIdx = tabOrder.indexOf(previousTab);
     const newIdx = tabOrder.indexOf(tabName);
     const flowClass = (newIdx >= prevIdx) ? "canva-slide-flow-right" : "canva-slide-flow-left";
@@ -1203,6 +1282,7 @@ class EpeAppV2 {
       pretest: this.elements.sectionPretest,
       diagnostic: this.elements.sectionDiagnostic,
       practice: this.elements.sectionPractice,
+      "photo-solver": this.elements.sectionPhotoSolver,
       posttest: this.elements.sectionPosttest,
       "error-profile": this.elements.sectionErrorProfile,
       research: this.elements.sectionResearch
@@ -1358,6 +1438,11 @@ class EpeAppV2 {
         NotificationToast.show("Mode Grafis Standar Aktif: Seluruh simulasi 3D & efek visual beroperasi optimal.", "info");
       }
     }
+
+    // Sinkronisasi status tampilan di Pengaturan / Settings Hub secara real-time
+    try {
+      this.syncSettingsHubUI();
+    } catch (e) {}
   }
 
   // =========================================================================
@@ -2552,6 +2637,7 @@ class EpeAppV2 {
     if (this.elements.tabBtnPretest) this.elements.tabBtnPretest.addEventListener("click", (e) => this.switchTab("pretest", e));
     if (this.elements.tabBtnDiagnostic) this.elements.tabBtnDiagnostic.addEventListener("click", (e) => this.switchTab("diagnostic", e));
     if (this.elements.tabBtnPractice) this.elements.tabBtnPractice.addEventListener("click", (e) => this.switchTab("practice", e));
+    if (this.elements.tabBtnPhotoSolver) this.elements.tabBtnPhotoSolver.addEventListener("click", (e) => this.switchTab("photo-solver", e));
     if (this.elements.tabBtnPosttest) this.elements.tabBtnPosttest.addEventListener("click", (e) => this.switchTab("posttest", e));
     if (this.elements.tabBtnErrorProfile) this.elements.tabBtnErrorProfile.addEventListener("click", (e) => this.switchTab("error-profile", e));
     if (this.elements.tabBtnResearch) this.elements.tabBtnResearch.addEventListener("click", (e) => this.switchTab("research", e));
@@ -2635,6 +2721,10 @@ class EpeAppV2 {
     }
     if (this.elements.dashBtnContinueDiag) {
       this.elements.dashBtnContinueDiag.addEventListener("click", (e) => this.switchTab("diagnostic", e));
+    }
+    const heroBtnPhotoSolver = document.getElementById("hero-btn-open-photo-solver");
+    if (heroBtnPhotoSolver) {
+      heroBtnPhotoSolver.addEventListener("click", (e) => this.switchTab("photo-solver", e));
     }
     if (this.elements.btnOpenCollection) {
       this.elements.btnOpenCollection.addEventListener("click", (e) => this.switchTab("diagnostic", e));

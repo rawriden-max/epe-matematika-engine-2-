@@ -16,8 +16,8 @@ export const VOICE_PERSONAS = {
     name: "Kakak Mentor Ceria",
     description: "Ramah, bersahabat, penuh semangat & memotivasi belajar",
     gender: "female",
-    pitch: 1.15,
-    rate: 1.05,
+    pitch: 1.18,
+    rate: 1.02,
     badge: "Mentor",
     svgIcon: '<svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>',
     accentColor: "from-amber-400 to-pink-500",
@@ -28,8 +28,8 @@ export const VOICE_PERSONAS = {
     name: "Profesor Sains Bijak",
     description: "Tenang, berwibawa, analitis dengan tempo tertata",
     gender: "male",
-    pitch: 0.85,
-    rate: 0.95,
+    pitch: 0.86,
+    rate: 0.94,
     badge: "Pakar",
     svgIcon: '<svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5"/></svg>',
     accentColor: "from-blue-500 to-indigo-700",
@@ -40,8 +40,8 @@ export const VOICE_PERSONAS = {
     name: "Cyber Matrix AI",
     description: "Futuristik, presisi digital, tajam & berteknologi tinggi",
     gender: "neutral",
-    pitch: 1.35,
-    rate: 1.12,
+    pitch: 1.25,
+    rate: 1.06,
     badge: "Matrix",
     svgIcon: '<svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>',
     accentColor: "from-cyan-400 to-blue-600",
@@ -53,7 +53,7 @@ export const VOICE_PERSONAS = {
     description: "Gaya santai, asik seperti teman belajar sebangku",
     gender: "casual",
     pitch: 1.0,
-    rate: 1.0,
+    rate: 0.96,
     badge: "Rekan",
     svgIcon: '<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>',
     accentColor: "from-emerald-400 to-teal-600",
@@ -65,7 +65,7 @@ export const VOICE_PERSONAS = {
     description: "Tempo dinamis, to-the-point bagi yang suka penjelasan cepat",
     gender: "fast",
     pitch: 1.05,
-    rate: 1.32,
+    rate: 1.18,
     badge: "Turbo",
     svgIcon: '<svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
     accentColor: "from-yellow-400 to-amber-600",
@@ -110,9 +110,10 @@ export class AiVoiceEngine {
 
     return {
       persona: "mentor",
+      gender: "auto",
       voiceURI: "",
-      pitch: 1.15,
-      rate: 1.05,
+      pitch: 1.18,
+      rate: 1.02,
       volume: 1.0,
       autoListenAfterSpeak: true
     };
@@ -169,7 +170,15 @@ export class AiVoiceEngine {
     const others = [];
 
     this.voices.forEach((v) => {
-      const isId = v.lang.toLowerCase().includes("id") || v.name.toLowerCase().includes("indonesia");
+      const langLower = (v.lang || "").toLowerCase();
+      const nameLower = (v.name || "").toLowerCase();
+      const isId = langLower.startsWith("id") || 
+                   langLower.includes("id-") || 
+                   langLower.includes("id_") || 
+                   nameLower.includes("indonesia") ||
+                   nameLower.includes("gadis") ||
+                   nameLower.includes("andika") ||
+                   nameLower.includes("siti");
       if (isId) {
         indonesian.push(v);
       } else {
@@ -183,29 +192,53 @@ export class AiVoiceEngine {
     };
   }
 
-  resolveActiveVoice() {
+  resolveActiveVoice(customConfig = null) {
     const { indonesian, all } = this.getAvailableVoices();
+    const cfg = customConfig || this.config;
 
     // 1. Cek voiceURI spesifik jika user memilih manual
-    if (this.config.voiceURI) {
-      const custom = all.find((v) => v.voiceURI === this.config.voiceURI || v.name === this.config.voiceURI);
+    if (cfg.voiceURI) {
+      const custom = all.find((v) => v.voiceURI === cfg.voiceURI || v.name === cfg.voiceURI);
       if (custom) return custom;
     }
 
-    // 2. Persona matching
-    const persona = this.getPersona();
-    if (persona.gender === "female") {
-      const femaleId = indonesian.find((v) => v.name.toLowerCase().includes("gadis") || v.name.toLowerCase().includes("female") || v.name.toLowerCase().includes("wanita") || v.name.toLowerCase().includes("siti"));
-      if (femaleId) return femaleId;
-    } else if (persona.gender === "male") {
-      const maleId = indonesian.find((v) => v.name.toLowerCase().includes("ardi") || v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("pria") || v.name.toLowerCase().includes("budi"));
-      if (maleId) return maleId;
+    // 2. Selalu prioritaskan suara asli Bahasa Indonesia agar tidak berlogat asing / bule
+    if (indonesian.length > 0) {
+      const targetGender = cfg.gender && cfg.gender !== "auto" ? cfg.gender : (this.getPersona().gender || "auto");
+
+      if (targetGender === "female") {
+        const femaleId = indonesian.find((v) => 
+          v.name.toLowerCase().includes("gadis") || 
+          v.name.toLowerCase().includes("siti") ||
+          v.name.toLowerCase().includes("indira") ||
+          v.name.toLowerCase().includes("female") || 
+          v.name.toLowerCase().includes("wanita")
+        );
+        if (femaleId) return femaleId;
+      } else if (targetGender === "male") {
+        const maleId = indonesian.find((v) => 
+          v.name.toLowerCase().includes("andika") || 
+          v.name.toLowerCase().includes("ardi") || 
+          v.name.toLowerCase().includes("budi") ||
+          v.name.toLowerCase().includes("male") || 
+          v.name.toLowerCase().includes("pria")
+        );
+        if (maleId) return maleId;
+      }
+
+      // Prioritas Utama: Suara Natural Online Microsoft Gadis / Andika
+      const naturalId = indonesian.find(v => v.name.toLowerCase().includes("natural") || v.name.toLowerCase().includes("online"));
+      if (naturalId) return naturalId;
+
+      // Prioritas Kedua: Google Bahasa Indonesia
+      const googleId = indonesian.find(v => v.name.toLowerCase().includes("google"));
+      if (googleId) return googleId;
+
+      // Fallback: Suara Indonesia pertama yang tersedia
+      return indonesian[0];
     }
 
-    // 3. Fallback ke suara Bahasa Indonesia pertama
-    if (indonesian.length > 0) return indonesian[0];
-
-    // 4. Default sistem
+    // 3. Fallback sistem hanya jika perangkat tidak memiliki suara Indonesia sama sekali
     return all.find((v) => v.default) || all[0] || null;
   }
 
@@ -533,58 +566,118 @@ export class AiVoiceEngine {
   cleanMathAndMarkdownForSpeech(text) {
     if (!text) return "";
 
-    return text
-      // Hapus format Markdown horizontal divider & code blocks
-      .replace(/^[ \t]*(?:---|___|\*\*\*)[ \t]*$/gm, " ")
-      .replace(/```[\s\S]*?```/g, " blok kode terlampir ")
-      .replace(/`([^`]+)`/g, "$1")
-      // Penanganan ekspresi Matematika LaTeX
-      .replace(/\$\$[\s\S]*?\$\$/g, (m) => this.pronounceLatex(m))
-      .replace(/\$([^\$]+)\$/g, (m, p1) => this.pronounceLatex(p1))
-      // Simbol & Notasi Matematika Khusus
-      .replace(/\\Delta\s*H/g, "delta H")
-      .replace(/\\Delta/g, "delta")
-      .replace(/\\approx/g, "kira-kira sama dengan")
-      .replace(/\\sum/g, "jumlah total")
-      .replace(/\\infty/g, "tak hingga")
-      .replace(/\\cdot/g, " kali ")
-      .replace(/\\times/g, " kali ")
-      .replace(/\\pm/g, "plus minus")
-      .replace(/\\neq/g, "tidak sama dengan")
-      .replace(/\\le|\\leq/g, "kurang dari atau sama dengan")
-      .replace(/\\ge|\\geq/g, "lebih dari atau sama dengan")
-      .replace(/\\implies/g, "maka didapatkan")
-      .replace(/\\sqrt\{([^}]+)\}/g, "akar dari $1")
-      .replace(/\\sqrt/g, "akar kuadrat")
-      .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1 per $2")
-      .replace(/([0-9a-zA-Z]+)\^([0-9]+)/g, "$1 pangkat $2")
-      .replace(/([0-9a-zA-Z]+)\^\{([^}]+)\}/g, "$1 pangkat $2")
-      .replace(/</g, " kurang dari ")
-      .replace(/>/g, " lebih dari ")
-      .replace(/=/g, " sama dengan ")
-      .replace(/\+/g, " tambah ")
-      .replace(/([0-9]+)\s*-\s*([0-9]+)/g, "$1 dikurang $2")
-      // Hapus format teks markdown sisa
-      .replace(/[#*_~]/g, "")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    let clean = String(text);
+
+    // 1. Hapus tag HTML (<span...>, <div...>, <br>, dsb)
+    clean = clean.replace(/<[^>]+>/g, " ");
+
+    // 2. Hapus format code block markdown & inline code
+    clean = clean.replace(/```[\s\S]*?```/g, " ");
+    clean = clean.replace(/`([^`]+)`/g, "$1");
+
+    // 3. Hapus horizontal rule / divider (---, ***, ___) di mana pun berada
+    clean = clean.replace(/(?:^|\s)[-*_]{3,}(?:\s|$)/g, " ");
+
+    // 4. Hapus markdown headings (#, ##, ###, ####, #####, ######) di awal baris/frasa
+    clean = clean.replace(/#{1,6}\s+/g, "");
+    clean = clean.replace(/#{1,6}/g, "");
+
+    // 5. Hapus blockquote (> ), bold, italic, strikethrough (***, **, *, __, _, ~~)
+    clean = clean.replace(/^>\s+/gm, "");
+    clean = clean.replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1");
+    clean = clean.replace(/_{1,3}([^_]+)_{1,3}/g, "$1");
+    clean = clean.replace(/~~([^~]+)~~/g, "$1");
+    clean = clean.replace(/[*_~]/g, ""); // Bersihkan sisa bintang atau garis bawah
+
+    // 6. Hapus link markdown [Teks](url) -> jadi Teks
+    clean = clean.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+
+    // 7. Hapus tabel markdown (| Kolom 1 | Kolom 2 |) dan garis pembatas (|---|---|)
+    clean = clean.replace(/\|[-:\s|]+\|/g, " ");
+    clean = clean.replace(/\|/g, " ");
+
+    // 8. Bersihkan simbol emoji & ikon dekoratif agar tidak dieja aneh oleh TTS
+    clean = clean.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}]/gu, "");
+    clean = clean.replace(/[•◆★⭐💡📋🔬⚡⚙️✓✕▶→⠿🔑✨📸]/g, "");
+
+    // 9. Penanganan ekspresi Matematika LaTeX ($$...$$ dan $...$)
+    clean = clean.replace(/\$\$([\s\S]*?)\$\$/g, (m, p1) => this.pronounceLatex(p1));
+    clean = clean.replace(/\$([^\$]+)\$/g, (m, p1) => this.pronounceLatex(p1));
+
+    // 10. Jika ada sisa rumus LaTeX mentah di luar tanda dollar
+    clean = this.pronounceLatex(clean);
+
+    // 11. Konversi pecahan numerik umum (1/2 -> setengah, 1/4 -> seperempat, 3/4 -> tiga perempat, A/B -> A per B)
+    clean = clean.replace(/\b1\/2\b/g, " setengah ");
+    clean = clean.replace(/\b1\/4\b/g, " seperempat ");
+    clean = clean.replace(/\b3\/4\b/g, " tiga perempat ");
+    clean = clean.replace(/(\d+)\s*\/\s*(\d+)/g, "$1 per $2");
+
+    // 12. Konversi persamaan umum & operasi
+    clean = clean.replace(/=/g, " sama dengan ");
+    clean = clean.replace(/\+/g, " tambah ");
+    clean = clean.replace(/(\d+)\s*-\s*(\d+)/g, "$1 dikurang $2");
+    clean = clean.replace(/[()\[\]{}]/g, " ");
+
+    // 13. Normalisasi spasi dan tanda baca
+    clean = clean
+      .replace(/\\/g, " ")
       .replace(/\s+/g, " ")
+      .replace(/\s+([.,!?])/g, "$1")
       .trim();
+
+    return clean;
   }
 
   pronounceLatex(latex) {
-    let clean = latex.replace(/^\$\$|\$\$$/g, "").replace(/^\$|\$$/g, "").trim();
-    clean = clean
+    if (!latex) return "";
+    let clean = latex
+      .replace(/^\$\$|\$\$$/g, "")
+      .replace(/^\$|\$$/g, "")
+      // Strip macro pembungkus seperti \cancel{x}, \text{x}, \mathbf{x}, \mathrm{x}
+      .replace(/\\cancel\{([^}]+)\}/g, "$1")
+      .replace(/\\text\{([^}]+)\}/g, "$1")
+      .replace(/\\mathbf\{([^}]+)\}/g, "$1")
+      .replace(/\\mathrm\{([^}]+)\}/g, "$1")
+      .replace(/\\color\{[^}]+\}\{([^}]+)\}/g, "$1")
+      .replace(/\\left|\\right/g, "")
+      .replace(/\\displaystyle/g, "")
+      .replace(/\\quad|\\qquad/g, " ")
+      .replace(/\\begin\{[^}]+\}|\\end\{[^}]+\}/g, " ")
+      // Pecahan dan akar
       .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1 per $2")
+      .replace(/\\sqrt\[([^\]]+)\]\{([^}]+)\}/g, "akar pangkat $1 dari $2")
       .replace(/\\sqrt\{([^}]+)\}/g, "akar dari $1")
-      .replace(/\\pm/g, "plus minus")
+      .replace(/\\sqrt/g, "akar kuadrat")
+      // Operasi aljabar
+      .replace(/\\pm/g, " plus minus ")
+      .replace(/\\mp/g, " minus plus ")
       .replace(/\\cdot|\\times/g, " kali ")
-      .replace(/\^2/g, " kuadrat ")
-      .replace(/\^3/g, " kubik ")
+      .replace(/\\div/g, " bagi ")
+      .replace(/\\neq/g, " tidak sama dengan ")
+      .replace(/\\le|\\leq/g, " kurang dari atau sama dengan ")
+      .replace(/\\ge|\\geq/g, " lebih dari atau sama dengan ")
+      .replace(/\\approx/g, " kira-kira ")
+      .replace(/\\implies|\\Rightarrow/g, " maka didapatkan ")
+      .replace(/\\sum/g, " jumlah total ")
+      .replace(/\\infty/g, " tak hingga ")
+      .replace(/\\Delta\s*H/g, "delta H")
+      .replace(/\\Delta/g, " delta ")
+      .replace(/\\pi/g, " pi ")
+      .replace(/\\alpha/g, " alfa ")
+      .replace(/\\beta/g, " beta ")
+      .replace(/\\theta/g, " teta ")
+      // Pangkat & Indeks
+      .replace(/\^2\b/g, " kuadrat ")
+      .replace(/\^3\b/g, " kubik ")
       .replace(/\^\{([^}]+)\}/g, " pangkat $1 ")
-      .replace(/_/g, " indeks ")
-      .replace(/\\pi/g, "pi")
-      .replace(/\\alpha/g, "alfa")
-      .replace(/\\beta/g, "beta");
+      .replace(/\^([0-9a-zA-Z]+)/g, " pangkat $1 ")
+      .replace(/_\{([^}]+)\}/g, " $1 ")
+      .replace(/_([0-9a-zA-Z]+)/g, " $1 ")
+      // Bersihkan backslash tersisa
+      .replace(/\\[a-zA-Z]+/g, " ")
+      .replace(/\\/g, " ");
+
     return clean;
   }
 
@@ -632,7 +725,7 @@ export class AiVoiceEngine {
     }
 
     const cfg = customConfig || this.config;
-    const voiceToUse = this.resolveActiveVoice();
+    const voiceToUse = this.resolveActiveVoice(cfg);
     let currentIndex = 0;
     this.isSpeaking = true;
 

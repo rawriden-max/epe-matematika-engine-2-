@@ -60,6 +60,17 @@ export class AiOrbEngine {
     this.particles = [];
     this.initParticles(36);
 
+    // Floating 3D Math Formulas (Rumus MTK) - Orbiting around Saturn Planet & Rings
+    this.mathFormulas = [
+      { text: "Δ = b² - 4ac", angle: 0.2, tilt: 0.32, color: "#fbbf24", speed: 0.009, dist: 2.65 },
+      { text: "x = (-b ± √D)/2a", angle: 1.6, tilt: -0.38, color: "#34d399", speed: 0.011, dist: 2.75 },
+      { text: "f(x) = ax²+bx+c", angle: 2.9, tilt: 0.44, color: "#f59e0b", speed: 0.008, dist: 2.58 },
+      { text: "[a  b | c  d]", angle: 4.1, tilt: -0.28, color: "#38bdf8", speed: 0.010, dist: 2.68 },
+      { text: "Av = λv", angle: 5.2, tilt: 0.36, color: "#c084fc", speed: 0.012, dist: 2.60 },
+      { text: "∫ f(x)dx", angle: 2.2, tilt: -0.45, color: "#f472b6", speed: 0.009, dist: 2.72 },
+      { text: "D > 0 (Akar Real)", angle: 3.6, tilt: 0.22, color: "#fb923c", speed: 0.010, dist: 2.80 }
+    ];
+
     this.init();
   }
 
@@ -78,6 +89,11 @@ export class AiOrbEngine {
 
     this.ctx = this.canvas.getContext("2d");
     this.resize();
+
+    if (typeof window !== "undefined" && window.ResizeObserver) {
+      this.resizeObserver = new ResizeObserver(() => this.resize());
+      this.resizeObserver.observe(this.container);
+    }
 
     this.bindInteractions();
     this.animate();
@@ -248,8 +264,8 @@ export class AiOrbEngine {
     const ctx = this.ctx;
     const cx = this.width / 2;
     const cy = this.height / 2;
-    // Base radius sized so orbital rings (1.5x) fit comfortably with glowing margins
-    const baseRadius = Math.min(this.width, this.height) * 0.24;
+    // Base radius sized so Saturn's planetary rings (~2.3x) & formulas (~2.7x) fit comfortably
+    const baseRadius = Math.min(this.width, this.height) * 0.19;
 
     // Time & dynamics
     const speedBoost = 1.0 + this.burstEnergy * 2.5;
@@ -291,236 +307,306 @@ export class AiOrbEngine {
     ctx.clearRect(0, 0, this.width, this.height);
 
     // =========================================================================
-    // 0. CLICK BURST SHOCKWAVE EXPANSION
+    // 0. FLOATING 3D MATH FORMULAS (RUMUS MTK) - CIRCLE AROUND SATURN
     // =========================================================================
-    if (this.burstEnergy > 0.05) {
-      const burstRadius = currentCoreRadius * (1.2 + (1.0 - this.burstEnergy) * 1.8);
-      ctx.beginPath();
-      ctx.arc(cx, cy, burstRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = rgba(this.color, this.burstEnergy * 0.7);
-      ctx.lineWidth = 2.5 * this.burstEnergy;
-      ctx.stroke();
+    const projectedFormulas = [];
+    if (this.mathFormulas && this.mathFormulas.length > 0) {
+      this.mathFormulas.forEach((f) => {
+        f.angle += f.speed * speedBoost;
+        const rx = f.dist * Math.cos(f.angle);
+        const rz = f.dist * Math.sin(f.angle);
+        const ry = rx * Math.sin(f.tilt) + rz * Math.cos(f.tilt);
+        const p = this.project3D(rx, ry, rz, currentCoreRadius, cx, cy);
+        projectedFormulas.push({
+          p,
+          text: f.text,
+          color: f.color,
+          z: p.z
+        });
+      });
     }
 
-    // =========================================================================
-    // 1. GENERATE ORBITAL RINGS 3D POINTS
-    // =========================================================================
-    const generateRingSegments = (radiusMult, tiltX, tiltY, spinOffset, ringColor, nodeSpeed = 0) => {
-      const segments = [];
-      const count = 36;
-      const pts = [];
+    // Helper to draw a math formula badge
+    const drawMathFormula = (f) => {
+      ctx.save();
+      ctx.translate(f.p.x, f.p.y);
+      const s = Math.max(0.65, Math.min(1.25, f.p.scale));
+      ctx.scale(s, s);
 
-      for (let i = 0; i <= count; i++) {
-        const angle = (i / count) * Math.PI * 2 + spinOffset;
-        const rx = radiusMult * Math.cos(angle);
-        const rz = radiusMult * Math.sin(angle);
-        const ry = rx * Math.sin(tiltX) + rz * Math.sin(tiltY);
+      ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+      const metrics = ctx.measureText(f.text);
+      const textWidth = metrics.width;
+      const padX = 7;
+      const pillW = textWidth + padX * 2;
+      const pillH = 18;
 
-        const p = this.project3D(rx, ry, rz, currentCoreRadius, cx, cy);
-        pts.push(p);
-      }
-
-      // Satellite node location
-      const satAngle = this.pulseTime * (nodeSpeed || 1.2);
-      const satRx = radiusMult * Math.cos(satAngle);
-      const satRz = radiusMult * Math.sin(satAngle);
-      const satRy = satRx * Math.sin(tiltX) + satRz * Math.sin(tiltY);
-      const satPoint = this.project3D(satRx, satRy, satRz, currentCoreRadius, cx, cy);
-
-      for (let i = 0; i < count; i++) {
-        const p1 = pts[i];
-        const p2 = pts[i + 1];
-        const avgZ = (p1.z + p2.z) * 0.5;
-        segments.push({
-          p1,
-          p2,
-          avgZ,
-          ringColor
-        });
-      }
-
-      return { segments, satPoint, ringColor };
-    };
-
-    // Ring 1: Primary Gyroscopic Ring (Tilted 45deg, spins forward)
-    const ring1 = generateRingSegments(1.48, 0.75, 0.25, this.pulseTime * 0.85, this.color, 1.4);
-    // Ring 2: Secondary Gyroscopic Ring (Tilted -60deg, icy white/silver, spins backward)
-    const ring2 = generateRingSegments(1.68, -0.9, 0.45, -this.pulseTime * 1.05, "#ffffff", -1.8);
-    // Ring 3: Equatorial Horizontal Gyro Ring (Tilted 15deg)
-    const ring3 = generateRingSegments(1.35, 0.2, -0.7, this.pulseTime * 0.6, this.color, 0.9);
-
-    const allSegments = [...ring1.segments, ...ring2.segments, ...ring3.segments];
-    const satellites = [ring1.satPoint, ring2.satPoint, ring3.satPoint];
-
-    // Helper to draw a ring segment
-    const drawSegment = (seg, isFront) => {
-      ctx.beginPath();
-      ctx.moveTo(seg.p1.x, seg.p1.y);
-      ctx.lineTo(seg.p2.x, seg.p2.y);
+      const isFront = f.z < 0;
+      const alpha = isFront ? 0.95 : 0.45;
 
       if (isFront) {
-        ctx.strokeStyle = rgba(seg.ringColor, 0.95);
-        ctx.lineWidth = 2.4 + this.burstEnergy * 1.5;
-        ctx.shadowColor = seg.ringColor;
-        ctx.shadowBlur = 8 + this.burstEnergy * 10;
-      } else {
-        ctx.strokeStyle = rgba(seg.ringColor, 0.25);
-        ctx.lineWidth = 1.4;
-        ctx.shadowBlur = 0;
+        ctx.shadowColor = f.color;
+        ctx.shadowBlur = 8;
       }
+
+      // Pill Background
+      ctx.beginPath();
+      if (typeof ctx.roundRect === "function") {
+        ctx.roundRect(-pillW / 2, -pillH / 2, pillW, pillH, 9);
+      } else {
+        ctx.rect(-pillW / 2, -pillH / 2, pillW, pillH);
+      }
+      ctx.fillStyle = isFront ? "rgba(35, 22, 14, 0.94)" : "rgba(22, 14, 9, 0.65)";
+      ctx.fill();
+
+      // Pill Border
+      ctx.strokeStyle = isFront ? f.color : rgba(f.color, 0.35);
+      ctx.lineWidth = isFront ? 1.2 : 0.75;
       ctx.stroke();
-      ctx.shadowBlur = 0;
+
+      // Math Text
+      ctx.fillStyle = isFront ? "#ffffff" : rgba(f.color, alpha);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(f.text, 0, 0);
+
+      ctx.restore();
     };
 
     // =========================================================================
-    // 2. PHASE A: DRAW BACK-HALF OF RINGS (z < 0) BEHIND SPHERE
+    // 1. DRAW BACK PARTICLES & BACK MATH FORMULAS (z >= 0)
     // =========================================================================
-    allSegments.filter((s) => s.avgZ < 0).forEach((seg) => drawSegment(seg, false));
-
-    // Satellites in the back
-    satellites.filter((s) => s.z < 0).forEach((sat) => {
-      ctx.beginPath();
-      ctx.arc(sat.x, sat.y, 2.5 * sat.scale, 0, Math.PI * 2);
-      ctx.fillStyle = rgba(this.color, 0.4);
-      ctx.fill();
-    });
-
-    // Back particles (z < 0)
     this.particles.forEach((pt) => {
-      // Rotate around Y
-      const cosP = Math.cos(pt.speed);
-      const sinP = Math.sin(pt.speed);
-      const px = pt.x * cosP - pt.z * sinP;
-      const pz = pt.x * sinP + pt.z * cosP;
-      pt.x = px;
-      pt.z = pz;
-
       const p = this.project3D(pt.x, pt.y, pt.z, currentCoreRadius, cx, cy);
-      if (p.z < 0) {
-        const twinkle = 0.3 + 0.3 * Math.sin(this.pulseTime * 2 + pt.twinkleOffset);
+      if (p.z >= 0) {
+        const twinkle = 0.35 + 0.3 * Math.sin(this.pulseTime * 3 + pt.twinkleOffset);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, pt.size * p.scale, 0, Math.PI * 2);
-        ctx.fillStyle = rgba(this.color, twinkle);
+        ctx.arc(p.x, p.y, pt.size * p.scale * 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = rgba("#fde68a", twinkle);
         ctx.fill();
       }
     });
 
-    // =========================================================================
-    // 3. PHASE B: DRAW CENTRAL 3D HOLOGRAPHIC ENERGY SPHERE
-    // =========================================================================
+    projectedFormulas.filter((f) => f.z >= 0).forEach(drawMathFormula);
 
-    // Atmosphere Ambient Glow
-    const haloRadius = currentCoreRadius * (1.7 + this.burstEnergy * 0.4);
-    const glowGrad = ctx.createRadialGradient(cx, cy, currentCoreRadius * 0.2, cx, cy, haloRadius);
-    glowGrad.addColorStop(0, rgba(this.color, 0.45 + this.burstEnergy * 0.35));
-    glowGrad.addColorStop(0.45, rgba(this.color, 0.16));
-    glowGrad.addColorStop(1, "rgba(15, 23, 42, 0)");
-    ctx.fillStyle = glowGrad;
+    // =========================================================================
+    // 2. SATURN PLANETARY RINGS - 3D GEOMETRY HELPER
+    // =========================================================================
+    // Ring tilt relative to planet equator (Saturn's natural ~26.7 deg tilt)
+    const ringTilt = -0.46; // ~ -26.5 degrees
+    const sinT = Math.sin(ringTilt);
+    const cosT = Math.cos(ringTilt);
+
+    // Helper to get projected 3D coordinates for a point on Saturn's ring
+    const getRingPoint = (rMult, theta) => {
+      // Point on tilted ring disk
+      const rx = rMult * Math.cos(theta);
+      const rz = rMult * Math.sin(theta) * cosT;
+      const ry = rMult * Math.sin(theta) * sinT;
+      return this.project3D(rx, ry, rz, currentCoreRadius, cx, cy);
+    };
+
+    // Function to render either the back half (isFront=false) or front half (isFront=true) of Saturn's rings
+    const drawSaturnRings = (isFront) => {
+      ctx.save();
+      const numSteps = 84;
+      const step = (Math.PI * 2) / numSteps;
+
+      // Define Saturn Ring Zones: [InnerRadius, OuterRadius, BaseAlpha, ColorA, ColorB]
+      const ringZones = [
+        // Ring C (Faint crepe ring starting close to planet)
+        { rIn: 1.15, rOut: 1.42, alpha: 0.35, color: "rgba(253, 230, 138, " },
+        // Ring B (Bright dense main golden amber ring)
+        { rIn: 1.45, rOut: 1.88, alpha: 0.86, color: "rgba(251, 191, 36, " },
+        // Cassini Division (Dark gap between B and A) - skipped [1.88 - 1.94]
+        // Ring A (Outer luminous amber ring)
+        { rIn: 1.94, rOut: 2.32, alpha: 0.72, color: "rgba(245, 158, 11, " },
+        // Encke/Outer Ribbon Faint Veil
+        { rIn: 2.34, rOut: 2.45, alpha: 0.28, color: "rgba(217, 119, 6, " }
+      ];
+
+      ringZones.forEach((zone) => {
+        // Build quadrilateral ring segments
+        for (let i = 0; i < numSteps; i++) {
+          const theta1 = i * step;
+          const theta2 = (i + 1) * step;
+
+          // In our projection, z < 0 is closer to camera (FRONT), z >= 0 is further away (BACK)
+          const pMid = getRingPoint((zone.rIn + zone.rOut) * 0.5, (theta1 + theta2) * 0.5);
+          const segmentIsFront = pMid.z < 0;
+
+          if (segmentIsFront !== isFront) continue;
+
+          const p1 = getRingPoint(zone.rIn, theta1);
+          const p2 = getRingPoint(zone.rOut, theta1);
+          const p3 = getRingPoint(zone.rOut, theta2);
+          const p4 = getRingPoint(zone.rIn, theta2);
+
+          const depthScale = Math.max(0.5, Math.min(1.2, pMid.scale));
+          let effectiveAlpha = zone.alpha * (isFront ? 1.05 : 0.65) * (0.8 + 0.2 * depthScale);
+
+          // Planetary shadow cast onto back rings
+          if (!isFront) {
+            const dxFromCenter = Math.abs(pMid.x - cx);
+            if (dxFromCenter < currentCoreRadius * 0.85 && pMid.y < cy) {
+              effectiveAlpha *= 0.25; // In shadow of planet body
+            }
+          }
+
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.lineTo(p4.x, p4.y);
+          ctx.closePath();
+
+          ctx.fillStyle = `${zone.color}${Math.min(1, effectiveAlpha)})`;
+          ctx.fill();
+
+          // Subtle fine ringlet striation lines
+          if (i % 2 === 0) {
+            ctx.strokeStyle = `rgba(255, 255, 255, ${Math.min(0.6, effectiveAlpha * 0.4)})`;
+            ctx.lineWidth = isFront ? 0.75 : 0.4;
+            ctx.stroke();
+          }
+        }
+      });
+
+      // Luminous Satellite Beads gliding along the rings
+      const beadSpeed = this.pulseTime * 0.8;
+      const beadTracks = [
+        { r: 1.65, count: 3, color: "#ffffff", size: 2.2 },
+        { r: 2.12, count: 4, color: "#fef08a", size: 1.8 }
+      ];
+
+      beadTracks.forEach((track) => {
+        for (let b = 0; b < track.count; b++) {
+          const bAngle = beadSpeed + (b * Math.PI * 2) / track.count;
+          const bp = getRingPoint(track.r, bAngle);
+          if ((bp.z < 0) === isFront) {
+            ctx.beginPath();
+            ctx.arc(bp.x, bp.y, track.size * bp.scale, 0, Math.PI * 2);
+            ctx.fillStyle = track.color;
+            ctx.shadowColor = "#f59e0b";
+            ctx.shadowBlur = isFront ? 8 : 3;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        }
+      });
+
+      ctx.restore();
+    };
+
+    // =========================================================================
+    // 3. DRAW BACK HALF OF SATURN'S RINGS (z >= 0)
+    // =========================================================================
+    drawSaturnRings(false);
+
+    // =========================================================================
+    // 4. DRAW CENTRAL SATURN PLANETARY SPHERE (HIGH-CONTRAST 3D SPHERE)
+    // =========================================================================
+    ctx.save();
+
+    // 4a. Ambient Atmospheric Outer Corona Glow (Warm Golden Celestial Aurora)
+    const glowRad = currentCoreRadius * (1.32 + this.burstEnergy * 0.45);
+    const atmoGlow = ctx.createRadialGradient(cx, cy, currentCoreRadius * 0.6, cx, cy, glowRad);
+    atmoGlow.addColorStop(0, "rgba(251, 191, 36, 0.38)");
+    atmoGlow.addColorStop(0.5, "rgba(245, 158, 11, 0.18)");
+    atmoGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = atmoGlow;
     ctx.beginPath();
-    ctx.arc(cx, cy, haloRadius, 0, Math.PI * 2);
+    ctx.arc(cx, cy, glowRad, 0, Math.PI * 2);
     ctx.fill();
 
-    // 3D Specular Light Position (tracks pointer slightly)
-    const specOffsetX = this.pointerNormalized.x * (currentCoreRadius * 0.25) - currentCoreRadius * 0.32;
-    const specOffsetY = this.pointerNormalized.y * (currentCoreRadius * 0.25) - currentCoreRadius * 0.32;
+    // 4b. 3D Planet Sphere Body with Dynamic Pointer Light Angle (Warm Golden Saturnian Body)
+    const lightX = cx - currentCoreRadius * 0.32 + (this.pointerNormalized?.x || 0.2) * 12;
+    const lightY = cy - currentCoreRadius * 0.35 + (this.pointerNormalized?.y || -0.3) * 12;
+    const sphereGrad = ctx.createRadialGradient(lightX, lightY, currentCoreRadius * 0.08, cx, cy, currentCoreRadius);
+    sphereGrad.addColorStop(0, "#ffffff");
+    sphereGrad.addColorStop(0.15, "#fef08a");
+    sphereGrad.addColorStop(0.42, "#f59e0b");
+    sphereGrad.addColorStop(0.75, "#d97706");
+    sphereGrad.addColorStop(0.92, "#78350f");
+    sphereGrad.addColorStop(1, "#451a03");
 
-    const coreGrad = ctx.createRadialGradient(
-      cx + specOffsetX,
-      cy + specOffsetY,
-      currentCoreRadius * 0.06,
-      cx,
-      cy,
-      currentCoreRadius
-    );
-    coreGrad.addColorStop(0, "#ffffff");
-    coreGrad.addColorStop(0.2, rgba(this.color, 0.95));
-    coreGrad.addColorStop(0.65, rgba(this.color, 0.35));
-    coreGrad.addColorStop(0.92, "#0f172a");
-    coreGrad.addColorStop(1, "#020617");
-
-    ctx.fillStyle = coreGrad;
+    ctx.fillStyle = sphereGrad;
     ctx.beginPath();
     ctx.arc(cx, cy, currentCoreRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Spherical Fresnel Rim Glow
-    ctx.strokeStyle = rgba(this.color, 0.85 + this.burstEnergy * 0.15);
-    ctx.lineWidth = 2.0;
-    ctx.shadowColor = this.color;
-    ctx.shadowBlur = 12 + this.burstEnergy * 15;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // 3D Geodesic Latitude Lines on the Sphere Surface
-    const ringSegments = 16;
-    [-0.55, 0, 0.55].forEach((lat) => {
-      const rLat = Math.cos(lat * Math.PI * 0.5);
-      const yLat = Math.sin(lat * Math.PI * 0.5);
-
-      ctx.beginPath();
-      let first = true;
-      for (let i = 0; i <= ringSegments; i++) {
-        const theta = (i / ringSegments) * Math.PI * 2;
-        const x = rLat * Math.cos(theta);
-        const z = rLat * Math.sin(theta);
-        const p = this.project3D(x, yLat, z, currentCoreRadius * 0.98, cx, cy);
-
-        // Only draw surface points facing camera (p.z >= -0.15)
-        if (p.z >= -0.15) {
-          if (first) {
-            ctx.moveTo(p.x, p.y);
-            first = false;
-          } else {
-            ctx.lineTo(p.x, p.y);
-          }
-        } else {
-          first = true;
-        }
-      }
-      ctx.strokeStyle = rgba(this.color, 0.38 + this.burstEnergy * 0.3);
-      ctx.lineWidth = 1.1;
-      ctx.stroke();
-    });
-
-    // Center Core Iris Hologram
+    // 4c. Saturn Atmospheric Cloud Bands / Striations (Warm Caramel & Cream Latitudinal Bands)
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(cx, cy, currentCoreRadius * 0.38, 0, Math.PI * 2);
-    ctx.strokeStyle = rgba("#ffffff", 0.5 + Math.sin(this.pulseTime * 3) * 0.25);
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
+    ctx.arc(cx, cy, currentCoreRadius, 0, Math.PI * 2);
+    ctx.clip();
+
+    const numBands = 8;
+    for (let i = 0; i < numBands; i++) {
+      const bandY = cy + ((i - 3.5) / 4.0) * currentCoreRadius * 0.92;
+      const bandH = currentCoreRadius * 0.16;
+      const bandAlpha = 0.09 + Math.sin(i * 1.8 + this.pulseTime * 0.5) * 0.04;
+      ctx.fillStyle = i % 2 === 0 ? `rgba(254, 240, 138, ${bandAlpha * 1.3})` : `rgba(120, 53, 15, ${bandAlpha * 1.5})`;
+      ctx.fillRect(cx - currentCoreRadius, bandY - bandH / 2, currentCoreRadius * 2, bandH);
+    }
+
+    // 4d. Inner Rim Lighting (Golden Luminous Edge)
+    const rimGrad = ctx.createRadialGradient(cx, cy, currentCoreRadius * 0.82, cx, cy, currentCoreRadius);
+    rimGrad.addColorStop(0, "rgba(251, 191, 36, 0)");
+    rimGrad.addColorStop(1, "rgba(254, 240, 138, 0.72)");
+    ctx.fillStyle = rimGrad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, currentCoreRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 4e. Specular Highlight Pinpoint (High-contrast gloss)
+    const specX = lightX - currentCoreRadius * 0.08;
+    const specY = lightY - currentCoreRadius * 0.08;
+    const specGrad = ctx.createRadialGradient(specX, specY, 0, specX, specY, currentCoreRadius * 0.32);
+    specGrad.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+    specGrad.addColorStop(0.35, "rgba(255, 255, 255, 0.3)");
+    specGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+    ctx.fillStyle = specGrad;
+    ctx.beginPath();
+    ctx.arc(specX, specY, currentCoreRadius * 0.32, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
 
     // =========================================================================
-    // 4. PHASE C: DRAW FRONT-HALF OF RINGS (z >= 0) IN FRONT OF SPHERE
+    // 5. DRAW FRONT HALF OF SATURN'S RINGS (z < 0 - IN FRONT OF PLANET)
     // =========================================================================
-    allSegments.filter((s) => s.avgZ >= 0).forEach((seg) => drawSegment(seg, true));
+    drawSaturnRings(true);
 
-    // Satellites in the front (bright glowing energy beads)
-    satellites.filter((s) => s.z >= 0).forEach((sat) => {
-      // Glow halo around bead
+    // =========================================================================
+    // 6. BURST SHOCKWAVE FLARE (ON CLICK)
+    // =========================================================================
+    if (this.burstEnergy > 0.05) {
+      const burstRadius = currentCoreRadius * (1.2 + (1.0 - this.burstEnergy) * 2.2);
       ctx.beginPath();
-      ctx.arc(sat.x, sat.y, 6.5 * sat.scale, 0, Math.PI * 2);
-      ctx.fillStyle = rgba(this.color, 0.4);
-      ctx.fill();
-
-      // Sharp white-hot center bead
-      ctx.beginPath();
-      ctx.arc(sat.x, sat.y, 3.2 * sat.scale, 0, Math.PI * 2);
-      ctx.fillStyle = "#ffffff";
-      ctx.shadowColor = this.color;
-      ctx.shadowBlur = 10;
-      ctx.fill();
+      ctx.arc(cx, cy, burstRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = rgba("#f59e0b", this.burstEnergy * 0.85);
+      ctx.lineWidth = 2.5 * this.burstEnergy;
+      ctx.shadowColor = "#fbbf24";
+      ctx.shadowBlur = 14;
+      ctx.stroke();
       ctx.shadowBlur = 0;
-    });
+    }
 
-    // Front particles (z >= 0)
+    // =========================================================================
+    // 7. DRAW FRONT MATH FORMULAS (z < 0)
+    // =========================================================================
+    projectedFormulas.filter((f) => f.z < 0).forEach(drawMathFormula);
+
+    // Front Sparkling Star Particles (z < 0)
     this.particles.forEach((pt) => {
       const p = this.project3D(pt.x, pt.y, pt.z, currentCoreRadius, cx, cy);
-      if (p.z >= 0) {
+      if (p.z < 0) {
         const twinkle = 0.6 + 0.4 * Math.sin(this.pulseTime * 3 + pt.twinkleOffset);
         ctx.beginPath();
         ctx.arc(p.x, p.y, pt.size * p.scale, 0, Math.PI * 2);
-        ctx.fillStyle = rgba(this.color, twinkle);
-        ctx.shadowColor = this.color;
+        ctx.fillStyle = rgba("#fde68a", twinkle);
+        ctx.shadowColor = "#f59e0b";
         ctx.shadowBlur = 6;
         ctx.fill();
         ctx.shadowBlur = 0;

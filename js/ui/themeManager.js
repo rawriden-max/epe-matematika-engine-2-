@@ -77,7 +77,9 @@ export class ThemeManager {
   constructor({ onThemeChange = null }) {
     this.onThemeChange = onThemeChange;
     this.mode = localStorage.getItem("epe_theme_mode") || "dark";
-    this.currentPalette = localStorage.getItem("epe_color_palette") || "blue";
+    let savedPal = localStorage.getItem("epe_color_palette");
+    if (!savedPal || savedPal === "blue") savedPal = "amber";
+    this.currentPalette = savedPal;
     this.isRadialOpen = false;
 
     // Draggable & Rotatable State
@@ -118,7 +120,7 @@ export class ThemeManager {
   }
 
   applyPalette(paletteId) {
-    const pal = THEME_PALETTES[paletteId] || THEME_PALETTES.blue;
+    const pal = THEME_PALETTES[paletteId] || THEME_PALETTES.amber;
     this.currentPalette = pal.id;
     localStorage.setItem("epe_color_palette", pal.id);
 

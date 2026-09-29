@@ -78,7 +78,7 @@ export class AvatarLab {
     if (!modal) {
       modal = document.createElement("div");
       modal.id = "avatar-lab-modal";
-      modal.className = "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 modal-backdrop";
+      modal.className = "fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-6 modal-backdrop";
       document.body.appendChild(modal);
     }
     this.modalEl = modal;
@@ -134,10 +134,16 @@ export class AvatarLab {
                 <div id="avatar-lab-preview" class="w-44 h-44 rounded-full overflow-hidden shadow-2xl border-2 border-cyan-400 relative bg-slate-950 ring-4 ring-cyan-500/30 transition-transform duration-300">
                   <!-- SVG will be rendered here -->
                 </div>
-                <div class="absolute -bottom-2 inset-x-0 flex justify-center">
-                  <span id="avatar-lab-student-name" class="px-3 py-0.5 rounded-full bg-slate-900 border border-amber-500/60 text-[11px] text-amber-200 font-mono font-bold shadow-lg">
-                    ${activeStudentName}
-                  </span>
+                <div class="absolute -bottom-3 inset-x-0 flex justify-center">
+                  <button id="btn-lab-edit-nickname" type="button" class="group/name relative flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/95 hover:bg-slate-800 border border-amber-500/80 hover:border-amber-400 text-xs text-amber-200 font-mono font-bold shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md" title="Klik untuk Mengubah Nama Siswa / Identitas Pelajar">
+                    <span class="w-4 h-4 rounded-full bg-amber-500/25 border border-amber-500/50 flex items-center justify-center text-amber-300 group-hover/name:bg-amber-400 group-hover/name:text-slate-950 transition-colors shrink-0">
+                      <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    </span>
+                    <span id="avatar-lab-student-name" class="tracking-wide">${activeStudentName}</span>
+                    <span class="text-[9px] uppercase tracking-wider px-1.5 py-0.2 rounded bg-amber-500/25 text-amber-300 border border-amber-500/40 group-hover/name:bg-amber-500 group-hover/name:text-slate-950 transition-colors">
+                      Ubah ID
+                    </span>
+                  </button>
                 </div>
               </div>
 
@@ -193,6 +199,15 @@ export class AvatarLab {
     this.modalEl.querySelector("#btn-lab-wallet").addEventListener("click", () => {
       CubicWallet.openWalletModal();
     });
+
+    const labEditNameBtn = this.modalEl.querySelector("#btn-lab-edit-nickname");
+    if (labEditNameBtn) {
+      labEditNameBtn.addEventListener("click", () => {
+        if (typeof window !== "undefined" && window.ProfileManager) {
+          window.ProfileManager.promptEditNickname();
+        }
+      });
+    }
 
     this.modalEl.querySelector("#btn-save-avatar-config").addEventListener("click", () => {
       const ownedIds = CubicWallet.getOwnedItemIds();

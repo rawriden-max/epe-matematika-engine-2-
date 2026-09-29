@@ -569,7 +569,7 @@ export class AiAgentManager {
         depthBtns.forEach(b => {
           b.className = "ai-depth-btn px-1.5 py-0.5 rounded transition-all text-slate-400 hover:text-white";
         });
-        btn.className = "ai-depth-btn px-1.5 py-0.5 rounded transition-all bg-cyan-500 text-slate-950 font-bold";
+        btn.className = "ai-depth-btn px-1.5 py-0.5 rounded transition-all bg-amber-600 text-white font-bold";
       });
     });
 
@@ -1693,7 +1693,16 @@ Gunakan format LaTeX KaTeX (misal $x^2 - 5x + 6 = 0$) hanya jika memuat rumus ma
     const mimeType = match[1];
     const base64Data = match[2];
 
-    const modelsToTry = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+    const modelsToTry = [
+      "gemini-3-flash-preview",
+      "gemini-3.8-flash",
+      "gemini-3.1-flash-lite",
+      "gemini-flash-latest",
+      "gemini-3.1-pro-preview",
+      "gemini-pro-latest",
+      "gemini-2.5-flash",
+      "gemini-1.5-flash"
+    ];
     let lastError = null;
 
     const contents = [];
@@ -1820,7 +1829,16 @@ Konteks Pembelajaran di Aplikasi (HANYA rujuk jika ditanya oleh siswa terkait la
 `;
 
     if (this.apiProvider === "gemini") {
-      const modelsToTry = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+      const modelsToTry = [
+        "gemini-3-flash-preview",
+        "gemini-3.8-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-flash-latest",
+        "gemini-3.1-pro-preview",
+        "gemini-pro-latest",
+        "gemini-2.5-flash",
+        "gemini-1.5-flash"
+      ];
       let lastError = null;
 
       const contents = [];
@@ -2333,6 +2351,54 @@ Jika seseorang mendekati lubang hitam dengan kaki terlebih dahulu, gradien gaya 
 Berdasarkan relativitas, semakin kuat medan gravitasi, semakin lambat aliran waktu:
 $$t' = \\frac{t}{\\sqrt{1 - \\frac{r_s}{r}}}$$
 Bagi pengamat yang berada jauh di luar, objek yang jatuh ke cakrawala peristiwa akan tampak melambat secara dramatis dan membeku tepat di batas *event horizon* selamanya!`;
+    }
+
+    // 7e-2. Bagaimana Bumi Bisa Bulat (Keseimbangan Hidrostatis, Gravitasi & Rotasi)
+    if (
+      (q.includes("bumi") && (q.includes("bulat") || q.includes("lingkaran") || q.includes("sferoid") || q.includes("bentuk"))) ||
+      q.includes("bagaimana bumi bisa bulat") ||
+      q.includes("kenapa bumi bulat") ||
+      q.includes("mengapa bumi bulat") ||
+      q.includes("mengapa planet bulat") ||
+      q.includes("bentuk bumi") ||
+      q.includes("bumi itu bulat")
+    ) {
+      return `### Bagaimana & Mengapa Bumi Bisa Berbentuk Bulat?
+
+Pertanyaan sains dan astrofisika yang sangat fundamental dan luar biasa!
+
+Secara sederhana, **Bumi berbentuk bulat karena gaya gravitasi menarik seluruh massanya secara merata ke pusat massa**, sebuah fenomena fisika yang disebut **Keseimbangan Hidrostatis (*Hydrostatic Equilibrium*)**.
+
+---
+
+#### 1. Peran Gravitasi Universal: Tarikan Seimbang ke Segala Arah
+Hukum Gravitasi Universal menyatakan bahwa setiap partikel materi menarik partikel materi lainnya:
+$$F = G \\frac{m_1 m_2}{r^2}$$
+- Sekitar **4,5 miliar tahun yang lalu**, Bumi terbentuk dari benturan dan akresi debu serta batuan kosmik yang sangat panas dan berpijar (meleleh).
+- Karena massa Bumi sangat besar ($M \\approx 5{,}972 \\times 10^{24}\\text{ kg}$), gravitasi internalnya menjadi begitu kuat sehingga menarik seluruh material cair dan batuan **secara merata ke satu titik pusat gravitasi**.
+- Secara geometri matematis, **satu-satunya bentuk tiga dimensi di mana setiap titik di permukaannya berjarak sama dari titik pusat adalah bola (sferoid)**. Struktur yang menonjol tinggi (seperti gunung raksasa) akan runtuh oleh gravitasi jika melebihi batas kekuatan batuan (*crustal strength limit*).
+
+#### 2. Bentuk Sebenarnya: Sferoid Pepat (*Oblate Spheroid*)
+Bumi tidak 100% bulat sempurna layaknya bola biliar, melainkan berbentuk **elipsoid pepat (*oblate spheroid*)**:
+- Hal ini disebabkan oleh **rotasi Bumi pada porosnya** (sekitar $1.670\\text{ km/jam}$ di khatulistiwa).
+- Gaya sentrifugal inersia akibat putaran ini membuat bagian khatulistiwa sedikit mengembang (*equatorial bulge*):
+  - **Jari-jari Khatulistiwa ($R_{\\text{equator}}$)**: $\\approx 6.378\\text{ km}$
+  - **Jari-jari Kutub ($R_{\\text{polar}}$)**: $\\approx 6.357\\text{ km}$
+  - Selisihnya hanya sekitar **$21\\text{ km}$** (perbedaan sangat kecil, kurang dari $0{,}3\\%$, sehingga dari luar angkasa tampak bulat sempurna).
+
+#### 3. Mengapa Asteroid Kecil Tidak Berbentuk Bulat?
+- Benda langit kecil seperti asteroid (misal: Asteroid Bennu atau Eros) memiliki massa yang terlalu kecil ($M < 10^{20}\\text{ kg}$).
+- Gravitasinya tidak cukup kuat untuk mengatasi kekuatan ikatan batuan, sehingga bentuknya tetap tidak beraturan seperti kentang antariksa.
+- Sebuah objek kosmik membutuhkan diameter minimal sekitar **$600 - 800\\text{ km}$** agar gravitasinya mampu memaksanya menjadi bulat (*dwarf planet / planet threshold*).
+
+#### 4. Bukti Empiris Sejak Zaman Kuno:
+1. **Bayangan Gerhana Bulan**: Filsuf Yunani **Aristoteles (384–322 SM)** mencatat bahwa bayangan Bumi yang jatuh pada Bulan saat gerhana selalu membentuk kurva busur lingkaran sempurna.
+2. **Kapal Berlayar di Laut**: Kapal yang berlayar menjauh perlahan-lahan badan kapal tenggelam di balik cakrawala terlebih dahulu, baru kemudian ujung layarnya.
+3. **Eksperimen Eratosthenes (240 SM)**: Mengukur keliling Bumi menggunakan bayangan tongkat di Alexandria dan Syene dengan rumus trigonometri busur lingkaran:
+   $$\\frac{\\theta}{360^\\circ} = \\frac{s}{K_{\\text{bumi}}} \\implies K_{\\text{bumi}} \\approx 40.000\\text{ km}$$
+   Hasil hitungannya saat itu memiliki akurasi di atas $98\\%$ terhadap data satelit modern!
+
+Ada konsep fisika atau astronomi lain yang ingin kita bedah bersama?`;
     }
 
     // 7f. Teori Relativitas Albert Einstein ($E = mc^2$ & Dilatasi Waktu)
@@ -3440,14 +3506,21 @@ Agar Matrix dapat mengakses kapabilitas kecerdasan buatan berbasis cloud secara 
 Ada langkah pemasangan yang ingin kamu tanyakan lebih lanjut?`;
     }
 
-    // 8. Natural Conversational Fallback (Non-robotic, clean, and helpful)
-    return `Aku memahami pertanyaanmu mengenai hal ini.
+    // 8. Natural Conversational Fallback (Intelligent, Scientific & Engaging)
+    // Jangan pernah menolak dengan template kaku; berikan wawasan konseptual dan ajak eksplorasi
+    const topicSummary = q.length > 60 ? q.slice(0, 57) + "..." : q;
+    return `### Telaah Kognitif Matrix: "${topicSummary}"
 
-Untuk memberikan bimbingan yang paling tepat:
-- Jika pertanyaan ini berkaitan dengan perhitungan angka atau rumus (misal: aljabar, geometri, atau persamaan kuadrat), kamu bisa langsung menuliskan persamaan atau variabelnya di sini.
-- Jika kamu ingin berdiskusi topik sains atau pengetahuan umum secara mendalam dan terhubung ke internet, pastikan **Live Cloud AI (Gemini)** sudah aktif melalui menu **Pengaturan** di kanan atas.
+Pertanyaan yang sangat menarik untuk dieksplorasi!
 
-Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
+Dalam kerangka sains dan pemodelan matematis:
+1. **Analisis Prinsip Dasar**: Setiap fenomena alam, logika matematis, atau keteraturan semesta bekerja berdasarkan hukum sebab-akibat yang konsisten—seperti hukum kekekalan energi, prinsip simetri, atau hubungan relasional antar variabel.
+2. **Langkah Penyelidikan Sistematis**:
+   - Tentukan variabel utama atau entitas yang sedang diamati.
+   - Periksa kaidah fisika, aljabar, atau struktur logika yang mendasari proses tersebut.
+   - Uji apakah ada model matematis atau bukti empiris yang dapat membuktikannya secara eksak.
+
+Untuk topik spesifik ini, aspek mana yang ingin kamu ketahui lebih mendalam? Apakah pembuktian rumusnya, penjelasan konsep visualnya, atau contoh aplikasinya dalam kehidupan sehari-hari? Tuliskan saja, aku siap membantu!`;
   }
 
   speakText(text) {
@@ -3967,7 +4040,16 @@ Ada bagian tertentu dari topik ini yang ingin kita telaah terlebih dahulu?`;
 
         try {
           if (testProv === "gemini") {
-            const modelsToTry = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+            const modelsToTry = [
+              "gemini-3-flash-preview",
+              "gemini-3.8-flash",
+              "gemini-3.1-flash-lite",
+              "gemini-flash-latest",
+              "gemini-3.1-pro-preview",
+              "gemini-pro-latest",
+              "gemini-2.5-flash",
+              "gemini-1.5-flash"
+            ];
             let connected = false;
             let connectedModel = "";
             let errMsg = "";

@@ -123,35 +123,8 @@ export class UniverseBackground {
   }
 
   initNebula() {
-    this.nebulaOrbs = [
-      {
-        x: this.width * 0.25,
-        y: this.height * 0.3,
-        radius: Math.min(this.width, this.height) * 0.45,
-        colorDark: "rgba(30, 58, 138, 0.18)", // Deep blue/sapphire
-        colorLight: "rgba(37, 99, 235, 0.05)",
-        vx: 0.05,
-        vy: 0.03
-      },
-      {
-        x: this.width * 0.75,
-        y: this.height * 0.65,
-        radius: Math.min(this.width, this.height) * 0.5,
-        colorDark: "rgba(59, 130, 246, 0.12)", // Mid blue
-        colorLight: "rgba(96, 165, 250, 0.04)",
-        vx: -0.04,
-        vy: -0.05
-      },
-      {
-        x: this.width * 0.5,
-        y: this.height * 0.9,
-        radius: Math.min(this.width, this.height) * 0.38,
-        colorDark: "rgba(14, 165, 233, 0.1)", // Cyan tint
-        colorLight: "rgba(59, 130, 246, 0.03)",
-        vx: 0.03,
-        vy: -0.03
-      }
-    ];
+    // Meminimalisir bola-bola kosmik agar pengguna tetap fokus belajar dan tidak terdistraksi
+    this.nebulaOrbs = [];
   }
 
   bindEvents() {
@@ -299,20 +272,21 @@ export class UniverseBackground {
       ctx.arc(s.x, s.y, s.size * (dist < this.mouse.radius ? 1.3 : 1), 0, Math.PI * 2);
 
       if (this.isDark) {
-        ctx.fillStyle = `rgba(191, 219, 254, ${currentAlpha})`; // Soft blue-tinted white
+        // Bright shining star yellow / luminous celestial gold
+        ctx.fillStyle = `rgba(254, 240, 138, ${currentAlpha})`;
       } else {
-        ctx.fillStyle = `rgba(37, 99, 235, ${currentAlpha * 0.75})`; // Sapphire blue for light mode
+        ctx.fillStyle = `rgba(217, 119, 6, ${currentAlpha * 0.75})`; // Warm amber star for light mode
       }
       ctx.fill();
 
-      // Soft Halo for bright foreground stars
+      // Soft Halo for bright foreground stars (Golden Star Radiance)
       if (s.hasHalo) {
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.size * 2.8, 0, Math.PI * 2);
         if (this.isDark) {
-          ctx.fillStyle = `rgba(59, 130, 246, ${currentAlpha * 0.25})`;
+          ctx.fillStyle = `rgba(245, 158, 11, ${currentAlpha * 0.35})`;
         } else {
-          ctx.fillStyle = `rgba(37, 99, 235, ${currentAlpha * 0.15})`;
+          ctx.fillStyle = `rgba(217, 119, 6, ${currentAlpha * 0.18})`;
         }
         ctx.fill();
       }
@@ -334,8 +308,8 @@ export class UniverseBackground {
       ctx.moveTo(this.mouse.x, this.mouse.y);
       ctx.lineTo(s.x, s.y);
       ctx.strokeStyle = this.isDark
-        ? `rgba(96, 165, 250, ${alpha})`
-        : `rgba(37, 99, 235, ${alpha})`;
+        ? `rgba(245, 158, 11, ${alpha * 0.75})`
+        : `rgba(217, 119, 6, ${alpha * 0.6})`;
       ctx.lineWidth = 1.0;
       ctx.stroke();
 
@@ -343,8 +317,8 @@ export class UniverseBackground {
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.size + 1.2, 0, Math.PI * 2);
       ctx.strokeStyle = this.isDark
-        ? `rgba(147, 197, 253, ${alpha * 1.2})`
-        : `rgba(29, 78, 216, ${alpha * 1.2})`;
+        ? `rgba(254, 240, 138, ${alpha * 1.2})`
+        : `rgba(180, 83, 9, ${alpha * 1.2})`;
       ctx.stroke();
     }
 
@@ -363,15 +337,15 @@ export class UniverseBackground {
           ctx.moveTo(s1.x, s1.y);
           ctx.lineTo(s2.x, s2.y);
           ctx.strokeStyle = this.isDark
-            ? `rgba(147, 197, 253, ${lineAlpha})`
-            : `rgba(37, 99, 235, ${lineAlpha})`;
+            ? `rgba(251, 191, 36, ${lineAlpha * 0.75})`
+            : `rgba(217, 119, 6, ${lineAlpha * 0.6})`;
           ctx.lineWidth = 0.75;
           ctx.stroke();
         }
       }
     }
 
-    // Cursor Celestial Core Glow (Subtle & Elegant)
+    // Cursor Celestial Core Glow (Warm Star Nebula Glow)
     const cursorGlow = ctx.createRadialGradient(
       this.mouse.x,
       this.mouse.y,
@@ -381,11 +355,11 @@ export class UniverseBackground {
       35
     );
     if (this.isDark) {
-      cursorGlow.addColorStop(0, "rgba(59, 130, 246, 0.22)");
-      cursorGlow.addColorStop(1, "rgba(59, 130, 246, 0)");
+      cursorGlow.addColorStop(0, "rgba(245, 158, 11, 0.25)");
+      cursorGlow.addColorStop(1, "rgba(245, 158, 11, 0)");
     } else {
-      cursorGlow.addColorStop(0, "rgba(37, 99, 235, 0.12)");
-      cursorGlow.addColorStop(1, "rgba(37, 99, 235, 0)");
+      cursorGlow.addColorStop(0, "rgba(217, 119, 6, 0.15)");
+      cursorGlow.addColorStop(1, "rgba(217, 119, 6, 0)");
     }
     ctx.fillStyle = cursorGlow;
     ctx.beginPath();
@@ -393,7 +367,7 @@ export class UniverseBackground {
     ctx.fill();
 
     // =========================================================================
-    // 4. STARDUST TRAIL PARTICLES
+    // 4. STARDUST TRAIL PARTICLES (GOLDEN TWINKLE)
     // =========================================================================
     for (let i = this.dustParticles.length - 1; i >= 0; i--) {
       const p = this.dustParticles[i];
@@ -409,9 +383,9 @@ export class UniverseBackground {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
       if (this.isDark) {
-        ctx.fillStyle = `rgba(147, 197, 253, ${p.life * 0.6})`;
+        ctx.fillStyle = `rgba(254, 240, 138, ${p.life * 0.75})`;
       } else {
-        ctx.fillStyle = `rgba(37, 99, 235, ${p.life * 0.45})`;
+        ctx.fillStyle = `rgba(217, 119, 6, ${p.life * 0.55})`;
       }
       ctx.fill();
     }

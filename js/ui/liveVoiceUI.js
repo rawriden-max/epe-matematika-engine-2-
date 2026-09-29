@@ -45,6 +45,17 @@ export class LiveVoiceUI {
       });
     }
 
+    // Simbol rune matematika kosmik yang mengorbit 3D (membungkus depan dan belakang bola)
+    const glyphSymbols = ["π", "Σ", "x²", "Δ", "∞", "√x", "f(x)", "θ", "∫", "λ"];
+    this.mathGlyphs = glyphSymbols.map((sym, idx) => ({
+      symbol: sym,
+      baseAngle: (idx / glyphSymbols.length) * Math.PI * 2,
+      orbitRadius: 90 + (idx % 3) * 20,
+      tilt: 0.44 + (idx % 2) * 0.15,
+      speed: 0.01 + (idx % 3) * 0.004,
+      size: 11 + (idx % 3) * 2
+    }));
+
     this.render();
   }
 
@@ -59,49 +70,49 @@ export class LiveVoiceUI {
 
     const modal = document.createElement("div");
     modal.id = "ai-live-voice-modal";
-    modal.className = "fixed inset-0 z-[100003] flex flex-col justify-between p-4 sm:p-6 bg-slate-950/95 backdrop-blur-2xl text-white hidden select-none transition-all duration-300";
+    modal.className = "fixed inset-0 z-[100003] flex flex-col justify-between p-4 sm:p-6 bg-[#160d08]/98 backdrop-blur-2xl text-white hidden select-none transition-all duration-300";
     modal.innerHTML = `
       <!-- Top Navigation & Controls Bar -->
       <div class="flex items-center justify-between z-10 w-full max-w-4xl mx-auto">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/30 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-500/20">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#4a2e1f] to-[#2b170e] border border-amber-600/50 flex items-center justify-center text-amber-300 shadow-lg shadow-amber-950/40">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"></path></svg>
           </div>
           <div>
             <div class="flex items-center gap-2">
               <h2 class="text-base sm:text-lg font-black tracking-wide text-white">Mode Bicara Langsung</h2>
-              <span id="live-voice-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-950 text-cyan-400 border border-cyan-700/60 animate-pulse">
+              <span id="live-voice-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-950/80 text-amber-300 border border-amber-600/60 animate-pulse">
                 Siap Bicara
               </span>
             </div>
-            <p class="text-xs text-slate-400 flex items-center gap-1.5" id="live-voice-active-persona-text">
+            <p class="text-xs text-amber-200/70 flex items-center gap-1.5" id="live-voice-active-persona-text">
               <span>Persona:</span>
-              <strong class="text-cyan-300 font-bold" id="live-voice-persona-name">Kakak Mentor Ceria</strong>
+              <strong class="text-amber-300 font-bold" id="live-voice-persona-name">Kakak Mentor Ceria</strong>
             </p>
           </div>
         </div>
 
         <div class="flex items-center gap-2">
           <!-- Tombol Ubah Karakter Suara -->
-          <button id="btn-live-voice-change-persona" class="py-1.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm" title="Ubah Karakter & Nada Suara AI">
+          <button id="btn-live-voice-change-persona" class="py-1.5 px-3 rounded-xl bg-[#24160f] hover:bg-[#382217] text-amber-200 hover:text-white border border-[#5c3722] text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer" title="Ubah Karakter & Nada Suara AI">
             <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
             <span class="hidden sm:inline">Ubah Suara</span>
           </button>
 
           <!-- Toggle Hands-Free Loop -->
-          <button id="btn-live-voice-toggle-loop" class="py-1.5 px-3 rounded-xl bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/80 text-xs font-bold flex items-center gap-1.5 transition-all" title="Mode Percakapan Berkelanjutan Otomatis">
-            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          <button id="btn-live-voice-toggle-loop" class="py-1.5 px-3 rounded-xl bg-amber-950/80 hover:bg-amber-900/80 text-amber-300 border border-amber-600/70 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer" title="Mode Percakapan Berkelanjutan Otomatis">
+            <span class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b]"></span>
             <span class="hidden sm:inline">Auto-Loop:</span>
             <span id="label-loop-state">Aktif</span>
           </button>
 
           <!-- Buka di Chat Drawer -->
-          <button id="btn-live-voice-switch-drawer" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors" title="Buka Riwayat di Chat Teks">
+          <button id="btn-live-voice-switch-drawer" class="p-2 rounded-xl bg-[#24160f] hover:bg-[#382217] text-amber-200 hover:text-white border border-[#5c3722] transition-colors cursor-pointer" title="Buka Riwayat di Chat Teks">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
           </button>
 
           <!-- Tutup Modal -->
-          <button id="btn-close-live-voice" class="p-2 rounded-xl bg-slate-900 hover:bg-rose-950/60 hover:text-rose-400 text-slate-400 border border-slate-800 transition-colors" title="Keluar dari Mode Suara">
+          <button id="btn-close-live-voice" class="p-2 rounded-xl bg-[#24160f] hover:bg-rose-950/60 hover:text-rose-400 text-amber-200 border border-[#5c3722] transition-colors cursor-pointer" title="Keluar dari Mode Suara">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </div>
@@ -122,20 +133,20 @@ export class LiveVoiceUI {
           <canvas id="live-voice-canvas" width="600" height="360" class="w-full max-w-[480px] h-[260px] sm:h-[300px]"></canvas>
 
           <!-- Dynamic State Indicator Tag below Orb -->
-          <div id="live-voice-indicator-text" class="text-sm sm:text-base font-extrabold tracking-wide mt-2 text-center text-slate-300">
+          <div id="live-voice-indicator-text" class="text-sm sm:text-base font-extrabold tracking-wide mt-2 text-center text-amber-200">
             Tekan tombol mikrofon atau mulai berbicara...
           </div>
 
           <!-- Live Subtitles & Transcript Stream -->
-          <div id="live-voice-subtitles-card" class="mt-4 w-full max-w-lg p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 shadow-2xl backdrop-blur-xl transition-all duration-300 min-h-[80px] flex flex-col justify-center">
-            <div class="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-1">
+          <div id="live-voice-subtitles-card" class="mt-4 w-full max-w-lg p-4 rounded-2xl bg-[#24160f]/90 border border-[#5c3722]/70 shadow-2xl backdrop-blur-xl transition-all duration-300 min-h-[80px] flex flex-col justify-center">
+            <div class="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-amber-300 mb-1">
               <span id="live-voice-subtitle-speaker">Matrix AI</span>
-              <div id="live-voice-mic-level-box" class="flex items-center gap-1.5 text-[9px] text-cyan-400 font-mono font-semibold hidden">
-                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+              <div id="live-voice-mic-level-box" class="flex items-center gap-1.5 text-[9px] text-amber-400 font-mono font-semibold hidden">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_#f59e0b]"></span>
                 <span id="live-voice-mic-status-text">Mic Siap</span>
               </div>
             </div>
-            <p id="live-voice-subtitle-content" class="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium line-clamp-4">
+            <p id="live-voice-subtitle-content" class="text-xs sm:text-sm text-amber-100 leading-relaxed font-medium line-clamp-4">
               "Halo! Aku Matrix AI. Tanyakan soal matematika, konsep aljabar, atau rumus yang ingin kamu diskusikan langsung!"
             </p>
           </div>
@@ -145,16 +156,16 @@ export class LiveVoiceUI {
         <div class="w-full max-w-2xl mx-auto space-y-3 z-10">
           <!-- Quick Prompt Chips -->
           <div class="flex items-center justify-center gap-2 flex-wrap text-xs">
-            <button class="live-voice-quick-chip px-3 py-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-all cursor-pointer" data-prompt="Jelaskan apa itu diskriminan dan mengapa rumusnya b kuadrat kurang 4ac?">
+            <button class="live-voice-quick-chip px-3 py-1.5 rounded-full bg-[#2c1a11]/90 hover:bg-[#3d2417] text-amber-200 hover:text-white border border-[#5c3722] transition-all cursor-pointer" data-prompt="Jelaskan apa itu diskriminan dan mengapa rumusnya b kuadrat kurang 4ac?">
               Rumus Diskriminan
             </button>
-            <button class="live-voice-quick-chip px-3 py-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-all cursor-pointer" data-prompt="Bahas soal matematika aktif yang sedang kubuka di layar.">
+            <button class="live-voice-quick-chip px-3 py-1.5 rounded-full bg-[#2c1a11]/90 hover:bg-[#3d2417] text-amber-200 hover:text-white border border-[#5c3722] transition-all cursor-pointer" data-prompt="Bahas soal matematika aktif yang sedang kubuka di layar.">
               Bahas Soal Aktif
             </button>
-            <button class="live-voice-quick-chip px-3 py-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-all cursor-pointer" data-prompt="Beri aku satu kuis teka-teki logika matematika untuk melatih otak!">
+            <button class="live-voice-quick-chip px-3 py-1.5 rounded-full bg-[#2c1a11]/90 hover:bg-[#3d2417] text-amber-200 hover:text-white border border-[#5c3722] transition-all cursor-pointer" data-prompt="Beri aku satu kuis teka-teki logika matematika untuk melatih otak!">
               Kuis Logika
             </button>
-            <button class="live-voice-quick-chip px-3 py-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-all cursor-pointer" data-prompt="Bagaimana cara mudah memfaktorkan persamaan kuadrat jika koefisien x kuadrat lebih dari 1?">
+            <button class="live-voice-quick-chip px-3 py-1.5 rounded-full bg-[#2c1a11]/90 hover:bg-[#3d2417] text-amber-200 hover:text-white border border-[#5c3722] transition-all cursor-pointer" data-prompt="Bagaimana cara mudah memfaktorkan persamaan kuadrat jika koefisien x kuadrat lebih dari 1?">
               Trik Faktorisasi
             </button>
           </div>
@@ -165,12 +176,12 @@ export class LiveVoiceUI {
               type="text"
               id="input-live-voice-text"
               placeholder="Ketik soal/pertanyaan langsung di sini jika mic terkendala..."
-              class="flex-1 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 shadow-inner"
+              class="flex-1 px-3 py-1.5 rounded-xl bg-[#24160f] border border-[#5c3722]/80 text-xs text-white placeholder-amber-200/40 focus:outline-none focus:border-amber-500 shadow-inner"
             />
             <button
               type="button"
               id="btn-live-voice-send-text"
-              class="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:scale-95 text-white text-xs font-bold transition-all shadow-md shadow-cyan-600/30"
+              class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 active:scale-95 text-white text-xs font-bold transition-all shadow-md shadow-amber-950/40 cursor-pointer"
             >
               Kirim
             </button>
@@ -185,8 +196,8 @@ export class LiveVoiceUI {
             </button>
 
             <!-- Primary Mic Button -->
-            <button id="btn-live-voice-main-mic" class="relative group p-5 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-2xl shadow-cyan-500/40 transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center">
-              <div id="live-voice-mic-halo" class="absolute -inset-2 rounded-full bg-cyan-400 opacity-30 group-hover:opacity-60 blur-md transition-opacity"></div>
+            <button id="btn-live-voice-main-mic" class="relative group p-5 rounded-full bg-gradient-to-tr from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-2xl shadow-amber-950/60 transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer">
+              <div id="live-voice-mic-halo" class="absolute -inset-2 rounded-full bg-amber-400 opacity-30 group-hover:opacity-60 blur-md transition-opacity"></div>
               <svg id="live-voice-mic-icon" class="w-7 h-7 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"></path></svg>
             </button>
 
@@ -197,7 +208,7 @@ export class LiveVoiceUI {
             </button>
           </div>
 
-          <div class="text-center text-[11px] text-slate-500">
+          <div class="text-center text-[11px] text-amber-200/50">
           Tip: Anda dapat berbicara langsung tanpa menekan tombol jika mode Auto-Loop aktif.
         </div>
       </div>
@@ -611,48 +622,60 @@ export class LiveVoiceUI {
       this.smoothVolume += (instantVol - this.smoothVolume) * release;
     }
 
-    // 2. Parameter Geometris & Palet Warna Kosmik
+    // 2. Parameter Geometris & Palet Warna Kosmik (Warm Golden-Amber Theme)
     const baseRadius = 56 + this.smoothVolume * 22;
-    const waveAmplitude = 12 + this.smoothVolume * 38;
+    const waveAmplitude = 10 + this.smoothVolume * 32;
 
-    let primaryColor = "#38bdf8"; // Electric cyan
-    let secondaryColor = "#2dd4bf"; // Neon turquoise
-    let auraGlowColor = `rgba(56, 189, 248, ${0.4 + this.smoothVolume * 0.35})`;
-    let coreGradStart = "#e0f2fe";
-    let coreGradMid = "#38bdf8";
-    let coreGradOuter = "#0284c7";
+    let primaryColor = "#f59e0b"; // Warm Amber
+    let secondaryColor = "#fbbf24"; // Radiant Gold
+    let accentRing = "#d97706";
+    let auraGlowColor = `rgba(245, 158, 11, ${0.32 + this.smoothVolume * 0.3})`;
+    let coreGradStart = "#fffbeb";
+    let coreGradMid1 = "#fde68a";
+    let coreGradMid2 = "#f59e0b";
+    let coreGradOuter = "#78350f";
+    let coreGradDark = "#291307";
 
     if (this.state === "listening") {
-      primaryColor = "#38bdf8";
-      secondaryColor = "#2dd4bf";
-      auraGlowColor = `rgba(56, 189, 248, ${0.45 + this.smoothVolume * 0.4})`;
-      coreGradStart = "#f0fdfa";
-      coreGradMid = "#38bdf8";
-      coreGradOuter = "#0369a1";
+      primaryColor = "#10b981"; // Emerald
+      secondaryColor = "#34d399";
+      accentRing = "#059669";
+      auraGlowColor = `rgba(16, 185, 129, ${0.4 + this.smoothVolume * 0.35})`;
+      coreGradStart = "#ecfdf5";
+      coreGradMid1 = "#a7f3d0";
+      coreGradMid2 = "#10b981";
+      coreGradOuter = "#064e3b";
+      coreGradDark = "#022c22";
     } else if (this.state === "thinking") {
-      primaryColor = "#c084fc";
-      secondaryColor = "#a855f7";
-      auraGlowColor = "rgba(192, 132, 252, 0.55)";
+      primaryColor = "#c084fc"; // Violet Nebula
+      secondaryColor = "#f59e0b";
+      accentRing = "#9333ea";
+      auraGlowColor = "rgba(192, 132, 252, 0.45)";
       coreGradStart = "#faf5ff";
-      coreGradMid = "#c084fc";
-      coreGradOuter = "#7e22ce";
+      coreGradMid1 = "#e9d5ff";
+      coreGradMid2 = "#a855f7";
+      coreGradOuter = "#581c87";
+      coreGradDark = "#2e1065";
     } else if (this.state === "speaking") {
-      primaryColor = "#60a5fa";
-      secondaryColor = "#38bdf8";
-      auraGlowColor = `rgba(96, 165, 250, ${0.45 + this.smoothVolume * 0.35})`;
-      coreGradStart = "#eff6ff";
-      coreGradMid = "#60a5fa";
-      coreGradOuter = "#1d4ed8";
+      primaryColor = "#fbbf24"; // Solar Amber-Gold
+      secondaryColor = "#f97316";
+      accentRing = "#f59e0b";
+      auraGlowColor = `rgba(251, 191, 36, ${0.42 + this.smoothVolume * 0.35})`;
+      coreGradStart = "#ffffff";
+      coreGradMid1 = "#fef08a";
+      coreGradMid2 = "#f59e0b";
+      coreGradOuter = "#b45309";
+      coreGradDark = "#3a1505";
     }
 
     // 3. Shockwave Riak Suara Melebar Keluar saat Suara Berbicara (Echo Ripples)
     const now = performance.now();
-    if (this.state === "listening" && this.smoothVolume > 0.18 && (now - this.lastRippleTime > 180)) {
+    if ((this.state === "listening" || this.state === "speaking") && this.smoothVolume > 0.16 && (now - this.lastRippleTime > 160)) {
       this.outwardRipples.push({
-        radius: baseRadius + 6,
-        maxRadius: baseRadius + 115 + this.smoothVolume * 65,
-        alpha: 0.68 * this.smoothVolume,
-        speed: 2.4 + this.smoothVolume * 3.4,
+        radius: baseRadius + 8,
+        maxRadius: baseRadius + 125 + this.smoothVolume * 70,
+        alpha: 0.65 * this.smoothVolume,
+        speed: 2.2 + this.smoothVolume * 3.6,
         lineWidth: 1.8,
         phase: this.visualizerPhase
       });
@@ -663,42 +686,15 @@ export class LiveVoiceUI {
     for (let rIdx = this.outwardRipples.length - 1; rIdx >= 0; rIdx--) {
       const rip = this.outwardRipples[rIdx];
       rip.radius += rip.speed;
-      rip.alpha *= 0.948;
+      rip.alpha *= 0.945;
 
       if (rip.alpha <= 0.02 || rip.radius >= rip.maxRadius) {
         this.outwardRipples.splice(rIdx, 1);
         continue;
       }
 
-      const ripPtsCount = 56;
-      const ripPts = [];
-      for (let p = 0; p < ripPtsCount; p++) {
-        const theta = (p / ripPtsCount) * Math.PI * 2;
-        const wave = Math.sin(theta * 5 + rip.phase) * (4 + this.smoothVolume * 7) +
-                     Math.cos(theta * 3 - rip.phase * 1.5) * 3;
-        const rDist = rip.radius + wave;
-        ripPts.push({
-          x: cx + Math.cos(theta) * rDist,
-          y: cy + Math.sin(theta) * rDist
-        });
-      }
-
       this.ctx.beginPath();
-      const firstMid = {
-        x: (ripPts[ripPtsCount - 1].x + ripPts[0].x) / 2,
-        y: (ripPts[ripPtsCount - 1].y + ripPts[0].y) / 2
-      };
-      this.ctx.moveTo(firstMid.x, firstMid.y);
-
-      for (let p = 0; p < ripPtsCount; p++) {
-        const next = ripPts[(p + 1) % ripPtsCount];
-        const mid = {
-          x: (ripPts[p].x + next.x) / 2,
-          y: (ripPts[p].y + next.y) / 2
-        };
-        this.ctx.quadraticCurveTo(ripPts[p].x, ripPts[p].y, mid.x, mid.y);
-      }
-      this.ctx.closePath();
+      this.ctx.arc(cx, cy, rip.radius, 0, Math.PI * 2);
       this.ctx.strokeStyle = secondaryColor;
       this.ctx.lineWidth = rip.lineWidth;
       this.ctx.globalAlpha = Math.min(1.0, rip.alpha);
@@ -706,99 +702,217 @@ export class LiveVoiceUI {
       this.ctx.globalAlpha = 1.0;
     }
 
-    // 4. Outer Cosmic Aura Glow
-    const auraRad = baseRadius + 80 + this.smoothVolume * 45;
-    const auraGrad = this.ctx.createRadialGradient(cx, cy, baseRadius * 0.35, cx, cy, auraRad);
+    // 4. Outer Cosmic Celestial Aura Glow
+    const auraRad = baseRadius + 85 + this.smoothVolume * 50;
+    const auraGrad = this.ctx.createRadialGradient(cx, cy, baseRadius * 0.3, cx, cy, auraRad);
     auraGrad.addColorStop(0, auraGlowColor);
-    auraGrad.addColorStop(0.55, "rgba(15, 23, 42, 0.22)");
-    auraGrad.addColorStop(1, "rgba(2, 6, 23, 0)");
+    auraGrad.addColorStop(0.5, "rgba(40, 20, 10, 0.25)");
+    auraGrad.addColorStop(1, "rgba(22, 13, 8, 0)");
 
     this.ctx.fillStyle = auraGrad;
     this.ctx.beginPath();
     this.ctx.arc(cx, cy, auraRad, 0, Math.PI * 2);
     this.ctx.fill();
 
-    // 5. Cincin Gelombang Akustik Organis Cair (Fluid Organic Wave Loops - Bezier Splines)
-    // 4 layer cincin bergetar dinamis merefleksikan vokal & konsonan
-    const ringCount = 4;
-    const pointsPerRing = 96; // Resolusi tinggi kurva cairan tanpa kaku
+    // =========================================================================
+    // 5. 3D SATURNIAN RINGS & MATH GLYPHS CALCULATION
+    // Orbital rotation tilt: ~26 degrees (-0.45 rad)
+    // =========================================================================
+    const ringTiltAngle = -0.42; // Sudut kemiringan sumbu cincin
+    const ringInclination = 0.32; // Perbandingan sumbu minor vs mayor (geometri 3D elips)
 
-    for (let r = 0; r < ringCount; r++) {
-      const ringOffset = 10 + r * 14 + (this.smoothVolume * r * 7);
-      const currentRingRadius = baseRadius + ringOffset;
-      const ringPts = [];
+    const ringsConfig = [
+      { r: baseRadius + 22, width: 1.5, alpha: 0.45, dash: [] },
+      { r: baseRadius + 44, width: 3.2, alpha: 0.85, dash: [] }, // Cincin Utama Luminous
+      { r: baseRadius + 58, width: 1.2, alpha: 0.5, dash: [4, 6] },
+      { r: baseRadius + 78, width: 2.0, alpha: 0.65, dash: [] },
+      { r: baseRadius + 96, width: 1.0, alpha: 0.35, dash: [2, 8] }
+    ];
 
-      // Kecepatan dan arah putaran berbeda antar layer
-      const ringPhase = this.visualizerPhase * (1.2 + r * 0.32) * (r % 2 === 0 ? 1 : -1);
+    // Hitung posisi 3D Glyph Matematika
+    const computedGlyphs = this.mathGlyphs.map((glyph, idx) => {
+      const angle = glyph.baseAngle + this.visualizerPhase * glyph.speed * 1.6;
+      const R = glyph.orbitRadius + this.smoothVolume * 15;
+      
+      // Transformasi koordinat elips 3D terotasi
+      const localX = Math.cos(angle) * R;
+      const localY = Math.sin(angle) * (R * ringInclination);
+      
+      const cosT = Math.cos(ringTiltAngle);
+      const sinT = Math.sin(ringTiltAngle);
+      const screenX = cx + (localX * cosT - localY * sinT);
+      const screenY = cy + (localX * sinT + localY * cosT);
+      
+      // Kedalaman Z: jika sin(angle) < 0, glyph berada di BELAKANG bola!
+      const isBehind = Math.sin(angle) < 0;
+      const depthScale = 0.85 + 0.3 * Math.sin(angle);
 
-      for (let i = 0; i < pointsPerRing; i++) {
-        const theta = (i / pointsPerRing) * Math.PI * 2;
-
-        // Multi-harmonic fluid wave deformer
-        const h1 = Math.sin(theta * 3 + ringPhase + r * 1.1) * 0.44;
-        const h2 = Math.cos(theta * 5 - ringPhase * 1.4 - r * 0.7) * 0.32;
-        const h3 = Math.sin(theta * 7 + ringPhase * 2.1 + r) * 0.24;
-
-        // VIBRASI SUARA NYATA (Acoustic Tremor & Voice Jitter):
-        // Merefleksikan frekuensi getaran suara kita saat masuk
-        const voiceTremor = (this.smoothVolume > 0.03)
-          ? (Math.sin(theta * 11 + this.visualizerPhase * 18) * 0.6 +
-             Math.cos(theta * 16 - this.visualizerPhase * 26) * 0.4) * (this.smoothVolume * 11)
-          : 0;
-
-        const fluidDistortion = (h1 + h2 + h3) * waveAmplitude + voiceTremor;
-        const dist = currentRingRadius + fluidDistortion;
-
-        ringPts.push({
-          x: cx + Math.cos(theta) * dist,
-          y: cy + Math.sin(theta) * dist
-        });
-      }
-
-      // Gambar kurva menggunakan Quadratic Bezier Spline antar titik tengah (mulus cairan!)
-      this.ctx.beginPath();
-      const initialMid = {
-        x: (ringPts[pointsPerRing - 1].x + ringPts[0].x) / 2,
-        y: (ringPts[pointsPerRing - 1].y + ringPts[0].y) / 2
+      return {
+        ...glyph,
+        x: screenX,
+        y: screenY,
+        isBehind,
+        depthScale,
+        alpha: isBehind ? 0.38 : (0.8 + this.smoothVolume * 0.2)
       };
-      this.ctx.moveTo(initialMid.x, initialMid.y);
+    });
 
-      for (let i = 0; i < pointsPerRing; i++) {
-        const next = ringPts[(i + 1) % pointsPerRing];
-        const mid = {
-          x: (ringPts[i].x + next.x) / 2,
-          y: (ringPts[i].y + next.y) / 2
-        };
-        this.ctx.quadraticCurveTo(ringPts[i].x, ringPts[i].y, mid.x, mid.y);
-      }
-      this.ctx.closePath();
-
-      // Gradasi & kilau neon per cincin
-      const ringAlpha = Math.max(0.2, (0.85 - r * 0.18) * (0.7 + this.smoothVolume * 0.45));
-      this.ctx.globalAlpha = Math.min(1.0, ringAlpha);
-      this.ctx.strokeStyle = r % 2 === 0 ? primaryColor : secondaryColor;
-      this.ctx.lineWidth = Math.max(1.2, 2.4 - r * 0.35 + this.smoothVolume * 1.2);
-
-      // Neon glow pada gelombang utama
-      if (r < 2) {
-        this.ctx.shadowBlur = 8 + this.smoothVolume * 16;
-        this.ctx.shadowColor = primaryColor;
-      } else {
-        this.ctx.shadowBlur = 0;
-      }
-
+    // -------------------------------------------------------------------------
+    // PASS A: CINCIN BELAKANG & GLYPH BELAKANG (Rendered di Belakang Bola)
+    // -------------------------------------------------------------------------
+    // Gambar busur belakang cincin (angle PI sampai 2*PI pada sistem elips)
+    ringsConfig.forEach((ring) => {
+      this.ctx.save();
+      this.ctx.beginPath();
+      this.ctx.ellipse(
+        cx, cy,
+        ring.r, ring.r * ringInclination,
+        ringTiltAngle,
+        Math.PI, Math.PI * 2,
+        false
+      );
+      this.ctx.strokeStyle = ring.width > 2 ? primaryColor : secondaryColor;
+      this.ctx.lineWidth = ring.width;
+      this.ctx.globalAlpha = ring.alpha * 0.45;
+      if (ring.dash.length) this.ctx.setLineDash(ring.dash);
       this.ctx.stroke();
-      this.ctx.shadowBlur = 0;
-      this.ctx.globalAlpha = 1.0;
-    }
+      this.ctx.restore();
+    });
 
-    // 6. Luminous Orbit Sound Particles (Partikel nada suara beredar aktif)
+    // Gambar simbol matematika yang berada di belakang bola
+    computedGlyphs.filter(g => g.isBehind).forEach(glyph => {
+      this.ctx.save();
+      this.ctx.font = `600 ${Math.round(glyph.size * glyph.depthScale)}px "Outfit", sans-serif`;
+      this.ctx.textAlign = "center";
+      this.ctx.textBaseline = "middle";
+      this.ctx.fillStyle = secondaryColor;
+      this.ctx.globalAlpha = glyph.alpha;
+      this.ctx.fillText(glyph.symbol, glyph.x, glyph.y);
+      this.ctx.restore();
+    });
+
+    // -------------------------------------------------------------------------
+    // PASS B: BOLA INTI 3D LIVING CELESTIAL CORE
+    // -------------------------------------------------------------------------
+    const bassTremor = (this.smoothVolume > 0.04)
+      ? Math.sin(this.visualizerPhase * 14) * (this.smoothVolume * 3.6)
+      : 0;
+    const orbRadius = Math.max(34, baseRadius - 4 + bassTremor);
+
+    // Dynamic 3D Spherical Radial Gradient
+    const lightOffsetX = -orbRadius * 0.34;
+    const lightOffsetY = -orbRadius * 0.34;
+    const coreGrad = this.ctx.createRadialGradient(
+      cx + lightOffsetX, cy + lightOffsetY, 3,
+      cx, cy, orbRadius
+    );
+    coreGrad.addColorStop(0, coreGradStart);
+    coreGrad.addColorStop(0.2, coreGradMid1);
+    coreGrad.addColorStop(0.52, coreGradMid2);
+    coreGrad.addColorStop(0.82, coreGradOuter);
+    coreGrad.addColorStop(1, coreGradDark);
+
+    // Gambar bola utama
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.arc(cx, cy, orbRadius, 0, Math.PI * 2);
+    this.ctx.fillStyle = coreGrad;
+    this.ctx.shadowBlur = 16 + this.smoothVolume * 22;
+    this.ctx.shadowColor = primaryColor;
+    this.ctx.fill();
+    this.ctx.restore();
+
+    // Garis kontur atmosferik 3D bola (Harmonic Latitude Bands seperti Planet Saturnus)
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.arc(cx, cy, orbRadius, 0, Math.PI * 2);
+    this.ctx.clip(); // Potong di dalam batas bola saja!
+
+    const bandOffsets = [-orbRadius * 0.45, -orbRadius * 0.15, orbRadius * 0.15, orbRadius * 0.45];
+    bandOffsets.forEach((bY, bIdx) => {
+      this.ctx.beginPath();
+      this.ctx.ellipse(
+        cx, cy + bY,
+        orbRadius * 1.1, orbRadius * 0.28,
+        ringTiltAngle,
+        0, Math.PI * 2
+      );
+      this.ctx.strokeStyle = bIdx % 2 === 0 ? "rgba(255, 255, 255, 0.16)" : "rgba(0, 0, 0, 0.22)";
+      this.ctx.lineWidth = 2.5 + Math.sin(this.visualizerPhase + bIdx) * 1.2;
+      this.ctx.stroke();
+    });
+
+    this.ctx.restore();
+
+    // Pantulan Cahaya Spekular 3D (*Specular Highlight Gloss*)
+    const specGrad = this.ctx.createRadialGradient(
+      cx + lightOffsetX, cy + lightOffsetY, 1,
+      cx + lightOffsetX, cy + lightOffsetY, orbRadius * 0.38
+    );
+    specGrad.addColorStop(0, "rgba(255, 255, 255, 0.96)");
+    specGrad.addColorStop(0.28, "rgba(255, 255, 255, 0.72)");
+    specGrad.addColorStop(0.65, "rgba(255, 255, 255, 0.16)");
+    specGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+    this.ctx.fillStyle = specGrad;
+    this.ctx.beginPath();
+    this.ctx.arc(cx + lightOffsetX, cy + lightOffsetY, orbRadius * 0.38, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // -------------------------------------------------------------------------
+    // PASS C: CINCIN DEPAN & GLYPH DEPAN (Rendered di Depan Bola / Menyilang di Muka)
+    // -------------------------------------------------------------------------
+    // Gambar busur depan cincin (angle 0 sampai PI pada sistem elips)
+    ringsConfig.forEach((ring) => {
+      this.ctx.save();
+      this.ctx.beginPath();
+      this.ctx.ellipse(
+        cx, cy,
+        ring.r, ring.r * ringInclination,
+        ringTiltAngle,
+        0, Math.PI,
+        false
+      );
+      this.ctx.strokeStyle = ring.width > 2 ? primaryColor : secondaryColor;
+      this.ctx.lineWidth = ring.width + (this.smoothVolume * 1.4);
+      this.ctx.globalAlpha = Math.min(1.0, ring.alpha * (0.85 + this.smoothVolume * 0.3));
+      if (ring.width > 2) {
+        this.ctx.shadowBlur = 10 + this.smoothVolume * 18;
+        this.ctx.shadowColor = primaryColor;
+      }
+      if (ring.dash.length) this.ctx.setLineDash(ring.dash);
+      this.ctx.stroke();
+      this.ctx.restore();
+    });
+
+    // Gambar simbol matematika yang berada di depan bola (Melintas di muka bola!)
+    computedGlyphs.filter(g => !g.isBehind).forEach(glyph => {
+      this.ctx.save();
+      this.ctx.font = `bold ${Math.round(glyph.size * glyph.depthScale)}px "Outfit", sans-serif`;
+      this.ctx.textAlign = "center";
+      this.ctx.textBaseline = "middle";
+      this.ctx.fillStyle = secondaryColor;
+      this.ctx.shadowBlur = 8 + this.smoothVolume * 12;
+      this.ctx.shadowColor = primaryColor;
+      this.ctx.globalAlpha = glyph.alpha;
+      this.ctx.fillText(glyph.symbol, glyph.x, glyph.y);
+      this.ctx.restore();
+    });
+
+    // -------------------------------------------------------------------------
+    // PASS D: PARTIKEL PLASMA AKUSTIK KOSMIK (Orbit Mengelilingi Sistem)
+    // -------------------------------------------------------------------------
     this.particles.forEach((pt) => {
       pt.angle += pt.speed * (1 + this.smoothVolume * 2.8);
       const radWobble = Math.sin(pt.angle * 4 + this.visualizerPhase * 2 + pt.wobblePhase) * (6 + this.smoothVolume * 14);
-      const pDist = baseRadius + 16 + pt.radiusOffset + radWobble;
-      const px = cx + Math.cos(pt.angle) * pDist;
-      const py = cy + Math.sin(pt.angle) * pDist;
+      const pDist = baseRadius + 18 + pt.radiusOffset + radWobble;
+      
+      const localX = Math.cos(pt.angle) * pDist;
+      const localY = Math.sin(pt.angle) * (pDist * ringInclination);
+      const cosT = Math.cos(ringTiltAngle);
+      const sinT = Math.sin(ringTiltAngle);
+      const px = cx + (localX * cosT - localY * sinT);
+      const py = cy + (localX * sinT + localY * cosT);
 
       this.ctx.fillStyle = pt.angle % 2 === 0 ? primaryColor : secondaryColor;
       this.ctx.shadowBlur = 6 + this.smoothVolume * 10;
@@ -812,46 +926,6 @@ export class LiveVoiceUI {
       this.ctx.shadowBlur = 0;
       this.ctx.globalAlpha = 1.0;
     });
-
-    // 7. Bola Inti 3D (Living Core Sphere with Bass Vibration)
-    // Bola berdenyut fisik mengikuti ketukan dan intonasi suara
-    const bassTremor = (this.smoothVolume > 0.04)
-      ? Math.sin(this.visualizerPhase * 14) * (this.smoothVolume * 3.4)
-      : 0;
-    const orbRadius = Math.max(32, baseRadius - 6 + bassTremor);
-
-    // Gradasi 3D Bola
-    const lightOffsetX = -orbRadius * 0.34;
-    const lightOffsetY = -orbRadius * 0.34;
-    const coreGrad = this.ctx.createRadialGradient(
-      cx + lightOffsetX, cy + lightOffsetY, 3,
-      cx, cy, orbRadius
-    );
-    coreGrad.addColorStop(0, coreGradStart);
-    coreGrad.addColorStop(0.24, coreGradMid);
-    coreGrad.addColorStop(0.68, coreGradOuter);
-    coreGrad.addColorStop(0.9, "#0b192c");
-    coreGrad.addColorStop(1, "#020617");
-
-    this.ctx.fillStyle = coreGrad;
-    this.ctx.beginPath();
-    this.ctx.arc(cx, cy, orbRadius, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    // 8. Pantulan Cahaya Spekular (*Specular Highlight*)
-    const specGrad = this.ctx.createRadialGradient(
-      cx + lightOffsetX, cy + lightOffsetY, 1,
-      cx + lightOffsetX, cy + lightOffsetY, orbRadius * 0.36
-    );
-    specGrad.addColorStop(0, "rgba(255, 255, 255, 0.95)");
-    specGrad.addColorStop(0.3, "rgba(255, 255, 255, 0.75)");
-    specGrad.addColorStop(0.65, "rgba(255, 255, 255, 0.18)");
-    specGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
-
-    this.ctx.fillStyle = specGrad;
-    this.ctx.beginPath();
-    this.ctx.arc(cx + lightOffsetX, cy + lightOffsetY, orbRadius * 0.36, 0, Math.PI * 2);
-    this.ctx.fill();
   }
 
   // =========================================================================

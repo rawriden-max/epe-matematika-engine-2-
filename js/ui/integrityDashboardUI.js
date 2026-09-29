@@ -94,9 +94,12 @@ export class IntegrityDashboardUI {
             <div class="flex items-center gap-2 flex-wrap">
               <!-- Creator Anti-Detector Mode Toggle -->
               <button id="btn-toggle-creator-antidetector" class="py-1.5 px-3 rounded-xl border text-xs font-mono font-bold transition-all flex items-center gap-2 ${isAntiActive ? 'bg-purple-500/15 dark:bg-purple-950/40 border-purple-500/40 text-purple-600 dark:text-purple-300 shadow-sm shadow-purple-500/10 ring-1 ring-purple-500/30' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}" title="Klik untuk mengaktifkan/menonaktifkan Creator Anti-Detector Bypass">
-                <span class="relative flex h-2 w-2">
-                  ${isAntiActive ? '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>' : ''}
-                  <span class="relative inline-flex rounded-full h-2 w-2 ${isAntiActive ? 'bg-purple-500' : 'bg-slate-400'}"></span>
+                <span class="relative flex items-center justify-center w-3.5 h-3.5 shrink-0 ${isAntiActive ? 'text-purple-400' : 'text-slate-400'}">
+                  <svg class="w-3.5 h-3.5 ${isAntiActive ? 'animate-pulse' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12,2 22,12 12,22 2,12" fill="${isAntiActive ? 'currentColor' : 'none'}" fill-opacity="${isAntiActive ? '0.28' : '0'}"/>
+                    <polygon points="12,7 17,12 12,17 7,12" stroke-width="1.5"/>
+                    <rect x="11" y="11" width="2" height="2" fill="currentColor"/>
+                  </svg>
                 </span>
                 <svg class="w-3.5 h-3.5 ${isAntiActive ? 'text-purple-400' : 'text-slate-400'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                   <path d="M12 2L3 6.5V11.5C3 16.5 6.8 21.2 12 22.5C17.2 21.2 21 16.5 21 11.5V6.5L12 2Z" stroke-linejoin="round"/>

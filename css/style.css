@@ -48,13 +48,16 @@ body.theme-dark {
 }
 
 /* Base Global Reset */
-html,
-body {
-  max-width: 100%;
+html {
+  max-width: 100vw;
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  overflow-y: auto;
   font-family: var(--font-sans);
   background-color: var(--bg-app);
   color: var(--text-main);
@@ -1591,7 +1594,7 @@ body:not(.theme-dark) .ai-msg-assistant tr:hover td {
 }
 
 /* Base layering so interactive UI cards sit above cosmic background */
-header, main, footer, .ai-drawer-container, #ai-chat-drawer {
+header, main, footer, .ai-drawer-container {
   position: relative;
   z-index: 1;
 }
@@ -1657,15 +1660,15 @@ body:not(.theme-dark) .card-clean {
 
 @keyframes cyber-flare-flash {
   0% {
-    transform: translate(-50%, -50%) scaleX(0.05) scaleY(0.4);
+    transform: translate(-50%, -50%) scaleX(0.1) scaleY(0.4);
     opacity: 1;
   }
-  35% {
-    transform: translate(-50%, -50%) scaleX(3.5) scaleY(1.8);
+  40% {
+    transform: translate(-50%, -50%) scaleX(4) scaleY(0.6);
     opacity: 0.95;
   }
   100% {
-    transform: translate(-50%, -50%) scaleX(8) scaleY(0.1);
+    transform: translate(-50%, -50%) scaleX(9) scaleY(0.2);
     opacity: 0;
   }
 }
@@ -2915,6 +2918,12 @@ body:not(.theme-dark) #ai-chat-input::placeholder {
 /* TATA LETAK NAVIGASI HALAMAN (ATAS, POJOK / SIDEBAR, BAWAH / DOCK)         */
 /* ========================================================================= */
 
+/* Sidebar Nav Hidden by default (prevents intrusion into standard bottom dock layout) */
+#epe-sidebar-nav,
+#epe-sidebar-backdrop {
+  display: none !important;
+}
+
 /* 1. Default / Atas: Navigasi Horizontal di Header */
 body.nav-pos-top #header-top-nav-row,
 body.nav-pos-top #main-top-nav {
@@ -3062,7 +3071,10 @@ body.nav-pos-bottom #epe-bottom-dock {
   animation: dockSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 body.nav-pos-bottom main {
-  padding-bottom: 7rem !important;
+  padding-bottom: 2rem !important;
+}
+body.nav-pos-bottom footer {
+  padding-bottom: 6rem !important;
 }
 body.nav-pos-bottom .floating-ai-trigger {
   bottom: 5.25rem !important;
@@ -3388,20 +3400,19 @@ body.theme-dark #main-header.scrolled-luxury-white,
 /* 2. Floating Top Notification Capsule (Inspirational Motivation) */
 #top-notification-strip {
   pointer-events: auto;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, visibility 0.35s ease;
+  transition: opacity 0.3s ease, margin 0.3s ease, max-height 0.3s ease;
 }
 
-#top-notification-strip.dismissed {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transform: translate(-50%, -24px) scale(0.92) !important;
-  visibility: hidden !important;
-}
-
+#top-notification-strip.dismissed,
+#top-notification-strip.hidden,
 #top-notification-strip.modal-open-hidden {
+  display: none !important;
   opacity: 0 !important;
   pointer-events: none !important;
   visibility: hidden !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 body:not(.theme-dark) #top-notification-strip #header-quote-banner {
@@ -3486,6 +3497,7 @@ body.theme-dark .waygo-squircle-card,
 /* Morphing Container Transitions */
 #waygo-pill-wrapper {
   position: relative;
+  min-height: 60px;
   transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -3861,13 +3873,24 @@ body:not(.theme-dark) .floating-student-avatar:hover {
   pointer-events: none !important;
 }
 
+/* Top Notification Strip Dismissed / Hidden State */
+#top-notification-strip.dismissed,
+#top-notification-strip.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transform: translate(-50%, -100%) scale(0.9) !important;
+}
+
 /* ========================================================================= */
 /* 12. FLOATING INTERACTIVE MOTIVATION CRYSTAL (DRAGGABLE & PLAYABLE GEM)     */
 /* ========================================================================= */
 .floating-motivation-crystal {
   position: fixed;
-  top: 72px;
-  right: 24px;
+  top: 76px;
+  right: 28px;
+  left: auto;
   z-index: 45;
   display: flex;
   align-items: center;
@@ -3883,7 +3906,10 @@ body:not(.theme-dark) .floating-student-avatar:hover {
   user-select: none;
   touch-action: none;
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease;
-  animation: crystal-float-idle 3.5s ease-in-out infinite, crystal-spawn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: crystal-spawn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  max-width: calc(100vw - 56px);
+  box-sizing: border-box;
+  contain: layout;
 }
 
 .floating-motivation-crystal:active,
@@ -4081,11 +4107,362 @@ body:not(.theme-dark) .crystal-tab-badge {
     opacity: 0.8;
   }
   100% {
-    transform: scale(1.6);
+    transform: scale(1.4);
     opacity: 0;
   }
 }
 
+/* ========================================================================= */
+/* 13. DYNAMIC ADAPTIVE INVERTED CURSOR (DIFFERENCE BLENDING & ULTRA Z-INDEX)*/
+/* Otomatis memutih di bidang hitam/gelap, menghitam di bidang putih/terang  */
+/* ========================================================================= */
+@media (pointer: fine) {
+  *,
+  *::before,
+  *::after {
+    cursor: none !important;
+  }
+}
 
+.epe-custom-cursor-wrapper {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  pointer-events: none !important;
+  z-index: 2147483647 !important;
+  overflow: visible !important;
+}
 
+@media (pointer: coarse) {
+  .epe-custom-cursor-wrapper {
+    display: none !important;
+  }
+}
+
+/* 1. Center Crisp Dot */
+.epe-cursor-dot {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  margin-top: -3.5px;
+  margin-left: -3.5px;
+  border-radius: 50%;
+  pointer-events: none !important;
+  z-index: 2147483647 !important;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.05s ease, width 0.2s ease, height 0.2s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+  will-change: transform;
+}
+
+/* 2. Outer Smooth Follower Ring */
+.epe-cursor-ring {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 34px;
+  height: 34px;
+  margin-top: -17px;
+  margin-left: -17px;
+  border-radius: 50%;
+  pointer-events: none !important;
+  border-style: solid !important;
+  z-index: 2147483647 !important;
+  opacity: 0;
+  transition: opacity 0.2s ease, width 0.22s cubic-bezier(0.16, 1, 0.3, 1), height 0.22s cubic-bezier(0.16, 1, 0.3, 1), margin 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.22s ease, background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  will-change: transform;
+}
+
+.epe-cursor-dot.is-active,
+.epe-cursor-ring.is-active {
+  opacity: 1 !important;
+}
+
+/* ========================================================================= */
+/* TEMA TERANG / PUTIH (body:not(.theme-dark)) -> KURSOR SOLID HITAM TEGAS   */
+/* Kontras tinggi & tidak pudar di atas latar putih, kartu, maupun tabel     */
+/* ========================================================================= */
+body:not(.theme-dark) .epe-cursor-dot {
+  background-color: #000000 !important;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.95), 0 2px 5px rgba(0, 0, 0, 0.5) !important;
+}
+
+body:not(.theme-dark) .epe-cursor-ring {
+  border-width: 2px !important;
+  border-color: #000000 !important;
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+body:not(.theme-dark) .epe-cursor-ring.is-hovering {
+  width: 48px !important;
+  height: 48px !important;
+  margin-top: -24px !important;
+  margin-left: -24px !important;
+  border-width: 2.5px !important;
+  border-color: #000000 !important;
+  background-color: rgba(0, 0, 0, 0.16) !important;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.95), 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+body:not(.theme-dark) .epe-cursor-dot.is-hovering {
+  width: 9px !important;
+  height: 9px !important;
+  margin-top: -4.5px !important;
+  margin-left: -4.5px !important;
+}
+
+body:not(.theme-dark) .epe-cursor-ring.is-text-field {
+  width: 3.5px !important;
+  height: 24px !important;
+  margin-top: -12px !important;
+  margin-left: -1.75px !important;
+  border-radius: 2px !important;
+  border: none !important;
+  background-color: #000000 !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.95), 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+body:not(.theme-dark) .epe-cursor-dot.is-text-field {
+  opacity: 0 !important;
+}
+
+body:not(.theme-dark) .epe-cursor-ring.is-clicking {
+  width: 24px !important;
+  height: 24px !important;
+  margin-top: -12px !important;
+  margin-left: -12px !important;
+  border-width: 3px !important;
+  border-color: #000000 !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ========================================================================= */
+/* TEMA GELAP (body.theme-dark, .dark) -> KURSOR SOLID PUTIH BERSINAR TERANG  */
+/* Menandai titik kursor di bidang gelap agar menyala terang & presisi       */
+/* ========================================================================= */
+body.theme-dark .epe-cursor-dot,
+.dark .epe-cursor-dot {
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.95), 0 0 12px rgba(255, 255, 255, 0.95) !important;
+}
+
+body.theme-dark .epe-cursor-ring,
+.dark .epe-cursor-ring {
+  border-width: 2px !important;
+  border-color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 0 0 16px rgba(255, 255, 255, 0.45) !important;
+}
+
+body.theme-dark .epe-cursor-ring.is-hovering,
+.dark .epe-cursor-ring.is-hovering {
+  width: 48px !important;
+  height: 48px !important;
+  margin-top: -24px !important;
+  margin-left: -24px !important;
+  border-width: 2.5px !important;
+  border-color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.9), 0 0 24px rgba(255, 255, 255, 0.65) !important;
+}
+
+body.theme-dark .epe-cursor-dot.is-hovering,
+.dark .epe-cursor-dot.is-hovering {
+  width: 9px !important;
+  height: 9px !important;
+  margin-top: -4.5px !important;
+  margin-left: -4.5px !important;
+}
+
+body.theme-dark .epe-cursor-ring.is-text-field,
+.dark .epe-cursor-ring.is-text-field {
+  width: 3.5px !important;
+  height: 24px !important;
+  margin-top: -12px !important;
+  margin-left: -1.75px !important;
+  border-radius: 2px !important;
+  border: none !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.95), 0 0 8px rgba(255, 255, 255, 0.9) !important;
+}
+
+body.theme-dark .epe-cursor-dot.is-text-field,
+.dark .epe-cursor-dot.is-text-field {
+  opacity: 0 !important;
+}
+
+body.theme-dark .epe-cursor-ring.is-clicking,
+.dark .epe-cursor-ring.is-clicking {
+  width: 24px !important;
+  height: 24px !important;
+  margin-top: -12px !important;
+  margin-left: -12px !important;
+  border-width: 3px !important;
+  border-color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ========================================================================= */
+/* 14. 3D ISOMETRIC LEARNING CUBES ICON STYLING (BUKAN DIAMOND)               */
+/* ========================================================================= */
+.epe-cube-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  filter: drop-shadow(0 2px 5px rgba(245, 158, 11, 0.5));
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.epe-cube-icon:hover {
+  transform: scale(1.15) rotate(4deg);
+}
+
+.epe-cube-svg {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  overflow: visible;
+}
+
+/* ========================================================================= */
+/* 15. AI MULTIMODAL PHOTO SOLVER & SCAN BEAM                               */
+/* ========================================================================= */
+@keyframes laserScanBeamSweep {
+  0% { top: 0%; opacity: 0.85; }
+  50% { top: 96%; opacity: 1; filter: drop-shadow(0 0 16px #38bdf8); }
+  100% { top: 0%; opacity: 0.85; }
+}
+
+.animate-scan-beam {
+  animation: laserScanBeamSweep 2.2s ease-in-out infinite !important;
+}
+
+.katex-rendered-card {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.katex-rendered-card:hover {
+  border-color: rgba(56, 189, 248, 0.6);
+  transform: translateY(-1px);
+}
+
+/* ========================================================================= */
+/* 16. TOAST NOTIFICATION ULTRA-HIGH Z-INDEX & SETTINGS ANTI-LAG BADGE        */
+/* ========================================================================= */
+#toast-container {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+  top: 1.25rem !important;
+  right: 1.5rem !important;
+  left: auto !important;
+  transform: none !important;
+  width: auto !important;
+  max-width: min(440px, calc(100vw - 2rem)) !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 640px) {
+  #toast-container {
+    top: 1rem !important;
+    right: 1rem !important;
+    left: 1rem !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Natural Seamless Window Scrolling & Layout Stability */
+html {
+  overflow-x: hidden !important;
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  min-height: 100vh !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.nav-pos-bottom main,
+#section-photo-solver-mode:not(.hidden),
+#section-dashboard-mode:not(.hidden),
+#section-pretest-mode:not(.hidden),
+#section-diagnostic-mode:not(.hidden),
+#section-practice-mode:not(.hidden),
+#section-posttest-mode:not(.hidden),
+#section-error-profile:not(.hidden),
+#section-research-mode:not(.hidden) {
+  min-height: calc(100vh - 120px);
+  padding-bottom: 8.5rem !important;
+  box-sizing: border-box;
+  overflow: visible !important;
+}
+
+#settings-perf-toggle.active-low {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.35) 100%) !important;
+  border-color: #f59e0b !important;
+  color: #fef08a !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.45) !important;
+}
+
+/* ========================================================================= */
+/* TOAST NOTIFICATION CONTAINER - ALWAYS HIGHEST Z-INDEX & CORNER POSITION   */
+/* ========================================================================= */
+#toast-container {
+  position: fixed !important;
+  top: 1.25rem !important;
+  right: 1.5rem !important;
+  left: auto !important;
+  transform: none !important;
+  z-index: 2147483647 !important;
+  pointer-events: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 0.65rem !important;
+  max-width: 440px !important;
+  width: auto !important;
+}
+
+@media (max-width: 640px) {
+  #toast-container {
+    top: 1rem !important;
+    left: 1rem !important;
+    right: 1rem !important;
+    max-width: none !important;
+    width: auto !important;
+    align-items: stretch !important;
+  }
+}
+
+#toast-container > div {
+  background-color: #140c07 !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 20px rgba(245, 158, 11, 0.4) !important;
+  border: 2px solid #f59e0b !important;
+  z-index: 2147483647 !important;
+}
+
+/* QUESTION BANK PORTAL ROOT */
+#qbank-portal-container,
+.qbank-portal-root {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2000050 !important;
+  pointer-events: none !important;
+}
+
+#qbank-portal-container:empty,
+.qbank-portal-root:empty {
+  display: none !important;
+}
+
+#qbank-portal-container > *,
+.qbank-portal-root > * {
+  pointer-events: auto !important;
+}
 

@@ -3,6 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    window.addEventListener('error', function(e) {
+      document.title = 'ERROR: ' + e.message + ' at ' + (e.filename ? e.filename.split('/').pop() : '') + ':' + e.lineno;
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      document.title = 'PROMISE_ERROR: ' + (e.reason && e.reason.message ? e.reason.message : e.reason);
+    });
+  </script>
   <title>EPE Matematika - Error Pattern Engine & Diagnostik Kognitif AI</title>
 
   <!-- SEO Primary Meta Tags -->
@@ -144,7 +152,7 @@
     }
   </style>
 </head>
-<body class="antialiased flex flex-col min-h-screen theme-dark">
+<body class="antialiased flex flex-col min-h-screen theme-dark nav-pos-bottom">
 
   <!-- Canvas Latar Belakang Alam Semesta Futuristik Interaktif -->
   <canvas id="universe-canvas" class="universe-background-canvas"></canvas>
@@ -154,7 +162,7 @@
   <!-- ========================================================================= -->
   <div id="epe-sidebar-backdrop" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity"></div>
   
-  <aside id="epe-sidebar-nav" class="epe-sidebar-component fixed top-0 bottom-0 left-0 w-64 z-50 bg-white/95 dark:bg-[#070c16]/98 backdrop-blur-2xl border-r border-slate-200 dark:border-slate-800/80 flex flex-col justify-between transition-transform duration-300 -translate-x-full lg:translate-x-0 shadow-2xl">
+  <aside id="epe-sidebar-nav" class="epe-sidebar-component fixed top-0 bottom-0 left-0 w-64 z-50 bg-white/95 dark:bg-[#070c16]/98 backdrop-blur-2xl border-r border-slate-200 dark:border-slate-800/80 flex flex-col justify-between transition-transform duration-300 -translate-x-full shadow-2xl">
     
     <!-- Bagian Atas: Brand & Quick Action AI -->
     <div class="p-4 space-y-4">
@@ -191,10 +199,7 @@
       <!-- Live Digital Clock & Sesi Belajar Widget di Sidebar (Tampilan Pojok) -->
       <div id="sidebar-live-clock-card" class="creative-header-card group flex items-center justify-between px-3 py-2 rounded-xl bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-xs cursor-pointer hover:border-cyan-500/40 transition-all select-none" title="Klik untuk beralih tampilan Jam / Tanggal / Zona Waktu">
         <div class="flex items-center gap-2">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981] shrink-0"></span>
           <div class="flex items-center gap-1.5 font-mono text-xs font-bold text-slate-800 dark:text-slate-100">
             <svg class="w-3.5 h-3.5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span id="sidebar-clock-display">00:00:00</span>
@@ -229,6 +234,14 @@
           <button data-tab="practice" class="epe-nav-item sidebar-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all">
             <svg class="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             <span>Bank Latihan</span>
+          </button>
+
+          <button data-tab="photo-solver" class="epe-nav-item sidebar-nav-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all">
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4 text-cyan-500 dark:text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              <span>Foto / File AI</span>
+            </div>
+            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-400 font-bold border border-cyan-500/30">AI</span>
           </button>
 
           <button data-tab="posttest" class="epe-nav-item sidebar-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all">
@@ -282,7 +295,16 @@
       <!-- User Info Tag (Synchronized with ProfileManager & CubicRewards) -->
       <div class="flex items-center justify-between px-1 pt-1 text-xs">
         <span id="sidebar-student-name" class="font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate max-w-[130px]" title="Nama Siswa">Siswa_01</span>
-        <span class="text-cyan-600 dark:text-cyan-400 font-mono text-[11px] font-bold shrink-0">◆ <span id="sidebar-cubic-balance">100</span></span>
+        <span class="text-amber-600 dark:text-amber-400 font-mono text-[11px] font-bold shrink-0 flex items-center gap-1">
+          <span class="epe-cube-icon">
+            <svg class="w-3 h-3 epe-cube-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L21 7.2L12 12.4L3 7.2Z" fill="#fde68a" stroke="#f59e0b" stroke-width="0.8" stroke-linejoin="round"/>
+              <path d="M3 7.2L12 12.4V22L3 16.8Z" fill="#f59e0b" stroke="#d97706" stroke-width="0.8" stroke-linejoin="round"/>
+              <path d="M12 12.4L21 7.2V16.8L12 22Z" fill="#d97706" stroke="#92400e" stroke-width="0.8" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span id="sidebar-cubic-balance">100</span>
+        </span>
       </div>
     </div>
   </aside>
@@ -290,14 +312,10 @@
   <!-- ========================================================================= -->
   <!-- FLOATING TOP NOTIFICATION CAPSULE (KUTIPAN MOTIVASI & MATRIX LIVE STATUS) -->
   <!-- ========================================================================= -->
-  <div id="top-notification-strip" class="fixed top-[58px] sm:top-[64px] left-1/2 -translate-x-1/2 z-30 pointer-events-auto transition-all duration-300">
+  <div id="top-notification-strip" class="w-full flex items-center justify-center pt-2.5 pb-1 px-4 relative z-30 transition-all duration-300">
     <div id="header-motivation-strip" class="w-full flex items-center justify-center px-3">
-      <div id="header-quote-banner" class="inline-flex items-center justify-center gap-2 sm:gap-3 px-3.5 sm:px-5 py-1.5 rounded-full bg-white/92 dark:bg-[#1a110b]/92 border border-slate-200/90 dark:border-amber-900/40 shadow-lg shadow-black/10 hover:border-emerald-500/50 backdrop-blur-2xl transition-all cursor-pointer select-none max-w-[94vw] sm:max-w-2xl group" title="Kutipan Filosofis Motivasi Belajar (Klik untuk Menutup Notifikasi)">
-        <span class="flex h-2.5 w-2.5 relative shrink-0">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-        </span>
-        <span class="text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0">EPE MOTIVASI</span>
+      <div id="header-quote-banner" class="inline-flex items-center justify-center gap-2 sm:gap-3 px-3.5 sm:px-5 py-1.5 rounded-full bg-white/92 dark:bg-[#1a110b]/92 border border-slate-200/90 dark:border-amber-900/40 shadow-lg shadow-black/10 hover:border-amber-500/50 backdrop-blur-2xl transition-all cursor-pointer select-none max-w-[94vw] sm:max-w-2xl group" title="Kutipan Filosofis Motivasi Belajar (Klik untuk Menutup Notifikasi)">
+        <span class="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0">EPE MOTIVASI</span>
         <span id="widget-motivation-quote" class="text-xs sm:text-[12px] font-medium text-slate-800 dark:text-slate-200 tracking-tight whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-300">“Jika kamu tak tahan akan penatnya belajar, maka kamu akan menanggung perihnya kebodohan” — Imam Syafi'i</span>
         <div class="flex items-center gap-1 shrink-0 ml-1">
           <button id="btn-close-motivation" type="button" class="w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-slate-200/60 dark:hover:bg-amber-950/60 transition-colors cursor-pointer" title="Tutup Notifikasi Motivasi">
@@ -311,19 +329,25 @@
   <!-- ========================================================================= -->
   <!-- FLOATING INTERACTIVE MOTIVATION CRYSTAL (SIMBOL MOTIVASI DAPAT DIGESER)   -->
   <!-- ========================================================================= -->
-  <div id="floating-motivation-crystal" class="floating-motivation-crystal hidden" title="Kristal Inspirasi Matematika (Geser bebas ke mana saja / Klik untuk Buka Motivasi)" role="button" tabindex="0">
+  <div id="floating-motivation-crystal" class="floating-motivation-crystal hidden" title="Kristal Motivasi Matematika (Geser bebas ke mana saja / Klik untuk Buka Motivasi)" role="button" tabindex="0">
     <div class="crystal-core-wrapper">
       <div class="crystal-prism">
         <div class="crystal-facet facet-front"></div>
         <div class="crystal-facet facet-glow"></div>
-        <span class="crystal-rune">💎</span>
+        <span class="crystal-rune">
+          <svg class="w-3.5 h-3.5 epe-cube-svg" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L21 7.2L12 12.4L3 7.2Z" fill="#fde68a" stroke="#f59e0b" stroke-width="0.8" stroke-linejoin="round"/>
+            <path d="M3 7.2L12 12.4V22L3 16.8Z" fill="#f59e0b" stroke="#d97706" stroke-width="0.8" stroke-linejoin="round"/>
+            <path d="M12 12.4L21 7.2V16.8L12 22Z" fill="#d97706" stroke="#92400e" stroke-width="0.8" stroke-linejoin="round"/>
+          </svg>
+        </span>
       </div>
       <div class="crystal-energy-ring"></div>
       <div class="crystal-pulse-wave"></div>
     </div>
     <div class="crystal-mini-tab">
       <span class="crystal-tab-badge">MOTIVASI</span>
-      <span class="crystal-tab-text">Buka Inspirasi ✨</span>
+      <span class="crystal-tab-text">Motivasi ✨</span>
       <span class="crystal-drag-handle" title="Tahan & Geser">⠿</span>
     </div>
   </div>
@@ -355,7 +379,7 @@
       <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
         <!-- Live Role Badge -->
         <div class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-amber-950/40 border border-slate-200/80 dark:border-amber-900/40 text-xs font-semibold text-slate-700 dark:text-slate-300">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-xs">🎓</span>
           <span id="header-current-mode-label">Mode Siswa</span>
         </div>
 
@@ -371,8 +395,18 @@
             <span class="floating-avatar-mini-icon">🎓</span>
           </div>
           <div class="floating-avatar-text-group hidden sm:flex flex-col text-left">
-            <span id="floating-student-name" class="text-xs font-extrabold text-slate-800 dark:text-amber-100 leading-tight truncate max-w-[110px]">Siswa Berbakat</span>
-            <span id="floating-student-cubes" class="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 leading-tight">💎 <span id="floating-student-cubic-val">100</span> Cubes</span>
+            <span id="floating-student-name" class="text-xs font-extrabold text-slate-800 dark:text-amber-100 leading-tight truncate max-w-[110px]">Ilyas</span>
+            <span id="floating-student-cubes" class="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 leading-tight flex items-center gap-1">
+              <span class="epe-cube-icon">
+                <svg class="w-3.5 h-3.5 epe-cube-svg" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L21 7.2L12 12.4L3 7.2Z" fill="#fde68a" stroke="#f59e0b" stroke-width="0.8" stroke-linejoin="round"/>
+                  <path d="M3 7.2L12 12.4V22L3 16.8Z" fill="#f59e0b" stroke="#d97706" stroke-width="0.8" stroke-linejoin="round"/>
+                  <path d="M12 12.4L21 7.2V16.8L12 22Z" fill="#d97706" stroke="#92400e" stroke-width="0.8" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12.2" r="1.3" fill="#ffffff" opacity="0.95"/>
+                </svg>
+              </span>
+              <span><span id="floating-student-cubic-val">100</span> Cubes</span>
+            </span>
           </div>
         </button>
       </div>
@@ -421,6 +455,7 @@
         <button id="tab-btn-pretest" data-tab="pretest" class="epe-nav-item"></button>
         <button id="tab-btn-diagnostic" data-tab="diagnostic" class="epe-nav-item"></button>
         <button id="tab-btn-practice" data-tab="practice" class="epe-nav-item"></button>
+        <button id="tab-btn-photo-solver" data-tab="photo-solver" class="epe-nav-item">Foto Soal</button>
         <button id="tab-btn-posttest" data-tab="posttest" class="epe-nav-item"></button>
         <button id="tab-btn-error-profile" data-tab="error-profile" class="epe-nav-item"></button>
         <button id="tab-btn-research" data-tab="research" class="epe-nav-item"><span id="nav-lock-badge"></span></button>
@@ -449,11 +484,10 @@
           <!-- Small Badge with ID and Edit Name -->
           <div class="flex items-center gap-2 flex-wrap">
             <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
               EPE Research & Learning Space
             </span>
             <span class="text-xs text-amber-200/80 flex items-center gap-1.5 font-mono">
-              ID: <strong id="dash-student-name" class="text-white font-bold">Siswa_01</strong>
+              ID: <strong id="dash-student-name" class="text-white font-bold font-sans">Ilyas</strong>
               <button id="btn-edit-student-name" class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-amber-200 border border-white/20 transition-all flex items-center gap-1" title="Ubah Nama / Nickname Saya">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                 <span>Ubah</span>
@@ -476,20 +510,24 @@
           
           <!-- Target Terdekat & Action -->
           <div class="pt-2 flex items-center gap-3 text-xs text-amber-200/80 flex-wrap">
-            <span>Target Terdekat: <strong id="next-target-title" class="text-white font-bold">Memuat Target...</strong></span>
-            <button id="btn-continue-diagnostic" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-white shadow-md shadow-emerald-500/30 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95">
+            <span>Target Terdekat: <strong id="next-target-title" class="text-white font-bold">Lanjutkan: Q1 (D1 - Konsep Aljabar)</strong></span>
+            <button id="btn-continue-diagnostic" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-white shadow-md shadow-emerald-500/30 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95 cursor-pointer">
               <span>Lanjutkan Diagnostik</span>
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
+            <button id="hero-btn-open-photo-solver" type="button" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-cyan-600/80 hover:bg-cyan-500 text-white shadow-md shadow-cyan-600/30 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95 border border-cyan-400/40 cursor-pointer" title="Pindai &amp; Diagnosis Foto Soal Matematika">
+              <svg class="w-3.5 h-3.5 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>Foto Soal AI</span>
+              <span class="px-1.5 py-0.2 rounded text-[9px] bg-white/20 text-white font-mono uppercase font-black">Baru</span>
             </button>
           </div>
         </div>
 
         <!-- Right: Image 4 Matrix AI Quantum Glass Core with Robotic Probe Arms & Floating Rumus MTK -->
         <div class="minimal-matrix-ai-card p-3 sm:p-4 flex flex-col items-center justify-between sm:min-w-[280px] lg:w-[325px] shrink-0 border border-white/15 bg-white/5 backdrop-blur-xl relative overflow-hidden group">
-          <!-- Image 2 Exact Header: 🟢 MATRIX AI ONLINE    3D Interactive -->
+          <!-- Image 2 Exact Header: MATRIX AI ONLINE    3D Saturn Core -->
           <div class="flex items-center justify-between w-full pb-2 border-b border-white/10 z-10">
             <div class="flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
               <span class="text-[11px] font-mono font-extrabold text-emerald-400 uppercase tracking-wider">MATRIX AI ONLINE</span>
             </div>
             <span class="text-[10px] text-amber-300 font-mono flex items-center gap-1">
@@ -498,9 +536,9 @@
             </span>
           </div>
 
-          <!-- 3D Saturn Math Planet + Orbital Rings + Floating Rumus MTK Canvas Container -->
+          <!-- 3D Saturn Core + Gyroscopic Rings + Floating Rumus MTK Canvas Container -->
           <div class="relative w-full py-0.5 flex flex-col items-center justify-center my-0.5">
-            <div id="ai-orb-container" class="w-full h-44 sm:h-48 relative cursor-pointer" title="Matrix AI Saturn Math Core (Klik untuk Buka Percakapan)"></div>
+            <div id="ai-orb-container" class="w-full h-44 sm:h-48 relative cursor-pointer" style="min-height: 180px; width: 100%; display: flex; align-items: center; justify-content: center;" title="Matrix AI 3D Saturn Core (Klik untuk Buka Percakapan)"></div>
             <p class="text-[10px] text-center text-amber-200/90 font-mono tracking-tight -mt-0.5">
               Saturn Orbit Rings &bull; Rumus Aljabar Interaktif
             </p>
@@ -1470,6 +1508,13 @@
   </main>
 
   <!-- ========================================================================= -->
+  <!-- TAB FOTO SOAL AI: SCANNER SOAL & DIAGNOSIS KOGNITIF MULTIMODAL            -->
+  <!-- ========================================================================= -->
+  <main id="section-photo-solver-mode" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 hidden">
+    <!-- Rendered dynamically by photoMathSolver.js -->
+  </main>
+
+  <!-- ========================================================================= -->
   <!-- TAB POST-TEST: EVALUASI AKHIR PENELITIAN (FORM B)                         -->
   <!-- ========================================================================= -->
   <main id="section-posttest-mode" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 hidden">
@@ -1771,6 +1816,7 @@ Remediasi = -</pre>
 
   </main>
 
+
   <!-- ========================================================================= -->
   <!-- MODAL: VIEW COLLECTION MODAL (LEARNING CUBES MONUMENT DETAIL)             -->
   <!-- ========================================================================= -->
@@ -1829,36 +1875,6 @@ Remediasi = -</pre>
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL: UBAH NAMA / NICKNAME SISWA                                         -->
-  <!-- ========================================================================= -->
-  <div id="edit-nickname-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-    <div class="card-clean max-w-md w-full p-6 space-y-4 shadow-2xl relative border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
-        <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <svg class="w-4 h-4 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-          <span>Ubah Nama / Nickname Siswa</span>
-        </h3>
-        <button id="btn-cancel-nickname-x" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onclick="document.getElementById('edit-nickname-modal').classList.add('hidden')">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-      </div>
-
-      <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-        Nama ini akan digunakan pada seluruh lembar kerja diagnostik, monumen Learning Cube, instrumen Pre-Test &amp; Post-Test, dan laporan riset.
-      </p>
-
-      <div class="space-y-1.5">
-        <label for="edit-nickname-input" class="block text-xs font-bold text-slate-800 dark:text-slate-200">Nama Lengkap / Panggilan:</label>
-        <input type="text" id="edit-nickname-input" class="input-clean w-full px-3.5 py-2.5 text-xs font-bold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-slate-950 focus:border-blue-500 rounded-xl" placeholder="Contoh: Muhammad Ilyas" maxlength="40" />
-      </div>
-
-      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
-        <button id="btn-cancel-nickname" class="btn-secondary py-2 px-3.5 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300">Batal</button>
-        <button id="btn-save-nickname" class="btn-primary py-2 px-4 text-xs font-bold shadow-md rounded-xl">Simpan Nama</button>
-      </div>
-    </div>
-  </div>
 
   <!-- ========================================================================= -->
   <!-- MODAL: FORMULIR TAMBAH SOAL LATIHAN BARU (GAMBAR, FILE, AUDIO)            -->
@@ -2284,10 +2300,7 @@ Remediasi = -</pre>
     <!-- Dedicated Live Voice Interaction Bar (Warm Chocolate Mocha Hands-Free) -->
     <div class="px-3 py-2 bg-gradient-to-r from-[#2c170d]/90 via-[#3a2113]/85 to-[#1e110a]/90 border-t border-amber-900/40 flex items-center justify-between gap-2 shrink-0">
       <div class="flex items-center gap-2 min-w-0">
-        <span class="relative flex h-2.5 w-2.5 shrink-0">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-        </span>
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] shrink-0"></span>
         <div class="truncate text-[11px]">
           <span class="font-bold text-amber-300">Live Voice AI</span>
           <span class="text-amber-200/60 ml-1.5 hidden sm:inline">Tanya lisan hands-free interaktif</span>
@@ -2528,7 +2541,7 @@ Remediasi = -</pre>
             <!-- Jam Real-time Card -->
             <div id="settings-clock-card" class="p-3 rounded-xl bg-white dark:bg-[#1a110b] border border-slate-200 dark:border-amber-900/50 flex items-center justify-between cursor-pointer hover:border-amber-500 transition-colors" title="Klik untuk beralih format waktu / tanggal">
               <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]"></span>
                 <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Jam Sistem:</span>
               </div>
               <div class="flex items-center gap-1.5 font-mono text-sm font-extrabold text-slate-900 dark:text-white">
@@ -2572,7 +2585,7 @@ Remediasi = -</pre>
               </div>
               <div>
                 <span class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Nama Panggilan</span>
-                <div class="text-sm font-bold text-slate-900 dark:text-white font-mono" id="settings-student-name">Siswa_01</div>
+                <div class="text-sm font-bold text-slate-900 dark:text-white font-sans" id="settings-student-name">Ilyas</div>
               </div>
             </div>
 
@@ -2638,6 +2651,72 @@ Remediasi = -</pre>
         </button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: GANTI NAMA / IDENTITAS SISWA (PROFILE MANAGER NICKNAME MODAL)       -->
+  <!-- ========================================================================= -->
+  <div id="edit-nickname-modal" class="fixed inset-0 z-[2000010] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md hidden transition-all duration-300">
+    <div class="card-clean max-w-sm sm:max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl relative border border-slate-700 bg-slate-900/98 backdrop-blur-2xl rounded-2xl text-white" onclick="event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-800 flex items-center justify-center text-amber-200 shadow-lg shadow-amber-600/30 shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-white tracking-tight flex items-center gap-2">
+              Ubah Identitas Siswa
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">PROFIL</span>
+            </h3>
+            <p class="text-[11px] text-slate-300">Tersinkronisasi otomatis ke seluruh instrumen evaluasi &amp; avatar</p>
+          </div>
+        </div>
+        <button id="btn-cancel-nickname-x" type="button" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" title="Tutup" onclick="document.getElementById('edit-nickname-modal').classList.add('hidden')">
+          ✕
+        </button>
+      </div>
+
+      <!-- Input Area -->
+      <div class="space-y-2">
+        <label for="edit-nickname-input" class="block text-xs font-bold text-amber-300 uppercase tracking-wider">
+          Nama / Nickname Baru:
+        </label>
+        <div class="relative">
+          <input 
+            type="text" 
+            id="edit-nickname-input" 
+            maxlength="28" 
+            placeholder="Contoh: Ilyas / Al-Khawarizmi" 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border-2 border-slate-700 focus:border-amber-400 text-sm font-semibold text-white placeholder-slate-500 focus:outline-none transition-all shadow-inner"
+          />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-mono">ID</span>
+        </div>
+      </div>
+
+      <!-- Quick Suggestion Chips -->
+      <div class="space-y-1.5">
+        <span class="text-[10.5px] font-semibold text-slate-400">Pilihan Nama Cepat / Tokoh Matematika:</span>
+        <div class="flex flex-wrap gap-1.5" id="nickname-quick-chips">
+          <button type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all cursor-pointer" onclick="document.getElementById('edit-nickname-input').value = this.textContent.trim()">Ilyas</button>
+          <button type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-amber-200 border border-slate-700 hover:border-amber-500/50 transition-all cursor-pointer" onclick="document.getElementById('edit-nickname-input').value = this.textContent.trim()">Al-Khawarizmi</button>
+          <button type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-amber-200 border border-slate-700 hover:border-amber-500/50 transition-all cursor-pointer" onclick="document.getElementById('edit-nickname-input').value = this.textContent.trim()">Archimedes</button>
+          <button type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-amber-200 border border-slate-700 hover:border-amber-500/50 transition-all cursor-pointer" onclick="document.getElementById('edit-nickname-input').value = this.textContent.trim()">Hypatia</button>
+          <button type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-amber-200 border border-slate-700 hover:border-amber-500/50 transition-all cursor-pointer" onclick="document.getElementById('edit-nickname-input').value = this.textContent.trim()">Gauss</button>
+          <button type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-amber-200 border border-slate-700 hover:border-amber-500/50 transition-all cursor-pointer" onclick="document.getElementById('edit-nickname-input').value = this.textContent.trim()">Ada Lovelace</button>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+        <button id="btn-cancel-nickname" type="button" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer">
+          Batal
+        </button>
+        <button id="btn-save-nickname" type="button" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 hover:from-amber-500 hover:to-amber-700 text-white shadow-lg shadow-amber-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer">
+          Simpan Nama
+        </button>
+      </div>
     </div>
   </div>
 
@@ -2747,6 +2826,11 @@ Remediasi = -</pre>
     <button data-tab="practice" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Bank Latihan">
       <svg class="w-4 h-4 text-purple-500 dark:text-purple-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
       <span class="text-[10px] sm:text-xs font-semibold hidden sm:inline">Latihan</span>
+    </button>
+
+    <button data-tab="photo-solver" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Foto &amp; Dokumen Soal AI (Scanner PDF &amp; Foto)">
+      <svg class="w-4 h-4 text-cyan-500 dark:text-cyan-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+      <span class="text-[10px] sm:text-xs font-semibold hidden sm:inline flex items-center gap-1">Foto / File <span class="px-1 py-0.2 rounded text-[8px] bg-cyan-500/20 text-cyan-400 font-bold">AI</span></span>
     </button>
 
     <button data-tab="posttest" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Post-Test">

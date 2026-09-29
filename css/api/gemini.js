@@ -106,8 +106,16 @@ Ini adalah obrolan chat yang SEDANG BERLANGSUNG. JANGAN mengulang kata sapaan ('
 
       contents.push({ role: "user", parts });
 
-      // Call Google Gemini API (Gemini 3.6 Flash / 3.5 Flash / 2.0 Flash / 1.5 Flash / 1.5 Pro)
-      const modelsToTry = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+      const modelsToTry = [
+        "gemini-3-flash-preview",
+        "gemini-3.8-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-flash-latest",
+        "gemini-3.1-pro-preview",
+        "gemini-pro-latest",
+        "gemini-2.5-flash",
+        "gemini-1.5-flash"
+      ];
       
       for (const modelName of modelsToTry) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey.trim()}`;

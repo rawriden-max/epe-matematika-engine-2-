@@ -4,8 +4,10 @@
  * menyinkronkannya ke seluruh modul (Dashboard, Header, Diagnostik, Practice, Pre/Post-Test, Supabase)
  */
 
+import { NotificationToast } from "../ui/notification.js";
+
 const STORAGE_KEY = "epe_student_name";
-const DEFAULT_NAME = "Siswa_01";
+const DEFAULT_NAME = "Ilyas";
 
 export class ProfileManager {
   /**
@@ -16,7 +18,12 @@ export class ProfileManager {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored && stored.trim()) {
-        return stored.trim();
+        const cleaned = stored.trim().replace(/\s+/g, " ");
+        // Jika masih placeholder bawaan lama, kembalikan nama bersih
+        if (cleaned === "Siswa  Berbakat" || cleaned === "Siswa Berbakat" || cleaned === "Siswa_01") {
+          return DEFAULT_NAME;
+        }
+        return cleaned;
       }
     } catch (e) {
       console.warn("Gagal membaca profile name dari localStorage:", e);
@@ -25,12 +32,23 @@ export class ProfileManager {
   }
 
   /**
+   * Mengambil objek profil lengkap siswa
+   * @returns {{ name: string, grade: string }}
+   */
+  static getProfile() {
+    return {
+      name: this.getStudentName(),
+      grade: localStorage.getItem("epe_student_grade") || "Kelas 7 / SMP"
+    };
+  }
+
+  /**
    * Menyimpan nama siswa baru dan memperbarui UI di seluruh aplikasi
    * @param {string} newName
    * @returns {string}
    */
   static setStudentName(newName) {
-    const cleanName = (newName || "").trim() || DEFAULT_NAME;
+    const cleanName = (newName || "").trim().replace(/\s+/g, " ") || DEFAULT_NAME;
     try {
       localStorage.setItem(STORAGE_KEY, cleanName);
     } catch (e) {
@@ -112,6 +130,7 @@ export class ProfileManager {
     if (modal && input) {
       input.value = currentName;
       modal.classList.remove("hidden");
+      modal.style.zIndex = "2147483600";
       setTimeout(() => input.focus(), 50);
     } else {
       // Fallback native prompt jika modal belum terpasang
@@ -136,6 +155,11 @@ export class ProfileManager {
     const editBtn = document.getElementById("btn-edit-student-name");
     if (editBtn) {
       editBtn.addEventListener("click", () => this.promptEditNickname());
+    }
+
+    const settingsEditBtn = document.getElementById("settings-btn-edit-name");
+    if (settingsEditBtn) {
+      settingsEditBtn.addEventListener("click", () => this.promptEditNickname());
     }
 
     const headerAvatarBtn = document.getElementById("btn-header-avatar");
@@ -167,8 +191,16 @@ export class ProfileManager {
         if (val) {
           this.setStudentName(val);
           if (modal) modal.classList.add("hidden");
-          if (window.NotificationManager) {
-            window.NotificationManager.show(`Nama berhasil diubah menjadi: ${val}`, "success");
+          
+          // Tampilkan notifikasi toast langsung di depan muka pengguna (Z-index 2000000)
+          NotificationToast.show(`✓ Nama identitas berhasil diperbarui: "${val}"`, "success", 3600);
+
+          // Sinkronisasi teks nama di lab avatar dan header badge secara real-time
+          const labName = document.getElementById("avatar-lab-student-name");
+          if (labName) {
+            labName.textContent = val;
+            labName.classList.add("text-emerald-400");
+            setTimeout(() => labName.classList.remove("text-emerald-400"), 1500);
           }
         }
       });
