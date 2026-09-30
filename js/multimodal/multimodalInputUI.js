@@ -213,9 +213,13 @@ export class MultimodalInputUI {
     const fileInput = document.getElementById(`${prefix}-file-input`);
 
     if (dropzone && fileInput) {
-      dropzone.addEventListener("click", () => fileInput.click());
+      dropzone.addEventListener("click", () => {
+        fileInput.value = "";
+        fileInput.click();
+      });
       fileInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
+        fileInput.value = "";
         if (file) await this.handleImageFile(file);
       });
     }
@@ -269,6 +273,7 @@ export class MultimodalInputUI {
         const guardCard = document.getElementById(`${prefix}-confirmation-guard`);
         if (previewCard) previewCard.classList.add("hidden");
         if (guardCard) guardCard.classList.add("hidden");
+        if (fileInput) fileInput.value = "";
         this.activePayload = null;
       });
     }

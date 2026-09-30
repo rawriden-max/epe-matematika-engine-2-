@@ -1,5 +1,5 @@
 /**
- * avatarEngine.js - EPE V2.1 Layered Vector Avatar Engine
+ * avatarEngine.js - EPE V3 Layered Vector Avatar Engine
  * 
  * Merender avatar visual siswa secara presisi dan artistik dalam bentuk SVG berkualitas tinggi.
  * Kompatibel untuk mini-pill (24px - 36px) maupun preview besar di Avatar Lab (176px - 220px).

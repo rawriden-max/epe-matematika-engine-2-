@@ -104,7 +104,7 @@ class EpeAppV2 {
     // Universal Question Bank & Academic Integrity
     this.questionBankUI = null;
     this.integrityDashboardUI = null;
-    this.activeResearchSubtab = "epe"; // 'epe' | 'qbank' | 'integrity'
+    this.activeResearchSubtab = "integrity"; // 'integrity' | 'epe' | 'qbank' (Default: Integritas & Linimasa Audit)
     this.photoMathSolver = null;
 
     this.elements = {};
@@ -201,7 +201,7 @@ class EpeAppV2 {
       console.warn("Peringatan inisialisasi Practice Mode:", err);
     }
 
-    // 6b. Inisialisasi EPE V2.1 Avatar & Cubic Economy System
+    // 6b. Inisialisasi EPE V3 Avatar & Cubic Economy System
     try {
       this.initAvatarAndEconomy();
     } catch (err) {
@@ -253,6 +253,13 @@ class EpeAppV2 {
       console.warn("Peringatan inisialisasi Foto Soal AI:", err);
     }
 
+    // 6i. Inisialisasi Navigasi Halaman & Sub-Halaman Diagnostik
+    try {
+      this.initDiagnosticSubjectNavigator();
+    } catch (err) {
+      console.warn("Peringatan inisialisasi Navigasi Halaman Diagnostik:", err);
+    }
+
     // 7. Binding Event Handlers
     this.bindEvents();
 
@@ -261,7 +268,17 @@ class EpeAppV2 {
     this.updateDashboardRecentSummary();
     this.updateEducatorStatusUI();
 
-    console.log("EPE V2.1 (Error Pattern Engine, Avatar & Cubic Economy) Berhasil Diinisialisasi.");
+    // Trigger initial render of 3D Saturn Core & Cube Engine after DOM layout settles
+    setTimeout(() => {
+      if (this.aiOrbEngine && typeof this.aiOrbEngine.resumeAndResize === "function") {
+        this.aiOrbEngine.resumeAndResize();
+      }
+      if (this.cubeEngine && typeof this.cubeEngine.resize === "function") {
+        this.cubeEngine.resize();
+      }
+    }, 150);
+
+    console.log("EPE V3 (Error Pattern Engine, Avatar & Cubic Economy) Berhasil Diinisialisasi.");
   }
 
   cacheElements() {
@@ -917,8 +934,15 @@ class EpeAppV2 {
 
     let cubicBalance = 0;
     try {
-      cubicBalance = parseInt(localStorage.getItem("epe_cubic_coins") || "150", 10);
-    } catch (e) {}
+      if (typeof CubicWallet !== "undefined" && typeof CubicWallet.getBalance === "function") {
+        cubicBalance = CubicWallet.getBalance();
+      } else {
+        const rawW = localStorage.getItem("epe_cubic_wallet");
+        cubicBalance = rawW !== null ? (parseInt(rawW, 10) || 0) : parseInt(localStorage.getItem("epe_cubic_coins") || "350", 10);
+      }
+    } catch (e) {
+      cubicBalance = 350;
+    }
     if (cubesEl) {
       cubesEl.innerHTML = `
         <span class="epe-cube-icon mr-1">
@@ -929,12 +953,12 @@ class EpeAppV2 {
             <circle cx="12" cy="12.2" r="1.3" fill="#ffffff" opacity="0.95"/>
           </svg>
         </span>
-        <span>${cubicBalance} CUBIC</span>
+        <span>${cubicBalance.toLocaleString("id-ID")} CUBIC</span>
       `;
     }
 
     const sidebarCubes = document.getElementById("sidebar-cubic-balance");
-    if (sidebarCubes) sidebarCubes.textContent = `${cubicBalance}`;
+    if (sidebarCubes) sidebarCubes.textContent = `${cubicBalance.toLocaleString("id-ID")}`;
 
     // Sync Floating Student Avatar in Header (Melayang ala Matrix AI)
     const floatingName = document.getElementById("floating-student-name");
@@ -987,6 +1011,35 @@ class EpeAppV2 {
           <span>Anti-Lag: Mati</span>
         `;
         perfToggleBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-[#1a110b] border border-slate-200 dark:border-amber-900/60 text-slate-800 dark:text-slate-200 hover:border-amber-500 transition-all flex items-center gap-1.5 cursor-pointer";
+      }
+    }
+
+    // 4. Sinkronkan Tampilan Live Role Badge di Navbar Atas (Mode Guru vs Mode Siswa)
+    this.updateHeaderRoleBadge();
+  }
+
+  /**
+   * Memperbarui visual badge mode di header navbar atas secara real-time
+   */
+  updateHeaderRoleBadge() {
+    const isTeacher = this.isEducatorUnlocked() || this.currentMode === "research" || this.activeTab === "research";
+    const badgeEl = document.getElementById("header-current-mode-badge");
+    const labelEl = document.getElementById("header-current-mode-label");
+    const iconEl = document.getElementById("header-current-mode-icon");
+
+    if (labelEl) {
+      labelEl.textContent = isTeacher ? "Mode Guru" : "Mode Siswa";
+    }
+    if (iconEl) {
+      iconEl.textContent = isTeacher ? "👨‍🏫" : "🎓";
+    }
+    if (badgeEl) {
+      if (isTeacher) {
+        badgeEl.className = "hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-800 text-xs font-bold text-purple-900 dark:text-purple-300 shadow-sm transition-all cursor-pointer hover:scale-105 active:scale-95";
+        badgeEl.title = "Mode Guru Aktif. Klik untuk membuka Pusat Pengaturan.";
+      } else {
+        badgeEl.className = "hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-amber-950/40 border border-slate-200/80 dark:border-amber-900/40 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all cursor-pointer hover:scale-105 active:scale-95";
+        badgeEl.title = "Mode Siswa Aktif. Klik untuk membuka Pusat Pengaturan.";
       }
     }
   }
@@ -1233,11 +1286,15 @@ class EpeAppV2 {
       if (!integrityService.isTracking) {
         const studentName = ProfileManager.getStudentName() || "Siswa";
         const studentId = studentName.toLowerCase().replace(/\s+/g, "_");
+        const studentClass = localStorage.getItem("epe_student_class") || localStorage.getItem("epe_student_grade") || "";
+        const subject = this.currentSubjectId || "matematika";
         integrityService.startSession(
           `diag_${Date.now()}`,
           "diagnostic",
           studentId,
-          studentName
+          studentName,
+          subject,
+          studentClass
         );
         const qIdx = this.questions.findIndex((item) => item.id === this.activeQuestionId);
         integrityService.recordQuestionOpened(this.activeQuestionId, qIdx >= 0 ? qIdx : 0);
@@ -1264,11 +1321,14 @@ class EpeAppV2 {
       if (this.elements.researchComparisonContainer) {
         ResearchAnalytics.renderResearchModeComparison(this.elements.researchComparisonContainer);
       }
-      if (this.activeResearchSubtab === "qbank") {
-        this.questionBankUI?.render();
-      } else if (this.activeResearchSubtab === "integrity") {
+      if (!this.activeResearchSubtab || this.activeResearchSubtab === "integrity") {
+        this.activeResearchSubtab = "integrity";
         this.integrityDashboardUI?.render();
+      } else if (this.activeResearchSubtab === "qbank") {
+        this.questionBankUI?.render();
       }
+      // Langsung muncul di depan mata guru tanpa perlu scroll ke bawah
+      window.scrollTo({ top: 0, behavior: "instant" });
     }
 
     // Efek Transisi Canva Presentation Slide Flow (Geser Mulus Horizontal)
@@ -1294,7 +1354,10 @@ class EpeAppV2 {
       activeSection.classList.add(flowClass);
     }
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (tabName !== "research") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    this.updateHeaderRoleBadge();
     this.syncAiContext();
   }
 
@@ -1319,6 +1382,7 @@ class EpeAppV2 {
       this.switchTab("dashboard");
       NotificationToast.show("Mode Siswa Aktif.", "info");
     }
+    this.updateHeaderRoleBadge();
   }
 
   // =========================================================================
@@ -1382,6 +1446,9 @@ class EpeAppV2 {
     btnEpe?.addEventListener("click", () => setSubtab("epe"));
     btnQbank?.addEventListener("click", () => setSubtab("qbank"));
     btnIntegrity?.addEventListener("click", () => setSubtab("integrity"));
+
+    // Set default subtab: Integritas Akademik & Linimasa Audit (Muncul langsung di depan mata guru)
+    setSubtab(this.activeResearchSubtab || "integrity");
   }
 
   // =========================================================================
@@ -1768,10 +1835,149 @@ class EpeAppV2 {
     });
   }
 
+  initDiagnosticSubjectNavigator() {
+    const subjectSelect = document.getElementById("diagnostic-subject-select");
+    const topicSelect = document.getElementById("diagnostic-topic-select");
+    const badgeEl = document.getElementById("diagnostic-active-badge");
+    const countBadge = document.getElementById("diagnostic-question-count-badge");
+
+    if (!subjectSelect || !topicSelect) return;
+
+    this.activeDiagnosticSubject = "mathematics";
+    this.activeDiagnosticTopic = "all";
+
+    const populateSubjects = () => {
+      const subjects = SubjectRegistry.getAllSubjects();
+      subjectSelect.innerHTML = subjects.map(s => `
+        <option value="${s.id}" ${s.id === this.activeDiagnosticSubject ? "selected" : ""}>
+          ${s.icon || "📚"} ${s.name}
+        </option>
+      `).join("");
+    };
+
+    const populateTopics = (subjId) => {
+      const subj = SubjectRegistry.getSubject(subjId);
+      const topics = SubjectRegistry.getTopicsForSubject(subjId);
+      const subjName = subj ? subj.name : "Bidang";
+
+      let optionsHtml = `<option value="all">🌟 Semua Sub-Halaman (${subjName})</option>`;
+      topics.forEach(t => {
+        optionsHtml += `<option value="${t}" ${t === this.activeDiagnosticTopic ? "selected" : ""}>📖 ${t}</option>`;
+      });
+      topicSelect.innerHTML = optionsHtml;
+    };
+
+    const updateDiagnosticQuestions = () => {
+      const subjId = this.activeDiagnosticSubject;
+      const topic = this.activeDiagnosticTopic;
+      const subj = SubjectRegistry.getSubject(subjId);
+
+      if (badgeEl) {
+        badgeEl.textContent = subj ? `${subj.icon || ""} ${subj.name}` : "Matematika";
+      }
+
+      let questionsToLoad = [];
+      if (subjId === "mathematics" && topic === "all") {
+        questionsToLoad = [...QUESTIONS];
+      } else {
+        // Query questions from AssessmentManager
+        let filter = { subject: subjId };
+        let allQ = AssessmentManager.getAllQuestions(filter);
+        if (topic !== "all") {
+          allQ = allQ.filter(q => q.topic === topic);
+        }
+
+        if (allQ.length > 0) {
+          questionsToLoad = allQ.map((uq, idx) => {
+            return {
+              id: uq.id,
+              number: idx + 1,
+              title: uq.question_text ? (uq.question_text.slice(0, 60) + "...") : `Soal ${idx + 1}`,
+              prompt: uq.question_text,
+              promptText: uq.question_text,
+              subject: uq.subject || subjId,
+              topic: uq.topic || (subj ? subj.name : "Umum"),
+              domain: uq.topic || (subj ? subj.name : "Umum"),
+              domainId: `D${(idx % 6) + 1}`,
+              latex: uq.latex || "",
+              latexEquation: uq.latex || "",
+              options: uq.options && uq.options.length >= 2 ? uq.options : [
+                { key: "A", text: "Opsi A" },
+                { key: "B", text: "Opsi B" }
+              ],
+              correctAnswer: uq.correct_answer || "A",
+              standardAnswer: uq.correct_answer || "A",
+              explanation: uq.explanation || "",
+              remediation: uq.explanation || ""
+            };
+          });
+        } else {
+          // If no questions exist yet for this subject/topic, provide a clear sample or prompt
+          questionsToLoad = [
+            {
+              id: `${subjId.toUpperCase().slice(0, 4)}_01`,
+              number: 1,
+              title: `Soal Latihan: ${subj ? subj.name : "Bidang"}`,
+              prompt: `Belum ada butir soal pada sub-halaman "${topic === "all" ? (subj ? subj.name : "ini") : topic}". Guru dapat menambahkan soal atau mengunggah berkas soal (.txt, .json, .csv) melalui Mode Guru!`,
+              promptText: `Belum ada butir soal pada sub-halaman "${topic === "all" ? (subj ? subj.name : "ini") : topic}". Guru dapat menambahkan soal atau mengunggah berkas soal (.txt, .json, .csv) melalui Mode Guru!`,
+              topic: topic === "all" ? (subj ? subj.name : "Umum") : topic,
+              domain: subj ? subj.name : "Umum",
+              domainId: "D1",
+              latex: null,
+              latexEquation: null,
+              options: [
+                { key: "A", text: "Buka Mode Guru untuk Tambah/Unggah Soal", errorType: null },
+                { key: "B", text: "Pilih Sub-Halaman atau Bidang Lain", errorType: null }
+              ],
+              correctAnswer: "A",
+              explanation: "Gunakan Mode Guru (PIN: 1234) untuk mengunggah atau membuat soal baru.",
+              remediation: "Gunakan Mode Guru untuk mengunggah berkas soal."
+            }
+          ];
+        }
+      }
+
+      this.questions = questionsToLoad;
+      if (countBadge) {
+        countBadge.textContent = `${questionsToLoad.length} Soal`;
+      }
+
+      // Re-init tornado and select first question
+      this.tornadoEngine?.init(this.questions, this.questions[0]?.id || "Q1");
+      if (this.questions[0]) {
+        this.selectQuestion(this.questions[0].id);
+      }
+      this.renderQuestionGrid();
+    };
+
+    populateSubjects();
+    populateTopics(this.activeDiagnosticSubject);
+
+    subjectSelect.addEventListener("change", (e) => {
+      this.activeDiagnosticSubject = e.target.value;
+      this.activeDiagnosticTopic = "all";
+      populateTopics(this.activeDiagnosticSubject);
+      updateDiagnosticQuestions();
+    });
+
+    topicSelect.addEventListener("change", (e) => {
+      this.activeDiagnosticTopic = e.target.value;
+      updateDiagnosticQuestions();
+    });
+
+    // Listen to subject or question bank updates
+    window.addEventListener("epe-question-bank-updated", () => {
+      populateSubjects();
+      populateTopics(this.activeDiagnosticSubject);
+      updateDiagnosticQuestions();
+    });
+  }
+
   selectQuestion(questionId) {
     this.activeQuestionId = questionId;
     const q = this.questions.find((item) => item.id === questionId) || this.questions[0];
-    const domain = this.domains[q.domainId];
+    if (!q) return;
+    const domain = this.domains[q.domainId] || { color: "#3b82f6", name: q.topic || "Umum", badgeClass: "badge-d1" };
 
     if (this.elements.qNumberBadge) {
       this.elements.qNumberBadge.textContent = q.id;
@@ -1780,16 +1986,17 @@ class EpeAppV2 {
       this.elements.qNumberBadge.style.boxShadow = `0 2px 8px ${domain?.color || "#3b82f6"}55`;
     }
     if (this.elements.qDomainBadge) {
-      this.elements.qDomainBadge.textContent = `${q.domainId} - ${domain?.name || q.domainName}`;
+      this.elements.qDomainBadge.textContent = `${q.domainId || "D1"} - ${domain?.name || q.domainName || q.topic || "Umum"}`;
       this.elements.qDomainBadge.className = `px-2 py-0.5 rounded-md text-xs font-semibold ${domain?.badgeClass || "badge-d1"}`;
     }
-    if (this.elements.qTitle) this.elements.qTitle.textContent = q.title;
-    if (this.elements.qPromptText) this.elements.qPromptText.textContent = q.promptText;
-    if (this.elements.qTopicText) this.elements.qTopicText.textContent = q.topic;
+    if (this.elements.qTitle) this.elements.qTitle.textContent = q.title || q.questionText || `Soal ${q.id}`;
+    if (this.elements.qPromptText) this.elements.qPromptText.textContent = q.promptText || q.prompt || q.questionText || "";
+    if (this.elements.qTopicText) this.elements.qTopicText.textContent = q.topic || "";
 
+    const equation = q.latexEquation || q.latex || q.equation;
     if (this.elements.qMathDisplay) {
-      if (q.latexEquation) {
-        this.renderKaTeX(q.latexEquation, this.elements.qMathDisplay, true);
+      if (equation) {
+        this.renderKaTeX(equation, this.elements.qMathDisplay, true);
         this.elements.qMathDisplay.classList.remove("hidden");
       } else {
         this.elements.qMathDisplay.classList.add("hidden");
@@ -1844,9 +2051,12 @@ class EpeAppV2 {
     }
 
     // Eksekusi core Error Pattern Engine (preserve research logic 100%)
+    // Cari objek soal aktif dari this.questions agar engine tidak fallback ke Q1 matematika
+    const activeQ = this.questions.find(q => q.id === this.activeQuestionId) || null;
     const result = ErrorPatternEngine.analyze({
       studentId,
       questionId: this.activeQuestionId,
+      question: activeQ,
       studentAnswer,
       studentSteps,
       media: multimodal,
@@ -1884,7 +2094,7 @@ class EpeAppV2 {
     // Refresh visual navigator grid
     this.renderQuestionGrid();
 
-    // EPE V2.1 Process-Based Non-Punitive Reward (+10 ◆) & Milestone Verification
+    // EPE V3 Process-Based Non-Punitive Reward (+10 ◆) & Milestone Verification
     CubicRewards.rewardDiagnostic(this.activeQuestionId);
     const completedCount = this.cubeStore.getCompletedCount();
     const hasE0 = result.classification?.code === "E0" || result.primaryErrorCode === "E0";
@@ -1918,12 +2128,16 @@ class EpeAppV2 {
         containerId: "ai-orb-container",
         initialColor: this.themeManager?.currentPalette ? (this.themeManager.THEME_PALETTES?.[this.themeManager.currentPalette]?.accent || "#3b82f6") : "#3b82f6",
         onClick: () => {
+          integrityService.recordMatrixAiAccess();
           if (this.aiAgentManager) this.aiAgentManager.openDrawer();
         }
       });
 
       this.aiAgentManager = new AiAgentManager({
-        orbEngine: this.aiOrbEngine
+        orbEngine: this.aiOrbEngine,
+        onOpenDrawer: () => {
+          integrityService.recordMatrixAiAccess();
+        }
       });
 
       this.syncAiContext();
@@ -2007,6 +2221,20 @@ class EpeAppV2 {
         if (sidebarBal) sidebarBal.textContent = valStr;
         const floatingCubes = document.getElementById("floating-student-cubic-val");
         if (floatingCubes) floatingCubes.textContent = valStr;
+        const settingsCubes = document.getElementById("settings-profile-cubes");
+        if (settingsCubes) {
+          settingsCubes.innerHTML = `
+            <span class="epe-cube-icon mr-1">
+              <svg class="w-3.5 h-3.5 epe-cube-svg" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L21 7.2L12 12.4L3 7.2Z" fill="#fde68a" stroke="#f59e0b" stroke-width="0.8" stroke-linejoin="round"/>
+                <path d="M3 7.2L12 12.4V22L3 16.8Z" fill="#f59e0b" stroke="#d97706" stroke-width="0.8" stroke-linejoin="round"/>
+                <path d="M12 12.4L21 7.2V16.8L12 22Z" fill="#d97706" stroke="#92400e" stroke-width="0.8" stroke-linejoin="round"/>
+                <circle cx="12" cy="12.2" r="1.3" fill="#ffffff" opacity="0.95"/>
+              </svg>
+            </span>
+            <span>${valStr} CUBIC</span>
+          `;
+        }
       });
 
       // Initial check for achievements based on existing data
@@ -3188,12 +3416,18 @@ class EpeAppV2 {
       });
     }
 
-    // Research Export Suite (5 Varian CSV)
+    // Research & Guru Export Suite
+    const getExportSubject = () => {
+      const sel = document.getElementById("select-export-subject");
+      return sel ? sel.value : "all";
+    };
+
     if (this.elements.btnExportPretestCsv) {
       this.elements.btnExportPretestCsv.addEventListener("click", () => {
         this.requireEducatorAuth(() => {
-          const res = ResearchExport.exportPreTestCSV();
-          if (res.success) NotificationToast.show(`Pre-Test (${res.count} data) berhasil diekspor ke CSV!`, "success");
+          const subj = getExportSubject();
+          const res = ResearchExport.exportPreTestCSV(subj);
+          if (res.success) NotificationToast.show(`Pre-Test / Tugas (${res.count} data) berhasil diekspor ke CSV!`, "success");
         });
       });
     }
@@ -3219,8 +3453,20 @@ class EpeAppV2 {
     if (this.elements.btnExportPosttestCsv) {
       this.elements.btnExportPosttestCsv.addEventListener("click", () => {
         this.requireEducatorAuth(() => {
-          const res = ResearchExport.exportPostTestCSV();
-          if (res.success) NotificationToast.show(`Post-Test (${res.count} data) berhasil diekspor ke CSV!`, "success");
+          const subj = getExportSubject();
+          const res = ResearchExport.exportPostTestCSV(subj);
+          if (res.success) NotificationToast.show(`Post-Test / Remedial (${res.count} data) berhasil diekspor ke CSV!`, "success");
+        });
+      });
+    }
+
+    const btnExportPaper = document.getElementById("btn-export-question-paper");
+    if (btnExportPaper) {
+      btnExportPaper.addEventListener("click", () => {
+        this.requireEducatorAuth(() => {
+          const subj = getExportSubject();
+          const res = ResearchExport.exportQuestionPaper({ subject: subj });
+          if (res.success) NotificationToast.show(`Naskah Soal & Kunci (${res.count} butir) berhasil diunduh!`, "success");
         });
       });
     }
@@ -3231,6 +3477,45 @@ class EpeAppV2 {
           const res = ResearchExport.exportCombinedResearchDataset();
           if (res.success) NotificationToast.show("Combined Research Dataset berhasil diekspor ke CSV!", "success");
         });
+      });
+    }
+
+    // Tombol Buku Nilai Excel (.XLS Asli) & CSV Format Rapi
+    const btnExportGradebookExcel = document.getElementById("btn-export-gradebook-excel");
+    if (btnExportGradebookExcel) {
+      btnExportGradebookExcel.addEventListener("click", () => {
+        this.requireEducatorAuth(() => {
+          const subj = getExportSubject();
+          const res = ResearchExport.exportSubjectGradebookExcel({ subject: subj });
+          if (res.success) {
+            NotificationToast.show(`Buku Nilai Excel (${res.count} record) berhasil diunduh! Siap dibuka rapi di Microsoft Excel.`, "success");
+          } else {
+            NotificationToast.show(res.message || "Gagal mengunduh Buku Nilai Excel.", "warning");
+          }
+        });
+      });
+    }
+
+    const btnExportGradebookCsv = document.getElementById("btn-export-gradebook-csv");
+    if (btnExportGradebookCsv) {
+      btnExportGradebookCsv.addEventListener("click", () => {
+        this.requireEducatorAuth(() => {
+          const subj = getExportSubject();
+          const res = ResearchExport.exportSubjectGradebookCSV({ subject: subj });
+          if (res.success) {
+            NotificationToast.show(`Buku Nilai CSV (${res.count} record) berhasil diekspor dengan pemisah titik-koma (;)!`, "success");
+          } else {
+            NotificationToast.show(res.message || "Gagal mengunduh Buku Nilai CSV.", "warning");
+          }
+        });
+      });
+    }
+
+    // Klik pada Role Badge di Navbar Atas untuk membuka Pusat Pengaturan
+    const headerModeBadge = document.getElementById("header-current-mode-badge");
+    if (headerModeBadge) {
+      headerModeBadge.addEventListener("click", () => {
+        this.openSettingsHub();
       });
     }
 
@@ -3334,7 +3619,7 @@ class EpeAppV2 {
         if (this.elements.worksheetQuestionsContainer) {
           this.elements.worksheetQuestionsContainer.innerHTML = `
             <div class="p-6 text-center text-rose-400 text-xs">
-              Gagal memproses gambar lembar kerja: ${err.message}. Pastikan API key terpasang di pengaturan AI Matrix.
+              Gagal memproses gambar atau dokumen PDF lembar kerja: ${err.message}. Pastikan file jelas dan API key terpasang di pengaturan AI Matrix.
             </div>
           `;
         }

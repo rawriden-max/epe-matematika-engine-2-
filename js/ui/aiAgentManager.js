@@ -30,7 +30,7 @@ export class AiAgentManager {
 
     this.isOpen = false;
     this.isSpeaking = false;
-    this.voiceEnabled = true;
+    this.voiceEnabled = localStorage.getItem("epe_voice_tts_enabled") === "true";
     this.apiKey = localStorage.getItem("epe_ai_api_key") || "";
     this.apiProvider = localStorage.getItem("epe_ai_provider") || "gemini";
 
@@ -460,20 +460,6 @@ export class AiAgentManager {
     const floatingTrigger = document.getElementById("floating-ai-trigger");
     if (floatingTrigger) floatingTrigger.addEventListener("click", () => this.toggleDrawer());
 
-    // Hero Quick AI Buttons
-    const heroBtnChat = document.getElementById("hero-btn-chat-ai");
-    if (heroBtnChat) {
-      heroBtnChat.addEventListener("click", () => this.openDrawer());
-    }
-
-    const heroBtnGuide = document.getElementById("hero-btn-guide-step");
-    if (heroBtnGuide) {
-      heroBtnGuide.addEventListener("click", () => {
-        this.openDrawer();
-        this.handleQuickAction("guide_active_question");
-      });
-    }
-
     if (this.closeBtn) this.closeBtn.addEventListener("click", () => this.closeDrawer());
 
     // Send Button & Input Enter
@@ -493,14 +479,18 @@ export class AiAgentManager {
       });
     }
 
-    // Voice Output Toggle
+    // Voice Output Toggle (Sinkronkan dengan preferensi tersimpan)
     if (this.voiceToggleBtn) {
+      this.voiceToggleBtn.classList.toggle("text-blue-400", this.voiceEnabled);
+      this.voiceToggleBtn.classList.toggle("text-slate-500", !this.voiceEnabled);
       this.voiceToggleBtn.addEventListener("click", () => {
         this.voiceEnabled = !this.voiceEnabled;
+        localStorage.setItem("epe_voice_tts_enabled", this.voiceEnabled ? "true" : "false");
         this.voiceToggleBtn.classList.toggle("text-blue-400", this.voiceEnabled);
         this.voiceToggleBtn.classList.toggle("text-slate-500", !this.voiceEnabled);
         if (!this.voiceEnabled) {
           aiVoiceEngine.stopSpeaking();
+          this.isSpeaking = false;
         }
       });
     }
@@ -717,11 +707,15 @@ export class AiAgentManager {
   openDrawer() {
     if (!this.drawer) return;
     this.isOpen = true;
+    this.clearUnreadBadge();
     this.drawer.classList.add("open");
     this.drawer.style.transform = "translateX(0)";
-    if (this.chatInput) {
-      setTimeout(() => this.chatInput.focus(), 150);
-    }
+    setTimeout(() => {
+      this.scrollToBottom();
+      if (this.chatInput) {
+        this.chatInput.focus();
+      }
+    }, 150);
     if (this.orbEngine) {
       this.orbEngine.triggerOrbitBurst();
       this.orbEngine.setState("thinking");
@@ -737,8 +731,66 @@ export class AiAgentManager {
     this.isOpen = false;
     this.drawer.classList.remove("open");
     this.drawer.style.transform = "translateX(100%)";
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    aiVoiceEngine.stopSpeaking();
+    this.isSpeaking = false;
+    if (this.activeSpeakingBubbleBtn) {
+      this.resetSpeakingBubbleBtn(this.activeSpeakingBubbleBtn);
+      this.activeSpeakingBubbleBtn = null;
+    }
     if (this.onCloseDrawer) this.onCloseDrawer();
+  }
+
+  showUnreadBadge() {
+    this.unreadCount = (this.unreadCount || 0) + 1;
+    
+    // 1. Floating trigger badge
+    const trigger = document.getElementById("floating-ai-trigger");
+    if (trigger) {
+      let badge = trigger.querySelector(".ai-unread-badge");
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "ai-unread-badge absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg ring-2 ring-slate-900 animate-bounce";
+        trigger.classList.add("relative");
+        trigger.appendChild(badge);
+      }
+      badge.textContent = this.unreadCount;
+      badge.classList.remove("hidden");
+    }
+
+    // 2. Hero button indicator
+    const heroBtn = document.getElementById("hero-btn-chat-ai");
+    if (heroBtn) {
+      let heroBadge = heroBtn.querySelector(".hero-ai-unread-dot");
+      if (!heroBadge) {
+        heroBadge = document.createElement("span");
+        heroBadge.className = "hero-ai-unread-dot w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping absolute -top-1 -right-1";
+        heroBtn.classList.add("relative");
+        heroBtn.appendChild(heroBadge);
+      }
+      heroBadge.classList.remove("hidden");
+    }
+  }
+
+  clearUnreadBadge() {
+    this.unreadCount = 0;
+    const trigger = document.getElementById("floating-ai-trigger");
+    if (trigger) {
+      const badge = trigger.querySelector(".ai-unread-badge");
+      if (badge) badge.classList.add("hidden");
+    }
+    const heroBtn = document.getElementById("hero-btn-chat-ai");
+    if (heroBtn) {
+      const heroBadge = heroBtn.querySelector(".hero-ai-unread-dot");
+      if (heroBadge) heroBadge.classList.add("hidden");
+    }
+  }
+
+  resetSpeakingBubbleBtn(btn) {
+    if (!btn) return;
+    btn.innerHTML = `
+      <svg class="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+      <span>Dengarkan Suara</span>
+    `;
   }
 
   toggleDrawer() {
@@ -783,16 +835,34 @@ export class AiAgentManager {
       const actionsContainer = document.createElement("div");
       actionsContainer.className = "mt-2 pt-1.5 border-t border-slate-200 dark:border-slate-700/60 flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400";
 
-      // 1. Dengarkan Suara (TTS)
+      // 1. Dengarkan / Hentikan Suara (TTS)
       const speakBtn = document.createElement("button");
       speakBtn.className = "flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-colors font-medium";
-      speakBtn.innerHTML = `
-        <svg class="w-3 h-3 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
-        <span>Dengarkan Suara</span>
-      `;
+      this.resetSpeakingBubbleBtn(speakBtn);
       speakBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        this.speakText(msg.text);
+        if (this.activeSpeakingBubbleBtn === speakBtn) {
+          // Sedang berbicara bubble ini -> hentikan segera!
+          aiVoiceEngine.stopSpeaking();
+          this.resetSpeakingBubbleBtn(speakBtn);
+          this.activeSpeakingBubbleBtn = null;
+        } else {
+          // Reset tombol bubble sebelumnya jika ada
+          if (this.activeSpeakingBubbleBtn) {
+            this.resetSpeakingBubbleBtn(this.activeSpeakingBubbleBtn);
+          }
+          this.activeSpeakingBubbleBtn = speakBtn;
+          speakBtn.innerHTML = `
+            <svg class="w-3 h-3 text-rose-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
+            <span class="text-rose-400 font-bold">Hentikan Suara</span>
+          `;
+          this.speakText(msg.text, () => {
+            if (this.activeSpeakingBubbleBtn === speakBtn) {
+              this.resetSpeakingBubbleBtn(speakBtn);
+              this.activeSpeakingBubbleBtn = null;
+            }
+          });
+        }
       });
       actionsContainer.appendChild(speakBtn);
 
@@ -907,10 +977,12 @@ export class AiAgentManager {
     this.saveHistory();
     this.appendMessageBubble(userMsg);
     this.showTypingIndicator();
+    this.isProcessingResponse = true;
 
     try {
       const responseText = await this.generateResponse(userMsg.text, attachedImage);
       this.hideTypingIndicator();
+      this.isProcessingResponse = false;
 
       const finalResponse = this.cleanLeadingGreeting(responseText);
 
@@ -927,16 +999,29 @@ export class AiAgentManager {
       this.saveHistory();
       this.appendMessageBubble(aiMsg);
 
-      if (this.voiceEnabled) {
-        this.speakText(finalResponse);
-      }
-      if (this.orbEngine) {
-        this.orbEngine.setState("speaking");
-        setTimeout(() => this.orbEngine.setState("idle"), 3000);
+      // Pastikan tetap berjalan mulus baik saat drawer sedang terbuka maupun telah ditutup
+      if (this.isOpen) {
+        if (this.voiceEnabled) {
+          this.speakText(finalResponse);
+        }
+        if (this.orbEngine) {
+          this.orbEngine.setState("speaking");
+          setTimeout(() => this.orbEngine.setState("idle"), 3000);
+        }
+      } else {
+        // Jika pengguna menutup drawer saat AI sedang berpikir/merumuskan:
+        // 1. Jangan putar suara secara tiba-tiba (agar tidak mengagetkan)
+        // 2. Beri notifikasi ramah bahwa respon telah selesai dibuat di chat
+        if (window.NotificationToast) {
+          window.NotificationToast.show("Matrix AI: Jawaban Anda telah selesai dibuat di chat!", "success");
+        }
+        // 3. Tampilkan unread badge penanda pesan baru
+        this.showUnreadBadge();
       }
     } catch (err) {
       console.error("AI Error:", err);
       this.hideTypingIndicator();
+      this.isProcessingResponse = false;
       const errorMsg = {
         sender: "assistant",
         text: "Terjadi sedikit kendala saat memproses jawaban. Silakan coba kembali.",
@@ -945,6 +1030,10 @@ export class AiAgentManager {
       this.messages.push(errorMsg);
       this.saveHistory();
       this.appendMessageBubble(errorMsg);
+
+      if (!this.isOpen && window.NotificationToast) {
+        window.NotificationToast.show("Matrix AI mengalami kendala saat merumuskan jawaban.", "warning");
+      }
     }
   }
 
@@ -2777,8 +2866,15 @@ $$\\sin^2(\\theta) + \\cos^2(\\theta) = 1$$`;
    Penemu kalkulus diferensial dan integral yang mengubah peradaban sains dan teknologi modern.`;
     }
 
-    // 13. Petunjuk Soal Aktif EPE
-    if (q.includes("petunjuk") || q.includes("bimbing") || q.includes("cara kerja") || q.includes("langkah awal")) {
+    // 13. Petunjuk Soal Aktif EPE (Hanya jika siswa secara eksplisit meminta bimbingan soal)
+    const isAskingActiveQuestion = 
+      (q.includes("soal") && (q.includes("petunjuk") || q.includes("bimbing") || q.includes("langkah awal") || q.includes("bagaimana cara"))) ||
+      q.includes("petunjuk soal") ||
+      q.includes("soal aktif") ||
+      q.includes("soal ini") ||
+      q.includes("bahas soal");
+
+    if (isAskingActiveQuestion) {
       if (activeQ) {
         const domainName = activeQ.domainName || (activeQ.domainId ? `Domain ${activeQ.domainId}` : "Konsep Dasar");
         const promptText = activeQ.promptText || activeQ.topic || activeQ.title;
@@ -3523,8 +3619,11 @@ Dalam kerangka sains dan pemodelan matematis:
 Untuk topik spesifik ini, aspek mana yang ingin kamu ketahui lebih mendalam? Apakah pembuktian rumusnya, penjelasan konsep visualnya, atau contoh aplikasinya dalam kehidupan sehari-hari? Tuliskan saja, aku siap membantu!`;
   }
 
-  speakText(text) {
-    if (!this.voiceEnabled) return;
+  speakText(text, onComplete = null) {
+    if (!this.voiceEnabled) {
+      if (onComplete) onComplete();
+      return;
+    }
 
     aiVoiceEngine.speak(text, {
       onStart: () => {
@@ -3533,11 +3632,21 @@ Untuk topik spesifik ini, aspek mana yang ingin kamu ketahui lebih mendalam? Apa
       },
       onEnd: () => {
         this.isSpeaking = false;
+        if (this.activeSpeakingBubbleBtn) {
+          this.resetSpeakingBubbleBtn(this.activeSpeakingBubbleBtn);
+          this.activeSpeakingBubbleBtn = null;
+        }
         if (this.orbEngine) this.orbEngine.setState("idle");
+        if (onComplete) onComplete();
       },
       onError: () => {
         this.isSpeaking = false;
+        if (this.activeSpeakingBubbleBtn) {
+          this.resetSpeakingBubbleBtn(this.activeSpeakingBubbleBtn);
+          this.activeSpeakingBubbleBtn = null;
+        }
         if (this.orbEngine) this.orbEngine.setState("idle");
+        if (onComplete) onComplete();
       }
     });
   }

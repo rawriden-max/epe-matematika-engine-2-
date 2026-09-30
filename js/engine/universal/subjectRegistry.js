@@ -154,13 +154,15 @@ export const SUBJECTS = {
 
 const STORAGE_KEY_CUSTOM_SUBJECTS = "epe_custom_subjects";
 const STORAGE_KEY_CUSTOM_TOPICS = "epe_custom_topics";
+const STORAGE_KEY_DELETED_SUBJECTS = "epe_deleted_subjects";
+const STORAGE_KEY_DELETED_TOPICS = "epe_deleted_topics";
 
 export class SubjectRegistry {
   /**
-   * Mengambil semua subjek terdaftar (Bawaan + Kustom Guru)
+   * Mengambil semua subjek terdaftar (Bawaan + Kustom Guru, dikurangi yang dihapus)
    */
   static getAllSubjects() {
-    const list = Object.values(SUBJECTS);
+    let list = Object.values(SUBJECTS);
     try {
       const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_SUBJECTS);
       if (stored) {
@@ -171,6 +173,15 @@ export class SubjectRegistry {
               list.push(cs);
             }
           });
+        }
+      }
+
+      // Filter subjek yang dihapus
+      const delStored = localStorage.getItem(STORAGE_KEY_DELETED_SUBJECTS);
+      if (delStored) {
+        const delSubjs = JSON.parse(delStored) || [];
+        if (Array.isArray(delSubjs) && delSubjs.length > 0) {
+          list = list.filter(item => !delSubjs.includes(item.id));
         }
       }
     } catch (e) {
@@ -185,8 +196,17 @@ export class SubjectRegistry {
   static getSubject(subjectId) {
     if (!subjectId) return SUBJECTS.mathematics;
     const cleanId = subjectId.toLowerCase().trim();
+    const aliasMap = {
+      matematika: "mathematics",
+      math: "mathematics",
+      fisika: "physics",
+      kimia: "chemistry",
+      biologi: "biology",
+      informatika: "informatics"
+    };
+    const targetId = aliasMap[cleanId] || cleanId;
     const all = this.getAllSubjects();
-    return all.find(s => s.id === cleanId) || SUBJECTS[cleanId] || SUBJECTS.mathematics;
+    return all.find(s => s.id === targetId || s.id === cleanId || s.name?.toLowerCase() === cleanId) || SUBJECTS[targetId] || SUBJECTS[cleanId] || SUBJECTS.mathematics;
   }
 
   /**
@@ -196,6 +216,16 @@ export class SubjectRegistry {
     if (!name || !name.trim()) throw new Error("Nama mata pelajaran/bidang wajib diisi.");
     const cleanId = (id || name.toLowerCase().replace(/[^a-z0-9]/g, "_")).trim();
     const cleanCode = (code || name.slice(0, 4).toUpperCase()).trim();
+
+    // Hapus dari daftar deleted jika sebelumnya pernah dihapus
+    try {
+      const delStored = localStorage.getItem(STORAGE_KEY_DELETED_SUBJECTS);
+      if (delStored) {
+        let delSubjs = JSON.parse(delStored) || [];
+        delSubjs = delSubjs.filter(x => x !== cleanId);
+        localStorage.setItem(STORAGE_KEY_DELETED_SUBJECTS, JSON.stringify(delSubjs));
+      }
+    } catch (e) {}
 
     const newSubject = {
       id: cleanId,
@@ -232,6 +262,46 @@ export class SubjectRegistry {
   }
 
   /**
+   * Menghapus Halaman / Bidang Studi (Mata Pelajaran)
+   */
+  static deleteSubject(subjectId) {
+    if (!subjectId) return false;
+    const cleanId = subjectId.toLowerCase().trim();
+
+    try {
+      // 1. Catat ke daftar subjek terhapus
+      let delSubjs = [];
+      const delStored = localStorage.getItem(STORAGE_KEY_DELETED_SUBJECTS);
+      if (delStored) delSubjs = JSON.parse(delStored) || [];
+      if (!delSubjs.includes(cleanId)) {
+        delSubjs.push(cleanId);
+        localStorage.setItem(STORAGE_KEY_DELETED_SUBJECTS, JSON.stringify(delSubjs));
+      }
+
+      // 2. Hapus dari custom subjects jika ada
+      const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_SUBJECTS);
+      if (stored) {
+        let customList = JSON.parse(stored) || [];
+        customList = customList.filter(c => c.id !== cleanId);
+        localStorage.setItem(STORAGE_KEY_CUSTOM_SUBJECTS, JSON.stringify(customList));
+      }
+
+      // 3. Bersihkan custom topics terkait
+      const storedTopics = localStorage.getItem(STORAGE_KEY_CUSTOM_TOPICS);
+      if (storedTopics) {
+        const customMap = JSON.parse(storedTopics) || {};
+        delete customMap[cleanId];
+        localStorage.setItem(STORAGE_KEY_CUSTOM_TOPICS, JSON.stringify(customMap));
+      }
+
+      return true;
+    } catch (e) {
+      console.warn("Gagal menghapus subjek:", e);
+      return false;
+    }
+  }
+
+  /**
    * Mengecek apakah subjek memiliki taksonomi diagnostik aktif
    */
   static hasActiveTaxonomy(subjectId) {
@@ -240,11 +310,11 @@ export class SubjectRegistry {
   }
 
   /**
-   * Mengambil daftar topik / sub-halaman berdasarkan subjek (bawaan + kustom)
+   * Mengambil daftar topik / sub-halaman berdasarkan subjek (bawaan + kustom, dikurangi yang dihapus)
    */
   static getTopicsForSubject(subjectId) {
     const s = this.getSubject(subjectId);
-    const topics = s && Array.isArray(s.defaultTopics) ? [...s.defaultTopics] : [];
+    let topics = s && Array.isArray(s.defaultTopics) ? [...s.defaultTopics] : [];
 
     try {
       const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_TOPICS);
@@ -257,6 +327,16 @@ export class SubjectRegistry {
               topics.push(top);
             }
           });
+        }
+      }
+
+      // Filter topik yang telah dihapus
+      const delStored = localStorage.getItem(STORAGE_KEY_DELETED_TOPICS);
+      if (delStored) {
+        const delMap = JSON.parse(delStored) || {};
+        const deletedForSubj = delMap[s.id] || [];
+        if (Array.isArray(deletedForSubj) && deletedForSubj.length > 0) {
+          topics = topics.filter(t => !deletedForSubj.includes(t));
         }
       }
     } catch (e) {
@@ -275,6 +355,16 @@ export class SubjectRegistry {
     const s = this.getSubject(subjectId);
 
     try {
+      // Hapus dari deleted topics jika pernah dihapus
+      const delStored = localStorage.getItem(STORAGE_KEY_DELETED_TOPICS);
+      if (delStored) {
+        let delMap = JSON.parse(delStored) || {};
+        if (Array.isArray(delMap[s.id])) {
+          delMap[s.id] = delMap[s.id].filter(t => t !== cleanTopic);
+          localStorage.setItem(STORAGE_KEY_DELETED_TOPICS, JSON.stringify(delMap));
+        }
+      }
+
       let customMap = {};
       const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_TOPICS);
       if (stored) customMap = JSON.parse(stored) || {};
@@ -290,6 +380,42 @@ export class SubjectRegistry {
     }
 
     return cleanTopic;
+  }
+
+  /**
+   * Menghapus Sub-Halaman / Topik dari Suatu Bidang
+   */
+  static deleteTopicFromSubject(subjectId, topicName) {
+    if (!subjectId || !topicName) return false;
+    const cleanTopic = topicName.trim();
+    const s = this.getSubject(subjectId);
+    if (!s) return false;
+
+    try {
+      // 1. Catat ke daftar topik terhapus
+      let delMap = {};
+      const delStored = localStorage.getItem(STORAGE_KEY_DELETED_TOPICS);
+      if (delStored) delMap = JSON.parse(delStored) || {};
+      if (!Array.isArray(delMap[s.id])) delMap[s.id] = [];
+      if (!delMap[s.id].includes(cleanTopic)) {
+        delMap[s.id].push(cleanTopic);
+        localStorage.setItem(STORAGE_KEY_DELETED_TOPICS, JSON.stringify(delMap));
+      }
+
+      // 2. Hapus dari custom topics jika ada
+      const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_TOPICS);
+      if (stored) {
+        const customMap = JSON.parse(stored) || {};
+        if (Array.isArray(customMap[s.id])) {
+          customMap[s.id] = customMap[s.id].filter(t => t !== cleanTopic);
+          localStorage.setItem(STORAGE_KEY_CUSTOM_TOPICS, JSON.stringify(customMap));
+        }
+      }
+      return true;
+    } catch (e) {
+      console.warn("Gagal menghapus topik kustom:", e);
+      return false;
+    }
   }
 
   /**

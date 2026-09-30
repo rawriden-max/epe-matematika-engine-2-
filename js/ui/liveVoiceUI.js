@@ -349,7 +349,7 @@ export class LiveVoiceUI {
         badge.textContent = "Matrix Berpikir...";
       }
       if (indicator) {
-        indicator.textContent = "Merumuskan solusi matematika...";
+        indicator.textContent = "Menelaah & merumuskan wawasan...";
         indicator.className = "text-sm sm:text-base font-extrabold tracking-wide mt-2 text-center text-purple-400 animate-pulse";
       }
       if (speakerLabel) speakerLabel.textContent = "Matrix AI";
@@ -475,7 +475,7 @@ export class LiveVoiceUI {
 
   interruptAi() {
     aiVoiceEngine.stopSpeaking();
-    this.startListeningTurn();
+    this.setState("idle", "AI telah dijeda. Tekan mikrofon saat ingin berbicara.");
   }
 
   async handleDirectPrompt(promptText) {

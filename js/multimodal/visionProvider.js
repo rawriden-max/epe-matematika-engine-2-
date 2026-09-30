@@ -134,10 +134,10 @@ export class VisionProvider {
    * Analyze image using Google Gemini Vision API
    */
   static async _analyzeWithGemini(imageDataUrl, apiKey) {
-    // Extract base64 data and MIME type from data URL
-    const match = imageDataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+    // Extract base64 data and MIME type from data URL (supports images and PDF files)
+    const match = imageDataUrl.match(/^data:([a-zA-Z0-9\/\.\-]+);base64,(.+)$/);
     if (!match) {
-      throw new Error("Format gambar tidak valid. Harus berupa data URL base64.");
+      throw new Error("Format file tidak valid. Harus berupa data URL base64 gambar atau dokumen PDF.");
     }
 
     const mimeType = match[1];

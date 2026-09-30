@@ -1,5 +1,5 @@
 /**
- * cubicRewards.js - EPE V2.1 Process-Based Non-Punitive Reward System
+ * cubicRewards.js - EPE V3 Process-Based Non-Punitive Reward System
  * 
  * Kebijakan Hadiah:
  * 1. Diagnostic Question Effort: +10 ◆ (Diberikan atas partisipasi pengerjaan soal diagnostik apapun klasifikasinya E0-E4).

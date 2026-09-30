@@ -87,7 +87,8 @@ export class ErrorPatternEngine {
     }
 
     // Generate remediasi adaptif
-    const remediation = generateRemediation(primaryError, resolvedQuestion.topic || "Persamaan Kuadrat", customAdvice);
+    const topicForRemediation = resolvedQuestion.topic || resolvedQuestion.subject || "materi ini";
+    const remediation = generateRemediation(primaryError, topicForRemediation, customAdvice);
 
     return this._buildResultPackage({
       studentId: studentId.trim() || "Siswa_01",
@@ -162,33 +163,70 @@ export class ErrorPatternEngine {
 
   /**
    * Diagnostik cerdas adaptif untuk Soal Latihan Mandiri & Persiapan Ujian
+   * Sepenuhnya subject-agnostic: menggunakan question.topic/subject secara dinamis,
+   * TIDAK mengarang label "Persamaan Kuadrat" untuk mata pelajaran non-Matematika.
    */
   static _smartPracticeDiagnostic(steps, answer, question, media = null) {
     const combined = `${steps} ${answer}`.toLowerCase().trim();
-    const stdAns = (question.standardAnswer || "").toLowerCase().trim();
-    const explanation = (question.explanation || "").toLowerCase();
+    const stdAns = (question.standardAnswer || question.correctAnswer || question.correct_answer || "").toLowerCase().trim();
+    const topicLabel = question.topic || question.subject || "materi ini";
+    const subjectId = (question.subject || "mathematics").toLowerCase();
 
-    // 1. Cek Jawaban Benar / Akurat (E0)
-    const isAnswerMatch = stdAns && (
-      combined.includes(stdAns) || 
-      StepAnalyzer.extractNumbers(answer).join(",") === StepAnalyzer.extractNumbers(stdAns).join(",")
-    );
+    // ── Deteksi ketidakpastian / jawaban spekulatif ──────────────────────
+    // Kata-kata ini menunjukkan siswa TIDAK yakin dengan jawabannya.
+    // Harus segera di-intercept sebelum logika E0 berjalan.
+    const UNCERTAINTY_WORDS = [
+      "sepertinya", "mungkin", "kayaknya", "kira-kira", "seperti",
+      "kelihatannya", "rasanya", "tampaknya", "kurasa", "kurang tahu",
+      "maybe", "perhaps", "i think", "probably", "i guess", "not sure"
+    ];
+    const hasUncertainty = UNCERTAINTY_WORDS.some(w => combined.includes(w));
+
+    if (hasUncertainty) {
+      return {
+        primaryError: "E1",
+        secondaryError: "none",
+        confidence: 88,
+        evidence: `Siswa memberikan jawaban spekulatif atau tidak yakin ("${answer.trim().slice(0, 60)}") tanpa menunjukkan pemahaman konsep yang solid pada materi ${topicLabel}.`,
+        customAdvice: `Pelajari dan pahami konsep dasar ${topicLabel} hingga kamu yakin dengan jawaban dan langkah pengerjaanmu.`
+      };
+    }
+
+    // ── Pencocokan Jawaban (E0) ───────────────────────────────────────────
+    // Untuk soal Pilihan Ganda (MCQ): stdAns berupa huruf tunggal A–E.
+    // Gunakan word-boundary agar "B" tidak cocok dengan kata seperti "sebelum",
+    // "sebab", atau kalimat lain yang kebetulan mengandung huruf tersebut.
+    const isMCQAnswer = /^[a-e]$/.test(stdAns);
+    let isAnswerMatch = false;
+
+    if (isMCQAnswer && stdAns) {
+      // Cocokkan: huruf sendirian, atau diawali (mis. "A.", "A)", "Jawab: A", "pilihan A")
+      const mcqRegex = new RegExp(`(?:^|\\s|pilihan\\s+|jawab(?:an)?[:\\s]+|option\\s*)${stdAns}(?:\\s|\\.|\\)|,|$)`, "i");
+      const trimmedAnswer = answer.trim();
+      // Juga izinkan jawaban tepat 1 karakter (pengguna hanya ketik "B")
+      isAnswerMatch = mcqRegex.test(trimmedAnswer) || trimmedAnswer.toLowerCase() === stdAns;
+    } else if (stdAns) {
+      // Untuk jawaban numerik / esai: pencocokan angka eksak
+      const numMatch = StepAnalyzer.extractNumbers(answer).join(",") === StepAnalyzer.extractNumbers(stdAns).join(",");
+      const exactInclude = answer.trim().toLowerCase() === stdAns;
+      isAnswerMatch = numMatch || exactInclude;
+    }
 
     if (isAnswerMatch) {
       return {
         primaryError: "E0",
         secondaryError: "none",
         confidence: 95,
-        evidence: `Jawaban siswa tepat sesuai kunci penyelesaian (${question.standardAnswer}). Langkah pengerjaan tersusun secara logis dan valid.`,
+        evidence: `Jawaban siswa tepat sesuai kunci penyelesaian (${question.standardAnswer || question.correctAnswer || stdAns.toUpperCase()}). Langkah pengerjaan tersusun secara logis dan valid.`,
         customAdvice: "Pertahankan ketelitian dan pemahaman konseptual yang sudah sangat baik ini."
       };
     }
 
-    // 2. Deteksi Kesalahan E4 (Interpretasi Konteks Nyata / Geometri)
-    // Contoh: memilih ukuran panjang/waktu bernilai negatif
-    if (StepAnalyzer.contains(combined, "-") && (
-      StepAnalyzer.contains(combined, "panjang = -") || 
-      StepAnalyzer.contains(combined, "lebar = -") || 
+    // 2. Deteksi Kesalahan E4 (Interpretasi Konteks Nyata)
+    // Khusus Matematika: besaran panjang/waktu negatif
+    if (subjectId === "mathematics" && StepAnalyzer.contains(combined, "-") && (
+      StepAnalyzer.contains(combined, "panjang = -") ||
+      StepAnalyzer.contains(combined, "lebar = -") ||
       StepAnalyzer.contains(combined, "waktu = -") ||
       StepAnalyzer.contains(combined, "t = -") ||
       StepAnalyzer.contains(combined, "x = -8") && question.id === "LAT-01"
@@ -197,45 +235,60 @@ export class ErrorPatternEngine {
         primaryError: "E4",
         secondaryError: "E0",
         confidence: 92,
-        evidence: "Siswa berhasil menyelesaikan persamaan kuadrat, namun salah menginterpretasikan hasil fisis dengan memilih nilai negatif untuk besaran fisik (panjang/lebar/waktu).",
-        customAdvice: "Dalam konteks nyata atau geometri, besaran panjang atau waktu selalu bernilai positif (> 0)."
+        evidence: `Siswa berhasil menyelesaikan soal, namun salah menginterpretasikan hasil fisis dengan memilih nilai negatif untuk besaran yang harus positif (panjang/lebar/waktu).`,
+        customAdvice: `Dalam konteks ${topicLabel}, besaran seperti panjang atau waktu selalu bernilai positif (> 0).`
       };
     }
 
-    // 3. Deteksi Kesalahan E3 (Komputasi & Aritmatika Tanda)
-    // Tanda minus salah hitung, perkalian tanda salah (-4ac, dll)
+    // Deteksi E4 Fisika: salah satuan atau konteks fisis
+    if (subjectId === "physics" && (
+      StepAnalyzer.contains(combined, "negatif") ||
+      StepAnalyzer.contains(combined, "salah satuan") ||
+      StepAnalyzer.contains(combined, "konteks")
+    )) {
+      return {
+        primaryError: "E4",
+        secondaryError: "none",
+        confidence: 88,
+        evidence: `Siswa kurang tepat dalam menginterpretasikan konteks fisis atau satuan pada soal ${topicLabel}.`,
+        customAdvice: `Perhatikan satuan besaran dan arah vektor pada materi ${topicLabel}.`
+      };
+    }
+
+    // 3. Deteksi Kesalahan E3 (Komputasi)
     if (
-      StepAnalyzer.contains(combined, "+ 48") && question.id === "LAT-01" ||
       StepAnalyzer.contains(combined, "salah hitung") ||
-      StepAnalyzer.contains(combined, "-20") && StepAnalyzer.contains(combined, "+ 25") && combined.includes("65")
+      StepAnalyzer.contains(combined, "calculation error") ||
+      (subjectId === "mathematics" && StepAnalyzer.contains(combined, "-20") && StepAnalyzer.contains(combined, "+ 25") && combined.includes("65")) ||
+      (subjectId === "mathematics" && StepAnalyzer.contains(combined, "+ 48") && question.id === "LAT-01")
     ) {
       return {
         primaryError: "E3",
         secondaryError: "none",
         confidence: 88,
-        evidence: "Konsep pemodelan dan prosedur aljabar siswa sudah tepat, namun terjadi kekeliruan perhitungan numerik atau operasi tanda aljabar.",
-        customAdvice: "Lakukan pemeriksaan kembali pada setiap operasi penjumlahan/pengurangan bertanda negatif."
+        evidence: `Konsep pemodelan dan prosedur siswa sudah tepat pada materi ${topicLabel}, namun terjadi kekeliruan perhitungan numerik atau operasi tanda aljabar.`,
+        customAdvice: `Lakukan pemeriksaan kembali setiap langkah hitung pada soal ${topicLabel}.`
       };
     }
 
-    // 4. Deteksi Kesalahan E2 (Prosedural Aljabar)
-    // Faktor terbalik tanda (misal: (x-8)(x+6) bukan (x+8)(x-6))
+    // 4. Deteksi Kesalahan E2 (Prosedural)
     if (
-      StepAnalyzer.contains(combined, "(x - 8)(x + 6)") ||
       StepAnalyzer.contains(combined, "faktor terbalik") ||
-      StepAnalyzer.contains(combined, "akar = 8") && question.id === "LAT-01" ||
-      StepAnalyzer.contains(combined, "x = -4") && StepAnalyzer.contains(combined, "x = 1") && question.id === "LAT-03"
+      StepAnalyzer.contains(combined, "prosedur salah") ||
+      (subjectId === "mathematics" && StepAnalyzer.contains(combined, "(x - 8)(x + 6)")) ||
+      (subjectId === "mathematics" && StepAnalyzer.contains(combined, "akar = 8") && question.id === "LAT-01") ||
+      (subjectId === "mathematics" && StepAnalyzer.contains(combined, "x = -4") && StepAnalyzer.contains(combined, "x = 1") && question.id === "LAT-03")
     ) {
       return {
         primaryError: "E2",
         secondaryError: "none",
         confidence: 90,
-        evidence: "Siswa memahami bentuk kuadrat tetapi keliru dalam algoritma pemfaktoran atau tanda pembuat nol pada suku pemfaktoran aljabar.",
-        customAdvice: "Periksa kembali sifat pemfaktoran: jika (x - p) = 0 maka x = +p."
+        evidence: `Siswa memahami konsep dasar ${topicLabel} tetapi keliru dalam algoritma prosedural atau urutan langkah penyelesaian.`,
+        customAdvice: `Tinjau ulang prosedur baku penyelesaian untuk materi ${topicLabel}.`
       };
     }
 
-    // 5. Deteksi Kesalahan E1 (Konseptual / Tidak Paham Rumus)
+    // 5. Deteksi Kesalahan E1 (Konseptual)
     if (
       StepAnalyzer.contains(combined, "tidak tahu") ||
       StepAnalyzer.contains(combined, "bingung") ||
@@ -246,18 +299,18 @@ export class ErrorPatternEngine {
         primaryError: "E1",
         secondaryError: "none",
         confidence: 85,
-        evidence: "Siswa menunjukkan kesulitan dalam memahami prinsip dasar pembentukan model persamaan kuadrat untuk menyelesaikan soal ini.",
-        customAdvice: `Pelajari konsep dasar topik: ${question.topic || "Persamaan Kuadrat"}.`
+        evidence: `Siswa menunjukkan kesulitan dalam memahami prinsip dasar ${topicLabel} untuk menyelesaikan soal ini.`,
+        customAdvice: `Pelajari konsep dasar topik: ${topicLabel}.`
       };
     }
 
-    // Default Fallback
+    // Default Fallback — subject-agnostic
     return {
       primaryError: "E2",
       secondaryError: "E3",
       confidence: 78,
-      evidence: "Langkah pengerjaan siswa belum mencapai solusi akhir yang tepat. Perlu penajaman pada alur prosedur pemecahan masalah.",
-      customAdvice: `Tinjau kembali kunci penyelesaian dan penjelasan pada materi ${question.topic}.`
+      evidence: `Langkah pengerjaan siswa belum mencapai solusi akhir yang tepat pada materi ${topicLabel}. Perlu penajaman pada alur prosedur pemecahan masalah.`,
+      customAdvice: `Tinjau kembali kunci penyelesaian dan penjelasan pada materi ${topicLabel}.`
     };
   }
 }

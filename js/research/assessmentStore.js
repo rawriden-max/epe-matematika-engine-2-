@@ -22,9 +22,11 @@ export class AssessmentStore {
     const stored = localStorage.getItem("epe_student_name");
     const nameEl = document.getElementById("dash-student-name");
     const name = stored || nameEl?.textContent?.trim() || "Siswa_01";
+    const studentClass = localStorage.getItem("epe_student_class") || localStorage.getItem("epe_student_grade") || "";
     return {
       studentId: name.toLowerCase().replace(/\s+/g, "_"),
-      studentName: name
+      studentName: name,
+      studentClass: studentClass
     };
   }
 
@@ -115,6 +117,8 @@ export class AssessmentStore {
       attemptId: attemptId,
       studentId: attemptData.studentId || studentInfo.studentId,
       studentName: attemptData.studentName || studentInfo.studentName,
+      studentClass: attemptData.studentClass || studentInfo.studentClass || localStorage.getItem("epe_student_class") || "",
+      subject: attemptData.subject || "mathematics",
       testType: testType,
       testForm: attemptData.testForm || (testType === "pretest" ? "Form A" : "Form B"),
       startedAt: attemptData.startedAt || new Date(timestampMs - (attemptData.durationSeconds || 60) * 1000).toISOString(),

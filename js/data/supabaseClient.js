@@ -698,6 +698,8 @@ export async function saveIntegritySessionToSupabase(session) {
     tab_switch_count: s.tabSwitches || 0,
     total_inactive_duration: s.totalInactiveSeconds || 0,
     rapid_answer_count: s.rapidAnswersCount || 0,
+    ai_access_count: (s.matrixAiOpenedCount || 0) + (s.googleLensAttempts || 0),
+    screenshot_count: s.screenshotAttempts || 0,
     similarity_flag_count: 0,
     overall_status: s.reviewRecommended ? "review_recommended" : "normal",
     review_recommended: Boolean(s.reviewRecommended),

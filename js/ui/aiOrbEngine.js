@@ -79,6 +79,9 @@ export class AiOrbEngine {
 
     this.container.innerHTML = "";
     this.canvas = document.createElement("canvas");
+    this.canvas.style.position = "absolute";
+    this.canvas.style.top = "0";
+    this.canvas.style.left = "0";
     this.canvas.style.width = "100%";
     this.canvas.style.height = "100%";
     this.canvas.style.display = "block";
@@ -140,6 +143,9 @@ export class AiOrbEngine {
     if (!Number.isFinite(this.rotY)) this.rotY = 0;
     this.resize();
     this.triggerOrbitBurst();
+    if (!this.animId) {
+      this.animate();
+    }
   }
 
   resize() {
@@ -148,17 +154,23 @@ export class AiOrbEngine {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     
     // Only update dimensions if container is visibly rendered with valid width/height
-    if (rect.width > 20 && rect.height > 20) {
+    if (rect.width > 30 && rect.height > 30) {
       this.width = rect.width;
       this.height = rect.height;
-    } else if (!this.width || !this.height) {
-      this.width = 260;
-      this.height = 220;
+    } else {
+      this.width = this.container.clientWidth || 300;
+      this.height = this.container.clientHeight || 185;
+      if (this.width < 50) this.width = 300;
+      if (this.height < 50) this.height = 185;
     }
 
-    this.canvas.width = this.width * dpr;
-    this.canvas.height = this.height * dpr;
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.canvas.width = Math.round(this.width * dpr);
+    this.canvas.height = Math.round(this.height * dpr);
+    this.canvas.style.width = "100%";
+    this.canvas.style.height = "100%";
+    if (this.ctx) {
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
   }
 
   bindInteractions() {
@@ -247,13 +259,19 @@ export class AiOrbEngine {
 
   animate() {
     this.animId = requestAnimationFrame(() => this.animate());
-    if (!this.ctx || !this.width || !this.height) return;
+    if (!this.ctx) return;
 
-    // Throttle rendering saat mode anti-lag aktif
-    if (window.__EPE_LOW_PERF__) {
-      this._perfFrame = (this._perfFrame || 0) + 1;
-      if (this._perfFrame % 2 !== 0) return; // Skip tiap frame kedua (render di ~30fps)
+    if (!this.width || this.width < 30 || !this.height || this.height < 30) {
+      this.resize();
     }
+    if (!this.width || !this.height) return;
+
+    try {
+      // Throttle rendering saat mode anti-lag aktif
+      if (window.__EPE_LOW_PERF__) {
+        this._perfFrame = (this._perfFrame || 0) + 1;
+        if (this._perfFrame % 2 !== 0) return; // Skip tiap frame kedua (render di ~30fps)
+      }
 
     // Auto-recover defensive check against any NaN corruption
     if (!Number.isFinite(this.rotX)) this.rotX = 0.22;
@@ -612,6 +630,9 @@ export class AiOrbEngine {
         ctx.shadowBlur = 0;
       }
     });
+    } catch (err) {
+      console.warn("AiOrbEngine animate loop catch:", err);
+    }
   }
 
   destroy() {

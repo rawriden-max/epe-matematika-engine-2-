@@ -1,5 +1,5 @@
 /**
- * cubicTransactions.js - EPE V2.1 Cubic Ledger & Transaction History
+ * cubicTransactions.js - EPE V3 Cubic Ledger & Transaction History
  * 
  * Mencatat setiap mutasi virtual currency (Cubic '◆'):
  * - Reward (perolehan dari diagnostic, remediation, latihan mandiri)

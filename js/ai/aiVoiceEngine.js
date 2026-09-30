@@ -91,6 +91,7 @@ export class AiVoiceEngine {
     this.currentUtterances = [];
     this.isSpeaking = false;
     this.keepAliveInterval = null;
+    this.currentSpeechSessionId = 0;
 
     this.initVoices();
   }
@@ -727,10 +728,21 @@ export class AiVoiceEngine {
     const cfg = customConfig || this.config;
     const voiceToUse = this.resolveActiveVoice(cfg);
     let currentIndex = 0;
+
+    // Invalidate session sebelumnya & pastikan speech yang lama berhenti
+    this.stopSpeaking();
+    const sessionId = ++this.currentSpeechSessionId;
     this.isSpeaking = true;
 
     // Chrome TTS Bug Workaround: panggil resume tiap 4 detik saat speaking aktif
     this.keepAliveInterval = setInterval(() => {
+      if (this.currentSpeechSessionId !== sessionId || !this.isSpeaking) {
+        if (this.keepAliveInterval) {
+          clearInterval(this.keepAliveInterval);
+          this.keepAliveInterval = null;
+        }
+        return;
+      }
       if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
         window.speechSynthesis.pause();
         window.speechSynthesis.resume();
@@ -738,6 +750,11 @@ export class AiVoiceEngine {
     }, 4000);
 
     const speakNextSentence = () => {
+      // Jika session sudah dibatalkan atau isSpeaking sudah false, STOP LANGSUNG!
+      if (this.currentSpeechSessionId !== sessionId || !this.isSpeaking) {
+        return;
+      }
+
       if (currentIndex >= sentences.length) {
         this.stopSpeaking();
         if (onEnd) onEnd();
@@ -757,19 +774,30 @@ export class AiVoiceEngine {
       }
 
       utterance.onstart = () => {
+        if (this.currentSpeechSessionId !== sessionId || !this.isSpeaking) {
+          try { window.speechSynthesis.cancel(); } catch (e) {}
+          return;
+        }
         if (currentIndex === 0 && onStart) onStart();
       };
 
       utterance.onboundary = (e) => {
-        if (onBoundary) onBoundary(e, sentenceText);
+        if (this.currentSpeechSessionId === sessionId && this.isSpeaking && onBoundary) {
+          onBoundary(e, sentenceText);
+        }
       };
 
       utterance.onend = () => {
+        if (this.currentSpeechSessionId !== sessionId || !this.isSpeaking) return;
         currentIndex++;
         speakNextSentence();
       };
 
       utterance.onerror = (err) => {
+        // Jika dibatalkan oleh pengguna (canceled / interrupted) atau session dihentikan, jangan lanjut!
+        if (this.currentSpeechSessionId !== sessionId || !this.isSpeaking || err?.error === "canceled" || err?.error === "interrupted") {
+          return;
+        }
         console.warn("TTS Utterance Error:", err);
         currentIndex++;
         if (currentIndex >= sentences.length) {
@@ -788,6 +816,7 @@ export class AiVoiceEngine {
   }
 
   stopSpeaking() {
+    this.currentSpeechSessionId++; // Invalidate session secara instan
     this.isSpeaking = false;
     if (this.keepAliveInterval) {
       clearInterval(this.keepAliveInterval);
@@ -795,6 +824,9 @@ export class AiVoiceEngine {
     }
     if (typeof window !== "undefined" && window.speechSynthesis) {
       try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
         window.speechSynthesis.cancel();
       } catch (e) {}
     }

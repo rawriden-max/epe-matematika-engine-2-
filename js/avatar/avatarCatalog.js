@@ -1,5 +1,5 @@
 /**
- * avatarCatalog.js - EPE V2.1 Cosmetic Item Catalog
+ * avatarCatalog.js - EPE V3 Cosmetic Item Catalog
  * 
  * 6 Kategori Kustomisasi:
  * - face: Bentuk wajah dan ekspresi

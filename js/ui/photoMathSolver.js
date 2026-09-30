@@ -391,6 +391,137 @@ export class PhotoMathSolver {
     `;
   }
 
+  getAiApiKeyBannerHtml() {
+    const hasKey = AiVisionService.hasValidKey();
+    const cfg = AiVisionService.getStoredConfig();
+    const providerLabel = cfg.provider === "gemini" ? "Google Gemini" : cfg.provider === "openai" ? "OpenAI" : "Anthropic Claude";
+    const modelShort = cfg.model ? cfg.model.replace("gemini-", "").replace("claude-3-5-", "").replace("gpt-4o", "GPT-4o") : "";
+
+    if (hasKey) {
+      return `
+        <!-- Connected Status Banner -->
+        <div class="photo-api-callout-card connected p-4 sm:p-5 mb-6 relative z-10">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                <svg class="w-6 h-6 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
+                </svg>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs font-mono font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping inline-block"></span>
+                    Vision AI Terhubung &amp; Siap
+                  </span>
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-extrabold bg-emerald-900/90 dark:bg-emerald-950 text-emerald-100 dark:text-emerald-200 border border-emerald-500/60 shadow-xs">
+                    ${providerLabel} • ${modelShort}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-700 dark:text-slate-300 mt-1 font-medium leading-relaxed">
+                  OCR Vision berakurasi tinggi aktif untuk membaca foto lembar kerja &amp; dokumen PDF matematika Anda.
+                </p>
+              </div>
+            </div>
+            <button
+              id="btn-banner-connect-api"
+              type="button"
+              class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-800 hover:bg-emerald-700 dark:bg-slate-900 text-white dark:text-emerald-300 border border-emerald-600/50 dark:border-emerald-500/40 transition-all flex items-center gap-2 shrink-0 shadow-md hover:scale-[1.02] cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>Ubah Konfigurasi API</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <!-- Unconnected Creative Notice Banner -->
+      <div class="photo-api-callout-card animate-pulse-gentle p-5 sm:p-6 mb-6 relative z-10">
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+          <div class="flex items-start gap-4">
+            <!-- Pulsing Holographic Key Icon -->
+            <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-amber-500/30 via-amber-400/20 to-cyan-500/30 border-2 border-amber-400/60 text-amber-300 flex items-center justify-center shrink-0 shadow-[0_0_25px_rgba(245,158,11,0.4)]">
+              <svg class="w-7 h-7 sm:w-8 sm:h-8 text-amber-300 drop-shadow-[0_2px_8px_rgba(245,158,11,0.6)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+              </svg>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-extrabold uppercase tracking-wider bg-amber-500/25 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
+                  <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping inline-block"></span>
+                  Langkah Penting • Aktifkan Fitur Scanner
+                </span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/20 text-cyan-200 border border-cyan-500/30">
+                  100% Gratis Tanpa Kartu Kredit
+                </span>
+              </div>
+              <h4 class="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                <span>Sambungkan Vision AI API Key untuk Scan Foto Soal</span>
+              </h4>
+              <p class="text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed">
+                Agar AI dapat mengekstrak teks, rumus pecahan, dan diagram dari foto soal atau dokumen PDF Anda, hubungkan API Key gratis dari <strong>Google Gemini</strong> (hanya butuh 30 detik &amp; tanpa biaya).
+              </p>
+              <div class="flex items-center gap-3 pt-1 text-[11px] text-amber-200/90 font-mono flex-wrap">
+                <span class="flex items-center gap-1">✓ Gratis 15 scan/menit</span>
+                <span class="flex items-center gap-1">✓ Disimpan lokal di browser Anda</span>
+                <span class="flex items-center gap-1">✓ Mendukung Claude &amp; GPT-4o</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prominent CTA Button -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 w-full lg:w-auto">
+            <button
+              id="btn-banner-connect-api"
+              type="button"
+              class="px-6 py-3.5 rounded-xl text-sm font-extrabold bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 cursor-pointer font-sans"
+            >
+              <svg class="w-4 h-4 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+              <span>Sambungkan API Key Sekarang</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  getFloatingPhotoApiTabHtml() {
+    const hasKey = AiVisionService.hasValidKey();
+    if (hasKey) return "";
+
+    return `
+      <!-- Creative Sticky/Floating Mini Tab Badge -->
+      <div 
+        id="floating-photo-api-tab"
+        class="fixed bottom-6 right-6 z-40 group cursor-pointer animate-slide-in-tab transition-all duration-300 hover:scale-105"
+        title="Klik untuk menyambungkan API Key Vision AI"
+      >
+        <div class="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-slate-950/95 border-2 border-amber-400 text-amber-300 shadow-[0_8px_30px_rgba(245,158,11,0.45)] backdrop-blur-md">
+          <span class="relative flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+          </span>
+          <svg class="w-4 h-4 text-amber-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          </svg>
+          <span class="text-xs font-black tracking-wide text-white group-hover:text-amber-200">
+            Sambungkan API Key
+          </span>
+          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-300 border border-amber-500/40">
+            Gratis
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
   render() {
     if (!this.container) return;
 
@@ -464,6 +595,12 @@ export class PhotoMathSolver {
         </div>
       </div>
 
+      <!-- Prominent Vision AI API Key Callout Banner -->
+      ${this.getAiApiKeyBannerHtml()}
+
+      <!-- Floating Mini Tab For Quick Recognition & Access -->
+      ${this.getFloatingPhotoApiTabHtml()}
+
       <!-- Main Grid: Left Upload & Scan Zone | Right Solution / Interactive Quiz -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
@@ -531,34 +668,34 @@ export class PhotoMathSolver {
           </div>
 
           <!-- Sample Math Question Carousel (Uji Coba Cepat Tanpa Upload) -->
-          <div class="card-clean p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+          <div class="photo-sample-card p-4 rounded-2xl space-y-2.5">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-extrabold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                <span class="w-4 h-4 rounded-md bg-amber-400/20 text-amber-300 inline-flex items-center justify-center shrink-0">
+              <span class="text-xs font-extrabold text-amber-500 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-4 h-4 rounded-md bg-amber-400/20 text-amber-400 inline-flex items-center justify-center shrink-0">
                   <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/></svg>
                 </span>
                 <span>Atau Uji Contoh Dokumen / Foto:</span>
               </span>
-              <span class="text-[10px] text-slate-400">Klik salah satu</span>
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Klik salah satu</span>
             </div>
 
             <!-- Featured Sample 1: PDF Document -->
             <button 
               type="button" 
-              class="sample-math-btn w-full p-3 rounded-xl bg-gradient-to-r from-slate-950 via-slate-900 to-rose-950/30 hover:border-rose-400/70 border border-rose-500/40 transition-all text-left group cursor-pointer shadow-md"
+              class="sample-math-btn w-full p-3 rounded-xl photo-sample-featured-pdf transition-all text-left group cursor-pointer shadow-md"
               data-sample-id="sample_pdf_worksheet"
             >
               <div class="flex items-center justify-between mb-1">
-                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1">
-                  <svg class="w-3 h-3 text-rose-400" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM8 17v-1h3v1H8zm0-3v-1h8v1H8zm0-3v-1h8v1H8z"/></svg>
+                <span class="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/40 flex items-center gap-1">
+                  <svg class="w-3 h-3 text-rose-500 dark:text-rose-400" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM8 17v-1h3v1H8zm0-3v-1h8v1H8zm0-3v-1h8v1H8z"/></svg>
                   DOKUMEN PDF (4 BUTIR SOAL)
                 </span>
-                <span class="text-[10px] text-emerald-400 font-semibold font-mono">184 KB</span>
+                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-extrabold font-mono">184 KB</span>
               </div>
-              <p class="text-xs font-extrabold text-white group-hover:text-rose-300 transition-colors">
+              <p class="text-xs font-extrabold text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-300 transition-colors">
                 Dokumen PDF: Lembar Kerja Siswa Perkalian Pecahan Aljabar
               </p>
-              <p class="text-[11px] font-mono text-cyan-300/90 mt-1 truncate">
+              <p class="text-[11px] font-mono text-cyan-700 dark:text-cyan-300/90 mt-1 truncate">
                 3/2 × 1/3, 5/2 × 2/10, 4/2 × 3/4, 3/5 × 5/7
               </p>
             </button>
@@ -566,20 +703,20 @@ export class PhotoMathSolver {
             <!-- Featured Sample 2: LaTeX .tex File -->
             <button 
               type="button" 
-              class="sample-math-btn w-full p-2.5 rounded-xl bg-gradient-to-r from-slate-950 via-slate-900 to-cyan-950/30 hover:border-cyan-400/70 border border-cyan-500/40 transition-all text-left group cursor-pointer shadow-md"
+              class="sample-math-btn w-full p-2.5 rounded-xl photo-sample-featured-latex transition-all text-left group cursor-pointer shadow-md"
               data-sample-id="sample_latex_file"
             >
               <div class="flex items-center justify-between mb-1">
-                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1">
+                <span class="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 border border-cyan-500/40 flex items-center gap-1">
                   <span class="text-[10px]">∑</span>
                   BERKAS LATEX (.tex)
                 </span>
-                <span class="text-[10px] text-cyan-300 font-mono">1.2 KB</span>
+                <span class="text-[10px] text-cyan-700 dark:text-cyan-300 font-extrabold font-mono">1.2 KB</span>
               </div>
-              <p class="text-xs font-extrabold text-white group-hover:text-cyan-300 transition-colors">
+              <p class="text-xs font-extrabold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors">
                 Berkas Sumber LaTeX: Limit Fungsi Trigonometri
               </p>
-              <p class="text-[11px] font-mono text-amber-300/90 mt-0.5 truncate">
+              <p class="text-[11px] font-mono text-amber-700 dark:text-amber-300/90 mt-0.5 truncate">
                 \\lim_{x \\to 0} \\frac{\\sin x}{\\sqrt{\\pi + \\tan x} - \\sqrt{\\pi - \\tan x}}
               </p>
             </button>
@@ -589,14 +726,14 @@ export class PhotoMathSolver {
               ${SAMPLE_MATH_PHOTOS.filter(s => s.id !== "sample_pdf_worksheet" && s.id !== "sample_latex_file").map((sp) => `
                 <button 
                   type="button" 
-                  class="sample-math-btn p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 hover:border-cyan-500/60 transition-all text-left group cursor-pointer"
+                  class="sample-math-btn p-2.5 rounded-xl photo-sample-pill transition-all text-left group cursor-pointer"
                   data-sample-id="${sp.id}"
                 >
                   <div class="flex items-center justify-between mb-1">
-                    <span class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">${sp.badge}</span>
+                    <span class="text-[10px] font-mono font-extrabold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 border border-cyan-500/30">${sp.badge}</span>
                   </div>
-                  <p class="text-xs font-extrabold text-white truncate group-hover:text-cyan-300 transition-colors">${sp.title}</p>
-                  <p class="text-[11px] font-mono text-amber-300/90 mt-0.5 truncate">${sp.latex}</p>
+                  <p class="text-xs font-extrabold text-slate-900 dark:text-white truncate group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors">${sp.title}</p>
+                  <p class="text-[11px] font-mono text-amber-700 dark:text-amber-300/90 mt-0.5 truncate">${sp.latex}</p>
                 </button>
               `).join("")}
             </div>
@@ -1881,7 +2018,7 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
       }
 
       // Open AI Key Configuration Modal
-      const openAiModalBtn = e.target.closest("#btn-open-ai-config, #btn-quick-config-link");
+      const openAiModalBtn = e.target.closest("#btn-open-ai-config, #btn-quick-config-link, #btn-banner-connect-api, #floating-photo-api-tab, .btn-open-api-modal");
       if (openAiModalBtn) {
         this.openApiKeyModal();
         return;
@@ -2010,14 +2147,20 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
       const pickScratchBtn = e.target.closest("#btn-pick-quiz-scratchpad");
       if (pickScratchBtn) {
         const fileInp = this.container?.querySelector("#quiz-scratchpad-file-input");
-        if (fileInp) fileInp.click();
+        if (fileInp) {
+          fileInp.value = "";
+          fileInp.click();
+        }
         return;
       }
 
       const camScratchBtn = e.target.closest("#btn-camera-quiz-scratchpad");
       if (camScratchBtn) {
         const camInp = this.container?.querySelector("#quiz-scratchpad-camera-input");
-        if (camInp) camInp.click();
+        if (camInp) {
+          camInp.value = "";
+          camInp.click();
+        }
         return;
       }
 
@@ -2154,193 +2297,128 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
         }
         return;
       }
+
+      // Main File Pickers (Delegated Click - Works repeatedly across re-renders)
+      const pickBtn = e.target.closest("#btn-pick-file");
+      if (pickBtn) {
+        const fileInput = this.container.querySelector("#photo-file-input");
+        if (fileInput) {
+          fileInput.value = "";
+          fileInput.click();
+        }
+        return;
+      }
+
+      const pickDocBtn = e.target.closest("#btn-pick-doc");
+      if (pickDocBtn) {
+        const docInput = this.container.querySelector("#doc-file-input");
+        if (docInput) {
+          docInput.value = "";
+          docInput.click();
+        }
+        return;
+      }
+
+      const camBtn = e.target.closest("#btn-take-photo");
+      if (camBtn) {
+        const cameraInput = this.container.querySelector("#camera-file-input");
+        if (cameraInput) {
+          cameraInput.value = "";
+          cameraInput.click();
+        }
+        return;
+      }
+
+      // Empty Dropzone Area Click (Triggers file picker if clicked anywhere on empty dropzone area)
+      const emptyDropzone = e.target.closest("#dropzone-empty-state");
+      if (emptyDropzone && !e.target.closest("button, a, input, kbd")) {
+        const fileInput = this.container.querySelector("#photo-file-input");
+        if (fileInput) {
+          fileInput.value = "";
+          fileInput.click();
+        }
+        return;
+      }
     });
 
-    // File Pickers
-    const fileInput = this.container.querySelector("#photo-file-input");
-    const docInput = this.container.querySelector("#doc-file-input");
-    const cameraInput = this.container.querySelector("#camera-file-input");
-    const pickBtn = this.container.querySelector("#btn-pick-file");
-    const pickDocBtn = this.container.querySelector("#btn-pick-doc");
-    const camBtn = this.container.querySelector("#btn-take-photo");
+    // Multimodal & Photo Solver File Inputs (Delegated Change Listener - Resetting value so same file can be re-selected)
+    this.container.addEventListener("change", async (e) => {
+      const target = e.target;
+      if (!target) return;
 
-    if (pickBtn && fileInput) pickBtn.addEventListener("click", () => fileInput.click());
-    if (pickDocBtn && docInput) pickDocBtn.addEventListener("click", () => docInput.click());
-    if (camBtn && cameraInput) camBtn.addEventListener("click", () => cameraInput.click());
-
-    const handleFile = async (file) => {
-      if (!file) return;
-
-      const name = file.name || "berkas_matematika";
-      const sizeFormatted = MediaManager.formatFileSize(file.size || 0);
-      const ext = (name.split(".").pop() || "").toLowerCase();
-
-      const isImage = file.type.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif", "svg"].includes(ext);
-      const isPdf = file.type === "application/pdf" || ext === "pdf";
-      const isText = file.type.startsWith("text/") || ["txt", "tex", "latex", "md", "markdown", "json", "csv"].includes(ext);
-      const isDoc = ["docx", "doc"].includes(ext);
-
-      if (!isImage && !isPdf && !isText && !isDoc) {
-        NotificationToast.show("Format berkas tidak didukung. Harap unggah Foto (JPG, PNG, WEBP), Dokumen PDF (.pdf), atau File Teks/LaTeX (.tex, .txt, .md).", "warning");
-        return;
-      }
-
-      // 1. Berkas Teks & LaTeX (.txt, .tex, .md, dll)
-      if (isText) {
-        try {
-          const textContent = await file.text();
-          this.currentFile = {
-            name,
-            size: file.size,
-            sizeFormatted,
-            type: file.type || "text/plain",
-            extension: ext,
-            isText: true,
-            isPdf: false,
-            isImage: false,
-            textContent
-          };
-          this.currentImage = null;
-          this.activeProblemTab = "all";
-          this.activeQuizProblemIndex = 0;
-          this.render();
-
-          if (AiVisionService.hasValidKey()) {
-            await this.scanTextWithLiveAi(textContent, this.currentFile);
-          } else {
-            const recognized = this.recognizeProblemFromText(textContent, name);
-            this.simulateScanAnimation(recognized);
-          }
-        } catch (err) {
-          NotificationToast.show(`Gagal membaca berkas teks: ${err.message}`, "error");
+      if (target.id === "photo-file-input" || target.id === "doc-file-input" || target.id === "camera-file-input") {
+        const file = target.files && target.files[0];
+        target.value = ""; // Reset so re-selecting the exact same file fires change event every time
+        if (file) {
+          await this.handleFile(file);
         }
         return;
       }
 
-      // 2. Berkas Dokumen PDF (.pdf)
-      if (isPdf) {
-        try {
-          const dataUrl = await MediaManager.readFileAsDataURL(file);
-          this.currentFile = {
-            name,
-            size: file.size,
-            sizeFormatted,
-            type: "application/pdf",
-            extension: "pdf",
-            isPdf: true,
-            isText: false,
-            isImage: false,
-            dataUrl
-          };
-          this.currentImage = null;
-          this.activeProblemTab = "all";
-          this.activeQuizProblemIndex = 0;
-          this.render();
-
-          if (AiVisionService.hasValidKey()) {
-            await this.scanFileWithLiveAi(this.currentFile);
-          } else {
-            const recognized = this.recognizeProblemFromImage(name);
-            this.simulateScanAnimation(recognized);
-          }
-        } catch (err) {
-          NotificationToast.show(`Gagal memproses berkas PDF: ${err.message}`, "error");
+      if (target.id === "quiz-scratchpad-file-input" || target.id === "quiz-scratchpad-camera-input") {
+        const file = target.files && target.files[0];
+        target.value = ""; // Reset value
+        if (file) {
+          await this.handleScratchpadImage(file);
         }
         return;
       }
+    });
 
-      // 3. Berkas Dokumen Word (.docx)
-      if (isDoc) {
-        try {
-          const textContent = await file.text();
-          this.currentFile = {
-            name,
-            size: file.size,
-            sizeFormatted,
-            type: file.type || "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            extension: ext,
-            isText: true,
-            isPdf: false,
-            isImage: false,
-            textContent: textContent.length > 50 ? textContent : `Dokumen Word: ${name} (${sizeFormatted})`
-          };
-          this.currentImage = null;
-          this.activeProblemTab = "all";
-          this.activeQuizProblemIndex = 0;
-          this.render();
-
-          if (AiVisionService.hasValidKey()) {
-            await this.scanTextWithLiveAi(this.currentFile.textContent, this.currentFile);
-          } else {
-            const recognized = this.recognizeProblemFromImage(name);
-            this.simulateScanAnimation(recognized);
-          }
-        } catch (err) {
-          NotificationToast.show(`Gagal membaca dokumen: ${err.message}`, "error");
-        }
-        return;
+    // Drag & Drop (Delegated on container so it permanently survives re-renders)
+    this.container.addEventListener("dragenter", (e) => {
+      const dropzone = e.target.closest("#photo-dropzone");
+      if (dropzone) {
+        e.preventDefault();
+        dropzone.classList.add("border-cyan-400", "bg-cyan-950/20");
       }
+    });
 
-      // 4. Berkas Gambar / Foto (JPG, PNG, WEBP)
-      try {
-        const dataUrl = await MediaManager.readFileAsDataURL(file);
-        this.currentFile = {
-          name,
-          size: file.size,
-          sizeFormatted,
-          type: file.type || "image/jpeg",
-          extension: ext,
-          isImage: true,
-          isPdf: false,
-          isText: false,
-          dataUrl
-        };
-        this.currentImage = dataUrl;
-        this.activeProblemTab = "all";
-        this.activeQuizProblemIndex = 0;
-        this.render();
-
-        if (AiVisionService.hasValidKey()) {
-          await this.scanWithLiveAi(dataUrl);
-        } else {
-          // Smart heuristic matcher (defaults to the 4-problem fraction worksheet for fraction/worksheet images)
-          const recognized = this.recognizeProblemFromImage(file.name);
-          this.simulateScanAnimation(recognized);
-        }
-      } catch (err) {
-        NotificationToast.show(`Gagal memuat gambar: ${err.message}`, "error");
+    this.container.addEventListener("dragover", (e) => {
+      const dropzone = e.target.closest("#photo-dropzone");
+      if (dropzone) {
+        e.preventDefault();
+        dropzone.classList.add("border-cyan-400", "bg-cyan-950/20");
       }
-    };
+    });
 
-    if (fileInput) fileInput.addEventListener("change", (e) => handleFile(e.target.files?.[0]));
-    if (docInput) docInput.addEventListener("change", (e) => handleFile(e.target.files?.[0]));
-    if (cameraInput) cameraInput.addEventListener("change", (e) => handleFile(e.target.files?.[0]));
+    this.container.addEventListener("dragleave", (e) => {
+      const dropzone = e.target.closest("#photo-dropzone");
+      if (dropzone) {
+        dropzone.classList.remove("border-cyan-400", "bg-cyan-950/20");
+      }
+    });
 
-    // Drag & Drop
-    const dropzone = this.container.querySelector("#photo-dropzone");
-    if (dropzone) {
-      ["dragenter", "dragover"].forEach((evt) => {
-        dropzone.addEventListener(evt, (e) => {
-          e.preventDefault();
-          dropzone.classList.add("border-cyan-400", "bg-cyan-950/20");
-        });
-      });
-
-      ["dragleave", "drop"].forEach((evt) => {
-        dropzone.addEventListener(evt, (e) => {
-          e.preventDefault();
-          dropzone.classList.remove("border-cyan-400", "bg-cyan-950/20");
-        });
-      });
-
-      dropzone.addEventListener("drop", (e) => {
+    this.container.addEventListener("drop", async (e) => {
+      const dropzone = e.target.closest("#photo-dropzone");
+      if (dropzone) {
+        e.preventDefault();
+        dropzone.classList.remove("border-cyan-400", "bg-cyan-950/20");
         const file = e.dataTransfer?.files?.[0];
-        if (file) handleFile(file);
-      });
-    }
+        if (file) {
+          await this.handleFile(file);
+        }
+      }
+    });
 
     // Global Clipboard Paste (Ctrl + V) when on this tab
     window.addEventListener("paste", (e) => {
+      // PENTING: Jangan mencegat paste jika pengguna sedang fokus di elemen input, textarea,
+      // atau jika dialog/modal (seperti modal API Key) sedang aktif!
+      const activeElement = document.activeElement;
+      const target = e.target;
+      const isInputFocused = target && (
+        target.tagName === "INPUT" || 
+        target.tagName === "TEXTAREA" || 
+        target.isContentEditable || 
+        target.closest("input, textarea, select, #ai-api-modal, .modal-backdrop, dialog")
+      );
+      const isApiModalOpen = document.getElementById("ai-api-modal") && !document.getElementById("ai-api-modal").classList.contains("hidden");
+
+      if (isInputFocused || isApiModalOpen || (activeElement && (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA"))) {
+        return; // Biarkan paste berjalan normal ke input/textarea (misal: menempelkan API key)
+      }
+
       const activeSection = document.getElementById("section-photo-solver-mode");
       if (activeSection && !activeSection.classList.contains("hidden")) {
         // 1. Cek apakah ada file berkas/gambar di clipboard
@@ -2349,7 +2427,7 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
         if (fileItem) {
           const file = fileItem.getAsFile();
           if (file) {
-            handleFile(file);
+            this.handleFile(file);
             return;
           }
         }
@@ -2357,21 +2435,24 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
         // 2. Cek apakah ada teks formula matematika / LaTeX yang ditempel
         const pastedText = e.clipboardData?.getData("text/plain");
         if (pastedText && pastedText.trim().length > 3) {
-          const isProbablyMath = /[\$\\\^\_\+\-\*\/\=\(\)\{\}]/.test(pastedText) || pastedText.includes("lim") || pastedText.includes("frac");
+          // Jangan perlakukan API key atau token (AIza, sk-, gsk, dll) sebagai formula
+          const isApiKeyPattern = /^(AIza|sk-|gsk-|claude-)/i.test(pastedText.trim());
+          if (isApiKeyPattern) return;
+
+          // Hanya deteksi formula jika mengandung notasi matematika spesifik
+          const isProbablyMath = /[\$\\\^]/.test(pastedText) || 
+            pastedText.includes("\\frac") || 
+            pastedText.includes("\\sqrt") || 
+            pastedText.includes("\\times") || 
+            pastedText.includes("\\int") || 
+            pastedText.includes("\\sum") || 
+            pastedText.includes("lim_{") || 
+            pastedText.includes("\\pm");
+
           if (isProbablyMath) {
             const fakeFile = new File([pastedText], "tangkapan_formula.tex", { type: "text/plain" });
-            handleFile(fakeFile);
+            this.handleFile(fakeFile);
           }
-        }
-      }
-    });
-
-    // Multimodal Quiz Scratchpad File Input (Delegated)
-    this.container.addEventListener("change", async (e) => {
-      if (e.target && (e.target.id === "quiz-scratchpad-file-input" || e.target.id === "quiz-scratchpad-camera-input")) {
-        const file = e.target.files && e.target.files[0];
-        if (file) {
-          await this.handleScratchpadImage(file);
         }
       }
     });
@@ -2384,6 +2465,149 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
         this.quizStepsValue = e.target.value;
       }
     });
+  }
+
+  async handleFile(file) {
+    if (!file) return;
+
+    const name = file.name || "berkas_matematika";
+    const sizeFormatted = MediaManager.formatFileSize(file.size || 0);
+    const ext = (name.split(".").pop() || "").toLowerCase();
+
+    const isImage = file.type.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif", "svg"].includes(ext);
+    const isPdf = file.type === "application/pdf" || ext === "pdf";
+    const isText = file.type.startsWith("text/") || ["txt", "tex", "latex", "md", "markdown", "json", "csv"].includes(ext);
+    const isDoc = ["docx", "doc"].includes(ext);
+
+    if (!isImage && !isPdf && !isText && !isDoc) {
+      NotificationToast.show("Format berkas tidak didukung. Harap unggah Foto (JPG, PNG, WEBP), Dokumen PDF (.pdf), atau File Teks/LaTeX (.tex, .txt, .md).", "warning");
+      return;
+    }
+
+    // 1. Berkas Teks & LaTeX (.txt, .tex, .md, dll)
+    if (isText) {
+      try {
+        const textContent = await file.text();
+        this.currentFile = {
+          name,
+          size: file.size,
+          sizeFormatted,
+          type: file.type || "text/plain",
+          extension: ext,
+          isText: true,
+          isPdf: false,
+          isImage: false,
+          textContent
+        };
+        this.currentImage = null;
+        this.activeProblemTab = "all";
+        this.activeQuizProblemIndex = 0;
+        this.render();
+
+        if (AiVisionService.hasValidKey()) {
+          await this.scanTextWithLiveAi(textContent, this.currentFile);
+        } else {
+          const recognized = this.recognizeProblemFromText(textContent, name);
+          this.simulateScanAnimation(recognized);
+        }
+      } catch (err) {
+        NotificationToast.show(`Gagal membaca berkas teks: ${err.message}`, "error");
+      }
+      return;
+    }
+
+    // 2. Berkas Dokumen PDF (.pdf)
+    if (isPdf) {
+      try {
+        const dataUrl = await MediaManager.readFileAsDataURL(file);
+        this.currentFile = {
+          name,
+          size: file.size,
+          sizeFormatted,
+          type: "application/pdf",
+          extension: "pdf",
+          isPdf: true,
+          isText: false,
+          isImage: false,
+          dataUrl
+        };
+        this.currentImage = null;
+        this.activeProblemTab = "all";
+        this.activeQuizProblemIndex = 0;
+        this.render();
+
+        if (AiVisionService.hasValidKey()) {
+          await this.scanFileWithLiveAi(this.currentFile);
+        } else {
+          const recognized = this.recognizeProblemFromImage(name);
+          this.simulateScanAnimation(recognized);
+        }
+      } catch (err) {
+        NotificationToast.show(`Gagal memproses berkas PDF: ${err.message}`, "error");
+      }
+      return;
+    }
+
+    // 3. Berkas Dokumen Word (.docx)
+    if (isDoc) {
+      try {
+        const textContent = await file.text();
+        this.currentFile = {
+          name,
+          size: file.size,
+          sizeFormatted,
+          type: file.type || "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          extension: ext,
+          isText: true,
+          isPdf: false,
+          isImage: false,
+          textContent: textContent.length > 50 ? textContent : `Dokumen Word: ${name} (${sizeFormatted})`
+        };
+        this.currentImage = null;
+        this.activeProblemTab = "all";
+        this.activeQuizProblemIndex = 0;
+        this.render();
+
+        if (AiVisionService.hasValidKey()) {
+          await this.scanTextWithLiveAi(this.currentFile.textContent, this.currentFile);
+        } else {
+          const recognized = this.recognizeProblemFromImage(name);
+          this.simulateScanAnimation(recognized);
+        }
+      } catch (err) {
+        NotificationToast.show(`Gagal membaca dokumen: ${err.message}`, "error");
+      }
+      return;
+    }
+
+    // 4. Berkas Gambar / Foto (JPG, PNG, WEBP)
+    try {
+      const dataUrl = await MediaManager.readFileAsDataURL(file);
+      this.currentFile = {
+        name,
+        size: file.size,
+        sizeFormatted,
+        type: file.type || "image/jpeg",
+        extension: ext,
+        isImage: true,
+        isPdf: false,
+        isText: false,
+        dataUrl
+      };
+      this.currentImage = dataUrl;
+      this.activeProblemTab = "all";
+      this.activeQuizProblemIndex = 0;
+      this.render();
+
+      if (AiVisionService.hasValidKey()) {
+        await this.scanWithLiveAi(dataUrl);
+      } else {
+        const recognized = this.recognizeProblemFromImage(file.name);
+        this.simulateScanAnimation(recognized);
+      }
+    } catch (err) {
+      NotificationToast.show(`Gagal memuat gambar: ${err.message}`, "error");
+    }
   }
 
   openApiKeyModal() {

@@ -223,7 +223,7 @@
 
           <button data-tab="pretest" class="epe-nav-item sidebar-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all">
             <svg class="w-4 h-4 text-cyan-500 dark:text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-            <span>Pre-Test</span>
+            <span>Pre-Test / Tugas</span>
           </button>
 
           <button data-tab="diagnostic" class="epe-nav-item sidebar-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all">
@@ -233,7 +233,7 @@
 
           <button data-tab="practice" class="epe-nav-item sidebar-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all">
             <svg class="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-            <span>Bank Latihan</span>
+            <span>Latihan &amp; Tryout</span>
           </button>
 
           <button data-tab="photo-solver" class="epe-nav-item sidebar-nav-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all">
@@ -246,7 +246,7 @@
 
           <button data-tab="posttest" class="epe-nav-item sidebar-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all">
             <svg class="w-4 h-4 text-teal-500 dark:text-teal-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span>Post-Test</span>
+            <span>Post-Test / Remedial</span>
           </button>
 
           <button data-tab="error-profile" class="epe-nav-item sidebar-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all">
@@ -378,8 +378,8 @@
       <!-- Sisi Kanan: Single Unified Control Hub & Floating Student Avatar Trigger -->
       <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
         <!-- Live Role Badge -->
-        <div class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-amber-950/40 border border-slate-200/80 dark:border-amber-900/40 text-xs font-semibold text-slate-700 dark:text-slate-300">
-          <span class="text-xs">🎓</span>
+        <div id="header-current-mode-badge" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-amber-950/40 border border-slate-200/80 dark:border-amber-900/40 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all cursor-pointer hover:opacity-90" title="Mode Siswa Aktif. Klik untuk membuka Pengaturan / Ganti Mode.">
+          <span id="header-current-mode-icon" class="text-xs">🎓</span>
           <span id="header-current-mode-label">Mode Siswa</span>
         </div>
 
@@ -538,7 +538,7 @@
 
           <!-- 3D Saturn Core + Gyroscopic Rings + Floating Rumus MTK Canvas Container -->
           <div class="relative w-full py-0.5 flex flex-col items-center justify-center my-0.5">
-            <div id="ai-orb-container" class="w-full h-44 sm:h-48 relative cursor-pointer" style="min-height: 180px; width: 100%; display: flex; align-items: center; justify-content: center;" title="Matrix AI 3D Saturn Core (Klik untuk Buka Percakapan)"></div>
+            <div id="ai-orb-container" class="w-full relative cursor-pointer" style="min-height: 185px; height: 185px; width: 100%; position: relative; overflow: hidden;" title="Matrix AI 3D Saturn Core (Klik untuk Buka Percakapan)"></div>
             <p class="text-[10px] text-center text-amber-200/90 font-mono tracking-tight -mt-0.5">
               Saturn Orbit Rings &bull; Rumus Aljabar Interaktif
             </p>
@@ -892,6 +892,57 @@
   <!-- ========================================================================= -->
   <main id="section-diagnostic-mode" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 hidden">
     
+    <!-- ========================================================================= -->
+    <!-- BAR NAVIGASI HALAMAN (MATA PELAJARAN) & SUB-HALAMAN (BAB / MATERI)        -->
+    <!-- ========================================================================= -->
+    <div id="diagnostic-navigator-card" class="card-clean p-4 sm:p-5 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-lg">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500/20 via-blue-500/15 to-purple-500/20 border border-cyan-500/40 text-cyan-500 dark:text-cyan-300 flex items-center justify-center shrink-0 shadow-sm">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-mono font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">Halaman &amp; Sub-Halaman Soal</span>
+              <span id="diagnostic-active-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-500/30 font-mono">
+                Matematika
+              </span>
+              <span id="diagnostic-question-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-mono">
+                24 Soal
+              </span>
+            </div>
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white mt-0.5">Navigasi Halaman &amp; Sub-Halaman Soal</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Pilih mata pelajaran (Matematika, Biologi, Fisika, dll) dan sub-halaman bab untuk memuat kumpulan soalnya.</p>
+          </div>
+        </div>
+
+        <!-- Dropdowns Selector -->
+        <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap w-full md:w-auto">
+          <!-- Dropdown Halaman (Mata Pelajaran) -->
+          <div class="space-y-1 w-full sm:w-auto min-w-[170px]">
+            <label for="diagnostic-subject-select" class="block text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">
+              Halaman (Mata Pelajaran):
+            </label>
+            <select id="diagnostic-subject-select" class="w-full text-xs font-bold py-2 px-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white cursor-pointer focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all shadow-sm">
+              <!-- Populated by SubjectRegistry -->
+            </select>
+          </div>
+
+          <!-- Dropdown Sub-Halaman (Bab / Topik) -->
+          <div class="space-y-1 w-full sm:w-auto min-w-[200px]">
+            <label for="diagnostic-topic-select" class="block text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">
+              Sub-Halaman (Bab / Materi):
+            </label>
+            <select id="diagnostic-topic-select" class="w-full text-xs font-bold py-2 px-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white cursor-pointer focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all shadow-sm">
+              <!-- Populated by Subject's topics -->
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- TORNADO + DETAIL: 2 KOLOM UTAMA -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       
@@ -1220,10 +1271,10 @@
           <span>Ekspor JSON</span>
         </button>
 
-        <label for="input-import-worksheet-image" title="Pindai Lembar Kerja / Foto Soal Guru (Multimodal)" class="btn-primary py-2 px-3 text-xs font-bold cursor-pointer bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-md">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-          <span>📷 Impor Worksheet</span>
-          <input type="file" id="input-import-worksheet-image" accept="image/*" class="hidden" />
+        <label for="input-import-worksheet-image" title="Pindai Lembar Kerja Guru (Foto / Dokumen PDF Multimodal)" class="btn-primary py-2 px-3 text-xs font-bold cursor-pointer bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-md">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          <span>📑 Impor Worksheet / PDF</span>
+          <input type="file" id="input-import-worksheet-image" accept="image/*,.pdf,application/pdf" class="hidden" />
         </label>
 
         <label for="input-import-bank-json" title="Impor Bank Soal dari file JSON" class="btn-secondary py-2 px-3 text-xs font-semibold cursor-pointer">
@@ -1599,15 +1650,26 @@
 
     <!-- SUB-NAVIGASI PORTAL MODE GURU (3 TAB SUITE RISET & AUTHORING) -->
     <div class="flex items-center gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 shadow-xs max-w-full overflow-x-auto">
-      <button id="subtab-btn-research-epe" class="subtab-research-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs">
+      <button id="subtab-btn-research-integrity" class="subtab-research-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs">
+        <svg class="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 2L3 6.5V11.5C3 16.5 6.8 21.2 12 22.5C17.2 21.2 21 16.5 21 11.5V6.5L12 2Z"/>
+          <circle cx="12" cy="11.5" r="2.5"/>
+          <path d="M12 7v2m0 5v2"/>
+        </svg>
+        <span>Integritas Akademik &amp; Linimasa Audit</span>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/15 text-amber-600 dark:text-amber-400 font-extrabold">Live Telemetry</span>
+      </button>
+
+      <button id="subtab-btn-research-epe" class="subtab-research-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
         <svg class="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <line x1="18" y1="20" x2="18" y2="10"/>
           <line x1="12" y1="20" x2="12" y2="4"/>
           <line x1="6" y1="20" x2="6" y2="14"/>
           <line x1="2" y1="20" x2="22" y2="20"/>
         </svg>
-        <span>Data Riset &amp; Komparasi EPE</span>
+        <span>Buku Nilai &amp; Data Riset EPE</span>
       </button>
+
       <button id="subtab-btn-research-qbank" class="subtab-research-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
         <svg class="w-4 h-4 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <polygon points="12,2 2,7 12,12 22,7 12,2"/>
@@ -1617,19 +1679,15 @@
         <span>Bank Soal Universal</span>
         <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-purple-500/15 text-purple-600 dark:text-purple-400 font-extrabold">All Subjects</span>
       </button>
-      <button id="subtab-btn-research-integrity" class="subtab-research-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-        <svg class="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M12 2L3 6.5V11.5C3 16.5 6.8 21.2 12 22.5C17.2 21.2 21 16.5 21 11.5V6.5L12 2Z"/>
-          <circle cx="12" cy="11.5" r="2.5"/>
-          <path d="M12 7v2m0 5v2"/>
-        </svg>
-        <span>Integritas Akademik</span>
-        <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/15 text-amber-600 dark:text-amber-400 font-extrabold">Telemetry</span>
-      </button>
     </div>
 
-    <!-- VIEW 1: DATA RISET & KOMPARASI EPE PERSAMAAN KUADRAT -->
-    <div id="container-research-epe-view" class="space-y-6">
+    <!-- VIEW 1 (DEFAULT DEPAN MATA): ACADEMIC INTEGRITY MONITOR & AUDIT TELEMETRY -->
+    <div id="container-academic-integrity" class="space-y-6">
+      <!-- Rendered dynamically by IntegrityDashboardUI -->
+    </div>
+
+    <!-- VIEW 2: DATA RISET & KOMPARASI EPE PERSAMAAN KUADRAT -->
+    <div id="container-research-epe-view" class="space-y-6 hidden">
 
     <!-- EPE V2.2: Research Dataset Export Suite (5 Varian CSV) -->
     <div class="card-clean p-4 bg-slate-900/90 border border-slate-800 space-y-3">
@@ -1643,17 +1701,40 @@
             </svg>
           </span>
           <div>
-            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Ekspor Dataset Penelitian Terstandarisasi</h4>
-            <p class="text-[10px] text-slate-400">Unduh dataset terstruktur untuk analisis kuantitatif dan publikasi ilmiah</p>
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Ekspor Database Nilai Siswa &amp; Dataset Ujian Guru</h4>
+            <p class="text-[10px] text-slate-400">Unduh database nilai siswa per bidang studi dan naskah soal ujian untuk rekap guru</p>
           </div>
         </div>
-        <span class="text-[10px] font-mono text-emerald-400">CSV Standard Format (UTF-8 BOM)</span>
+        <div class="flex items-center gap-2">
+          <label for="select-export-subject" class="text-[10px] text-slate-400 font-semibold hidden sm:inline">Bidang Studi:</label>
+          <select id="select-export-subject" class="bg-slate-900 border border-slate-700 text-white text-[11px] rounded-lg px-2.5 py-1 font-medium focus:border-amber-500 cursor-pointer">
+            <option value="all">🌐 Semua Bidang Studi</option>
+            <option value="mathematics">📐 Matematika</option>
+            <option value="physics">⚡ Fisika</option>
+            <option value="chemistry">🧪 Kimia</option>
+            <option value="biology">🧬 Biologi</option>
+          </select>
+          <span class="text-[10px] font-mono text-emerald-400 hidden md:inline">CSV UTF-8 BOM</span>
+        </div>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+      <!-- Tombol Ekspor Utama: Excel Asli (.XLS) & CSV Rapi -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+        <button id="btn-export-gradebook-excel" class="py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer" title="Unduh Buku Nilai Lengkap format Excel (.xls) dengan kolom rapi A-M, styling resmi, dan gridlines">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+          <span>📊 Unduh Buku Nilai Excel (.XLS Rapi Siap Buka)</span>
+        </button>
+
+        <button id="btn-export-gradebook-csv" class="py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 flex items-center justify-center gap-2 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer" title="Unduh Buku Nilai format CSV dengan delimiter titik-koma (;) standar Excel Indonesia">
+          <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>📑 Unduh Buku Nilai CSV (Format Rapi)</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         <button id="btn-export-pretest-csv" class="btn-secondary py-2 px-2.5 text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center justify-center gap-1.5 border border-blue-500/30">
           <svg class="w-3.5 h-3.5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          <span>Pre-Test CSV</span>
+          <span>Pre-Test / Tugas</span>
         </button>
 
         <button id="btn-export-diag-csv" class="btn-secondary py-2 px-2.5 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center justify-center gap-1.5 border border-indigo-500/30">
@@ -1668,7 +1749,12 @@
 
         <button id="btn-export-posttest-csv" class="btn-secondary py-2 px-2.5 text-[11px] font-bold text-teal-400 hover:text-teal-300 flex items-center justify-center gap-1.5 border border-teal-500/30">
           <svg class="w-3.5 h-3.5 text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-          <span>Post-Test CSV</span>
+          <span>Post-Test / Remedial</span>
+        </button>
+
+        <button id="btn-export-question-paper" class="btn-secondary py-2 px-2.5 text-[11px] font-bold text-cyan-400 hover:text-cyan-300 flex items-center justify-center gap-1.5 border border-cyan-500/30" title="Unduh Naskah Soal & Kunci Jawaban Lengkap">
+          <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>Naskah Soal &amp; Kunci</span>
         </button>
 
         <button id="btn-export-combined-csv" class="btn-primary py-2 px-2.5 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 col-span-2 sm:col-span-1">
@@ -1804,14 +1890,9 @@ Remediasi = -</pre>
     </section>
     </div> <!-- /#container-research-epe-view -->
 
-    <!-- VIEW 2: UNIVERSAL QUESTION BANK & ASSESSMENT AUTHORING -->
+    <!-- VIEW 3: UNIVERSAL QUESTION BANK & ASSESSMENT AUTHORING -->
     <div id="container-universal-qbank" class="space-y-6 hidden">
       <!-- Rendered dynamically by QuestionBankUI -->
-    </div>
-
-    <!-- VIEW 3: ACADEMIC INTEGRITY MONITOR & AUDIT TELEMETRY -->
-    <div id="container-academic-integrity" class="space-y-6 hidden">
-      <!-- Rendered dynamically by IntegrityDashboardUI -->
     </div>
 
   </main>
@@ -2813,9 +2894,9 @@ Remediasi = -</pre>
       <span class="text-[10px] sm:text-xs font-semibold hidden sm:inline">Dashboard</span>
     </button>
 
-    <button data-tab="pretest" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Pre-Test">
+    <button data-tab="pretest" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Pre-Test / Tugas">
       <svg class="w-4 h-4 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-      <span class="text-[10px] sm:text-xs font-semibold hidden sm:inline">Pre-Test</span>
+      <span class="text-[10px] sm:text-xs font-semibold hidden sm:inline">Pre-Test / Tugas</span>
     </button>
 
     <button data-tab="diagnostic" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Diagnostik Baku">
@@ -2823,9 +2904,9 @@ Remediasi = -</pre>
       <span class="text-[10px] sm:text-xs font-semibold hidden sm:inline">Diagnostik</span>
     </button>
 
-    <button data-tab="practice" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Bank Latihan">
+    <button data-tab="practice" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Bank Soal &amp; Tryout Mandiri">
       <svg class="w-4 h-4 text-purple-500 dark:text-purple-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-      <span class="text-[10px] sm:text-xs font-semibold hidden sm:inline">Latihan</span>
+      <span class="text-[10px] sm:text-xs font-semibold hidden sm:inline">Latihan &amp; Tryout</span>
     </button>
 
     <button data-tab="photo-solver" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Foto &amp; Dokumen Soal AI (Scanner PDF &amp; Foto)">
@@ -2833,9 +2914,9 @@ Remediasi = -</pre>
       <span class="text-[10px] sm:text-xs font-semibold hidden sm:inline flex items-center gap-1">Foto / File <span class="px-1 py-0.2 rounded text-[8px] bg-cyan-500/20 text-cyan-400 font-bold">AI</span></span>
     </button>
 
-    <button data-tab="posttest" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Post-Test">
+    <button data-tab="posttest" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Post-Test / Remedial">
       <svg class="w-4 h-4 text-teal-500 dark:text-teal-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-      <span class="text-[10px] sm:text-xs font-semibold hidden sm:inline">Post-Test</span>
+      <span class="text-[10px] sm:text-xs font-semibold hidden sm:inline">Post-Test / Remedial</span>
     </button>
 
     <button data-tab="error-profile" class="epe-nav-item bottom-dock-btn group relative p-2 sm:px-3 sm:py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all flex flex-col sm:flex-row items-center gap-1" title="Hasil Diagnostik">

@@ -11,13 +11,18 @@
  */
 
 import { FORM_A_PRETEST, FORM_B_POSTTEST } from "./assessmentForms.js";
+import { QUESTIONS as LEGACY_DIAG_QUESTIONS } from "../data/questions.js";
 import { AssessmentStore } from "./assessmentStore.js";
 import { integrityService } from "../services/integrityDetector.js";
+import { SubjectRegistry } from "../engine/universal/subjectRegistry.js";
+import { AssessmentManager } from "./assessmentManager.js";
 
 export class AssessmentUI {
   constructor(appInstance) {
     this.app = appInstance;
     this.activeTestType = null; // 'pretest' | 'posttest'
+    this.selectedSubject = "mathematics";
+    this.selectedTopic = "all";
     this.questions = [];
     this.currentIndex = 0;
     this.userAnswers = {}; // { questionId: { answer: 'A', selectedErrorType: 'E0', timeSpent: 30, flagged: false } }
@@ -26,8 +31,123 @@ export class AssessmentUI {
     this.elapsedSeconds = 0;
     this.isTestRunning = false;
 
+    // Konfigurasi Parameter Ujian Guru (Durasi Waktu & Target Jumlah Soal)
+    this.customDurationMinutes = parseInt(localStorage.getItem("epe_test_duration_minutes") || "120", 10);
+    const rawTarget = localStorage.getItem("epe_test_question_count");
+    this.targetQuestionCount = rawTarget === "all" ? "all" : parseInt(rawTarget || "50", 10);
+    this.totalDurationSeconds = (this.customDurationMinutes || 120) * 60;
+
     this.containerPretest = document.getElementById("section-pretest-mode");
     this.containerPosttest = document.getElementById("section-posttest-mode");
+  }
+
+  /**
+   * Muat butir soal berdasarkan Halaman (Mata Pelajaran), Sub-Halaman (Bab), dan Target Jumlah Soal (Hingga 50+)
+   */
+  loadAssessmentQuestions(type = "pretest", requestedCount = null) {
+    const subjId = this.selectedSubject || "mathematics";
+    const topic = this.selectedTopic || "all";
+    const target = requestedCount !== null ? requestedCount : this.targetQuestionCount;
+
+    let pool = [];
+
+    if (subjId === "mathematics" && topic === "all") {
+      const primaryForm = type === "pretest" ? [...FORM_A_PRETEST] : [...FORM_B_POSTTEST];
+      const secondaryForm = type === "pretest" ? [...FORM_B_POSTTEST] : [...FORM_A_PRETEST];
+
+      // Konversi 24 soal diagnostik baku
+      const diagList = typeof LEGACY_DIAG_QUESTIONS !== "undefined"
+        ? Object.keys(LEGACY_DIAG_QUESTIONS).map((k, idx) => {
+            const q = LEGACY_DIAG_QUESTIONS[k];
+            return {
+              id: `DIAG_${q.id}`,
+              number: idx + 13,
+              competencyId: q.domain || `C0${(idx % 12) + 1}`,
+              domain: q.domain ? q.domain.substring(0, 2) : `D${(idx % 6) + 1}`,
+              domainName: q.domain || "Persamaan Kuadrat",
+              title: `Diagnostik ${q.id} - ${q.domain || "Persamaan Kuadrat"}`,
+              prompt: q.questionText || q.title || `Soal Diagnostik ${q.id}`,
+              latex: q.equation || null,
+              options: q.options || [],
+              correctAnswer: q.correctAnswer || "A",
+              explanation: q.remediation || ""
+            };
+          })
+        : [];
+
+      // Ambil bank soal pengayaan matematika dari AssessmentManager
+      const extQuestions = AssessmentManager.getAllQuestions({ subject: "mathematics" })
+        .filter(q => !q.id.startsWith("PRE_") && !q.id.startsWith("POST_") && !q.id.startsWith("DIAG_"))
+        .map((uq, idx) => ({
+          id: uq.id,
+          number: idx + 37,
+          competencyId: uq.subtopic || `C0${(idx % 12) + 1}`,
+          domain: `D${(idx % 6) + 1}`,
+          domainName: uq.topic || "Matematika",
+          title: `${uq.topic || "Matematika"} - Soal ${idx + 1}`,
+          prompt: uq.question_text,
+          latex: uq.latex || null,
+          options: (uq.options && uq.options.length >= 2) ? uq.options : [
+            { key: "A", text: "Opsi A", errorType: "E0" },
+            { key: "B", text: "Opsi B", errorType: "E1" }
+          ],
+          correctAnswer: uq.correct_answer || "A",
+          explanation: uq.explanation || ""
+        }));
+
+      // Gabungkan seluruh bank: primaryForm (12) + diagList (24) + secondaryForm (12) + extQuestions (20) = 68 soal!
+      const combined = [
+        ...primaryForm,
+        ...diagList,
+        ...secondaryForm.filter(sf => !primaryForm.some(pf => pf.id === sf.id)),
+        ...extQuestions
+      ];
+
+      const seen = new Set();
+      pool = combined.filter(item => {
+        if (seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+    } else {
+      let questions = AssessmentManager.getAllQuestions({ subject: subjId });
+      if (topic !== "all") {
+        questions = questions.filter(q => q.topic === topic);
+      }
+      if (questions.length === 0) {
+        questions = AssessmentManager.getAllQuestions({ subject: subjId });
+      }
+      pool = questions.map((uq, idx) => ({
+        id: uq.id,
+        number: idx + 1,
+        competencyId: uq.subtopic || `C0${(idx % 12) + 1}`,
+        domain: `D${(idx % 6) + 1}`,
+        domainName: uq.topic || uq.subject || "Kompetensi",
+        title: `${uq.topic || uq.subject} - Soal ${idx + 1}`,
+        prompt: uq.question_text,
+        latex: uq.latex || null,
+        options: (uq.options && uq.options.length >= 2) ? uq.options : [
+          { key: "A", text: "Opsi A", errorType: "E0" },
+          { key: "B", text: "Opsi B", errorType: "E1" }
+        ],
+        correctAnswer: uq.correct_answer || "A",
+        explanation: uq.explanation || ""
+      }));
+    }
+
+    // Terapkan batas jumlah soal sesuai pilihan guru
+    let finalQuestions = pool;
+    if (target && target !== "all") {
+      const numTarget = parseInt(target, 10);
+      if (!isNaN(numTarget) && numTarget > 0 && numTarget < pool.length) {
+        finalQuestions = pool.slice(0, numTarget);
+      }
+    }
+
+    return finalQuestions.map((q, idx) => ({
+      ...q,
+      number: idx + 1
+    }));
   }
 
   /**
@@ -35,7 +155,7 @@ export class AssessmentUI {
    */
   openPreTest() {
     this.activeTestType = "pretest";
-    this.questions = [...FORM_A_PRETEST];
+    this.questions = this.loadAssessmentQuestions("pretest");
     this.renderPreTestView();
   }
 
@@ -44,7 +164,7 @@ export class AssessmentUI {
    */
   openPostTest() {
     this.activeTestType = "posttest";
-    this.questions = [...FORM_B_POSTTEST];
+    this.questions = this.loadAssessmentQuestions("posttest");
     this.renderPostTestView();
   }
 
@@ -62,37 +182,139 @@ export class AssessmentUI {
     const attempts = AssessmentStore.getAllAttempts("pretest");
     const latest = attempts.length > 0 ? attempts[attempts.length - 1] : null;
 
+    const subj = SubjectRegistry.getSubject(this.selectedSubject || "mathematics");
+    const activeSubjectName = subj ? subj.name : "Matematika";
+    const activeTopicName = this.selectedTopic && this.selectedTopic !== "all" ? this.selectedTopic : "Semua Sub-Halaman";
+    const subjectsList = SubjectRegistry.getAllSubjects();
+    const topicsList = SubjectRegistry.getTopicsForSubject(this.selectedSubject || "mathematics");
+    const totalQuestionsCount = this.questions.length;
+
     this.containerPretest.innerHTML = `
       <div class="max-w-4xl mx-auto space-y-6 py-4">
         
-        <!-- Header Banner Riset -->
+        <!-- Header Banner Asesmen & Tugas -->
         <div class="card-clean p-6 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 dark:from-slate-900 dark:via-blue-950/40 dark:to-slate-900 border border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-2 mb-2">
             <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 dark:border-blue-500/30">
-              Instrumen Riset EPE V2.2 &bull; Form A
+              Asesmen &amp; Tugas Mandiri &bull; Pre-Test / Tugas Form
             </span>
-            <span class="text-xs text-slate-500 dark:text-slate-400">Baseline Measurement Layer</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400">Baseline &amp; Assignment Layer</span>
           </div>
           <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Pre-Test Persamaan Kuadrat
+            Pre-Test / Tugas: ${activeSubjectName} &bull; ${activeTopicName}
           </h2>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
-            "Ukur kemampuan awalmu sebelum memulai perjalanan belajar."
+            "Ukur kemampuan awalmu atau selesaikan tugas pengerjaan mandiri pada bidang ${activeSubjectName}."
           </p>
+        </div>
+
+        <!-- Halaman (Mata Pelajaran) & Sub-Halaman (Bab) Selector -->
+        <div class="card-clean p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span class="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-lg border border-blue-500/30 shadow-xs">
+              ${subj?.icon || "📚"}
+            </span>
+            <div>
+              <span class="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 tracking-wider">Halaman &amp; Sub-Halaman Soal:</span>
+              <div class="text-sm font-extrabold text-slate-900 dark:text-white" id="pretest-selected-info">
+                ${activeSubjectName} &bull; ${activeTopicName}
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Pilih mata pelajaran dan bab untuk memuat soal yang disediakan guru.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap w-full md:w-auto">
+            <div class="space-y-1 w-full sm:w-auto min-w-[160px]">
+              <label for="pretest-subject-select" class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Halaman (Mapel):</label>
+              <select id="pretest-subject-select" class="w-full text-xs font-bold py-2.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white cursor-pointer focus:border-blue-500 shadow-sm">
+                ${subjectsList.map(s => `<option value="${s.id}" ${s.id === (this.selectedSubject || "mathematics") ? "selected" : ""}>${s.icon || "📚"} ${s.name}</option>`).join("")}
+              </select>
+            </div>
+
+            <div class="space-y-1 w-full sm:w-auto min-w-[180px]">
+              <label for="pretest-topic-select" class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Sub-Halaman (Bab):</label>
+              <select id="pretest-topic-select" class="w-full text-xs font-bold py-2.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white cursor-pointer focus:border-blue-500 shadow-sm">
+                <option value="all" ${(this.selectedTopic === "all" || !this.selectedTopic) ? "selected" : ""}>🌟 Semua Sub-Halaman</option>
+                ${topicsList.map(t => `<option value="${t}" ${t === this.selectedTopic ? "selected" : ""}>📖 ${t}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- PENGATURAN PARAMETER UJIAN GURU: JUMLAH SOAL (S.D 50+) & DURASI WAKTU (120 MENIT / 2 JAM) -->
+        <div class="card-clean p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/50 dark:from-slate-900 dark:via-slate-900/90 dark:to-indigo-950/30 border-2 border-indigo-200 dark:border-indigo-900/60 shadow-lg space-y-4">
+          <div class="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-indigo-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-indigo-600/30">
+                ⚙️
+              </span>
+              <div>
+                <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Konfigurasi Ujian Guru (Durasi &amp; Butir Soal)</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Tentukan jumlah soal (hingga 50+ butir) dan alokasi waktu ujian (misal 50 soal = 120 menit / 2 jam)</p>
+              </div>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+              Pengaturan Guru &bull; Otonom
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Pilihan Jumlah Soal -->
+            <div class="space-y-1.5">
+              <label for="pretest-question-count-select" class="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>📝 Target Jumlah Soal:</span>
+                <span class="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 font-extrabold">${totalQuestionsCount} Butir Aktif</span>
+              </label>
+              <select id="pretest-question-count-select" class="w-full text-xs font-bold py-2.5 px-3 rounded-xl bg-white dark:bg-slate-800 border border-indigo-300 dark:border-indigo-800 text-slate-900 dark:text-white cursor-pointer focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                <option value="10" ${this.targetQuestionCount === 10 ? "selected" : ""}>10 Butir (Kuis Ringkas)</option>
+                <option value="12" ${this.targetQuestionCount === 12 ? "selected" : ""}>12 Butir (Baku Standar Form A)</option>
+                <option value="20" ${this.targetQuestionCount === 20 ? "selected" : ""}>20 Butir (Ulangan Harian)</option>
+                <option value="25" ${this.targetQuestionCount === 25 ? "selected" : ""}>25 Butir (Asesmen Bab)</option>
+                <option value="30" ${this.targetQuestionCount === 30 ? "selected" : ""}>30 Butir (Asesmen Menengah)</option>
+                <option value="40" ${this.targetQuestionCount === 40 ? "selected" : ""}>40 Butir (Try Out)</option>
+                <option value="50" ${this.targetQuestionCount === 50 ? "selected" : ""}>50 Butir (Ujian Penuh 2 Jam / 120 Menit)</option>
+                <option value="all" ${this.targetQuestionCount === "all" ? "selected" : ""}>🌟 Semua Soal Tersedia (50+ Butir Lengkap)</option>
+              </select>
+            </div>
+
+            <!-- Pilihan Durasi Waktu Ujian -->
+            <div class="space-y-1.5">
+              <label for="pretest-duration-select" class="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>⏱️ Durasi Waktu Ujian (Ditentukan Guru):</span>
+                <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-extrabold">${this.customDurationMinutes} Menit (${(this.customDurationMinutes / 60).toFixed(1)} Jam)</span>
+              </label>
+              <select id="pretest-duration-select" class="w-full text-xs font-bold py-2.5 px-3 rounded-xl bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-800 text-slate-900 dark:text-white cursor-pointer focus:ring-2 focus:ring-emerald-500 shadow-sm">
+                <option value="15" ${this.customDurationMinutes === 15 ? "selected" : ""}>15 Menit (Kuis Kilat)</option>
+                <option value="30" ${this.customDurationMinutes === 30 ? "selected" : ""}>30 Menit (Latihan Cepat)</option>
+                <option value="45" ${this.customDurationMinutes === 45 ? "selected" : ""}>45 Menit (1 Jam Pelajaran)</option>
+                <option value="60" ${this.customDurationMinutes === 60 ? "selected" : ""}>60 Menit (1 Jam Standar)</option>
+                <option value="90" ${this.customDurationMinutes === 90 ? "selected" : ""}>90 Menit (1,5 Jam Asesmen)</option>
+                <option value="120" ${this.customDurationMinutes === 120 ? "selected" : ""}>120 Menit (2 Jam Penuh / Standar 50 Soal)</option>
+                <option value="custom" ${![15, 30, 45, 60, 90, 120].includes(this.customDurationMinutes) ? "selected" : ""}>✍️ Masukkan Durasi Kustom...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Input Kustom Menit (Muncul jika pilih custom) -->
+          <div id="container-pretest-custom-minutes" class="${[15, 30, 45, 60, 90, 120].includes(this.customDurationMinutes) ? "hidden" : ""} flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+            <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300">Durasi Menit Kustom:</span>
+            <input type="number" id="input-pretest-custom-minutes" min="5" max="360" step="5" value="${this.customDurationMinutes}" class="w-24 px-3 py-1.5 rounded-lg border border-emerald-400 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold text-xs" />
+            <span class="text-xs text-slate-500">Menit (Contoh: 120 = 2 jam, 150 = 2,5 jam)</span>
+          </div>
         </div>
 
         <!-- Kartu Panduan & Aturan Pengerjaan -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Jumlah Soal</span>
-            <div class="text-xl font-extrabold text-slate-900 dark:text-white">12 Butir</div>
-            <p class="text-[11px] text-slate-500">Mencakup 6 domain kompetensi D1 s.d. D6 secara seimbang.</p>
+            <div class="text-xl font-extrabold text-slate-900 dark:text-white">${totalQuestionsCount} Butir</div>
+            <p class="text-[11px] text-slate-500">Mencakup materi ${activeTopicName} pada bidang ${activeSubjectName}.</p>
           </div>
 
           <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estimasi Waktu</span>
-            <div class="text-xl font-extrabold text-blue-600 dark:text-blue-400">20 - 30 Menit</div>
-            <p class="text-[11px] text-slate-500">Dilengkapi timer observasional untuk analisis durasi penelitian.</p>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Alokasi Waktu Ujian</span>
+            <div class="text-xl font-extrabold text-blue-600 dark:text-blue-400">${this.customDurationMinutes} Menit (${(this.customDurationMinutes / 60).toFixed(1)} Jam)</div>
+            <p class="text-[11px] text-slate-500">Dilengkapi hitung mundur otomatis dan peringatan waktu.</p>
           </div>
 
           <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
@@ -102,7 +324,7 @@ export class AssessmentUI {
           </div>
         </div>
 
-        <!-- Pedoman Pengerjaan Riset -->
+        <!-- Pedoman Pengerjaan -->
         <div class="card-clean p-5 space-y-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <h4 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
             <svg class="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -110,10 +332,28 @@ export class AssessmentUI {
           </h4>
           <ul class="list-disc list-inside space-y-1.5 text-slate-400 text-[11px]">
             <li>Kerjakan secara mandiri di atas kertas buram tanpa bantuan kalkulator atau sumber eksternal.</li>
-            <li>Pilihlah salah satu opsi (A, B, C, atau D) yang paling sesuai dengan hasil hitungan aljabar Anda.</li>
+            <li>Pilihlah salah satu opsi (A, B, C, atau D) yang paling sesuai dengan pemahaman Anda.</li>
             <li>Anda dapat menandai ragu-ragu dan berpindah antar butir soal kapan saja sebelum mengirim jawaban akhir.</li>
-            <li>Data respon disimpan secara permanen untuk analisis komparatif baseline penelitian.</li>
+            <li>Data respon disimpan secara rapi untuk rekap nilai guru dan baseline belajar.</li>
           </ul>
+        </div>
+
+        <!-- Konfirmasi Keterangan Kelas Siswa (Wajib diisi sebelum pengerjaan) -->
+        <div class="card-clean p-4 rounded-xl bg-blue-50/50 dark:bg-slate-900/90 border border-blue-200 dark:border-blue-900/40 space-y-2">
+          <div class="flex items-center justify-between">
+            <label for="input-assessment-class-pre" class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 5m-4 0h4"></path></svg>
+              <span>Keterangan Asal Kelas Siswa <span class="text-rose-500">*</span></span>
+            </label>
+            <span class="text-[10.5px] text-blue-600 dark:text-blue-400 font-semibold">Wajib diisi agar guru mudah merekap nilai Anda</span>
+          </div>
+          <input 
+            type="text" 
+            id="input-assessment-class-pre" 
+            placeholder="Ketik kelas Anda (Contoh: X MIPA 1, XI IPA 2, 9A, dsb.)" 
+            value="${localStorage.getItem("epe_student_class") || localStorage.getItem("epe_student_grade") || ""}" 
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+          />
         </div>
 
         <!-- Riwayat Pengerjaan Terakhir (Jika ada) -->
@@ -122,7 +362,7 @@ export class AssessmentUI {
             ? `
           <div class="card-clean p-4 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div class="space-y-0.5">
-              <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Status Baseline Anda:</span>
+              <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Status Pengerjaan Terakhir:</span>
               <div class="text-xs font-semibold text-slate-900 dark:text-white">
                 Attempt Terakhir: <strong class="text-blue-600 dark:text-blue-400 font-bold">${latest.score}%</strong> (${latest.correctCount}/${latest.totalQuestions} Benar) &bull; ${latest.timestamp}
               </div>
@@ -141,7 +381,7 @@ export class AssessmentUI {
             ← Kembali ke Dashboard
           </button>
           <button id="btn-start-pretest" class="btn-primary text-xs px-6 py-2.5 font-bold shadow-lg shadow-blue-600/20 flex items-center gap-2">
-            <span>${latest ? "Ulangi Pre-Test (Attempt Baru)" : "Mulai Pre-Test Sekarang"}</span>
+            <span>${latest ? "Ulangi Pre-Test / Tugas (Attempt Baru)" : "Mulai Pre-Test / Tugas Sekarang"}</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
           </button>
         </div>
@@ -155,7 +395,71 @@ export class AssessmentUI {
     });
 
     this.containerPretest.querySelector("#btn-start-pretest")?.addEventListener("click", () => {
+      const classInput = this.containerPretest.querySelector("#input-assessment-class-pre");
+      const enteredClass = classInput ? classInput.value.trim() : "";
+      if (!enteredClass) {
+        alert("Mohon masukkan keterangan kelas Anda terlebih dahulu agar guru dapat mengenali dan merekap nilai Anda.");
+        classInput?.focus();
+        return;
+      }
+      localStorage.setItem("epe_student_class", enteredClass);
       this.startTest("pretest");
+    });
+
+    // Subject & Topic selector change events
+    const subjSelect = this.containerPretest.querySelector("#pretest-subject-select");
+    const topicSelect = this.containerPretest.querySelector("#pretest-topic-select");
+    const countSelect = this.containerPretest.querySelector("#pretest-question-count-select");
+    const durSelect = this.containerPretest.querySelector("#pretest-duration-select");
+    const customMinutesContainer = this.containerPretest.querySelector("#container-pretest-custom-minutes");
+    const customMinutesInput = this.containerPretest.querySelector("#input-pretest-custom-minutes");
+
+    subjSelect?.addEventListener("change", (e) => {
+      this.selectedSubject = e.target.value;
+      this.selectedTopic = "all";
+      this.questions = this.loadAssessmentQuestions("pretest");
+      this.renderPreTestView();
+    });
+
+    topicSelect?.addEventListener("change", (e) => {
+      this.selectedTopic = e.target.value;
+      this.questions = this.loadAssessmentQuestions("pretest");
+      this.renderPreTestView();
+    });
+
+    countSelect?.addEventListener("change", (e) => {
+      const val = e.target.value;
+      this.targetQuestionCount = val === "all" ? "all" : parseInt(val, 10);
+      localStorage.setItem("epe_test_question_count", val);
+
+      // Jika guru memilih 50 soal, otomatis sarankan 120 menit (2 jam)
+      if ((val === "50" || val === "all") && this.customDurationMinutes < 90) {
+        this.customDurationMinutes = 120;
+        localStorage.setItem("epe_test_duration_minutes", "120");
+      }
+
+      this.questions = this.loadAssessmentQuestions("pretest");
+      this.renderPreTestView();
+    });
+
+    durSelect?.addEventListener("change", (e) => {
+      const val = e.target.value;
+      if (val === "custom") {
+        if (customMinutesContainer) customMinutesContainer.classList.remove("hidden");
+        customMinutesInput?.focus();
+      } else {
+        if (customMinutesContainer) customMinutesContainer.classList.add("hidden");
+        this.customDurationMinutes = parseInt(val, 10);
+        localStorage.setItem("epe_test_duration_minutes", val);
+        this.renderPreTestView();
+      }
+    });
+
+    customMinutesInput?.addEventListener("change", (e) => {
+      const val = parseInt(e.target.value, 10) || 60;
+      this.customDurationMinutes = val;
+      localStorage.setItem("epe_test_duration_minutes", val.toString());
+      this.renderPreTestView();
     });
   }
 
@@ -174,107 +478,146 @@ export class AssessmentUI {
     const attempts = AssessmentStore.getAllAttempts("posttest");
     const latest = attempts.length > 0 ? attempts[attempts.length - 1] : null;
 
-    // KONDISI 1: Post-Test Terkunci karena prasyarat penelitian belum terpenuhi
-    if (!prereq.isUnlocked) {
-      this.containerPosttest.innerHTML = `
-        <div class="max-w-3xl mx-auto space-y-6 py-6">
-          <div class="card-clean p-8 bg-slate-900/90 border border-slate-800 text-center space-y-4">
-            
-            <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-3xl mx-auto shadow-inner">
-              🔒
-            </div>
+    // Tampilkan Layar Briefing Post-Test / Remedial (Bebas diakses untuk mode tugas & kompetisi)
+    const subj = SubjectRegistry.getSubject(this.selectedSubject || "mathematics");
+    const activeSubjectName = subj ? subj.name : "Matematika";
+    const activeTopicName = this.selectedTopic && this.selectedTopic !== "all" ? this.selectedTopic : "Semua Sub-Halaman";
+    const subjectsList = SubjectRegistry.getAllSubjects();
+    const topicsList = SubjectRegistry.getTopicsForSubject(this.selectedSubject || "mathematics");
+    const totalQuestionsCount = this.questions.length;
 
-            <div class="space-y-1">
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                Akses Terkunci Sementara
-              </span>
-              <h3 class="text-xl font-bold text-white">Post-Test Belum Dapat Dibuka</h3>
-              <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                Untuk menjaga validitas instrumen penelitian komparatif (Before vs After), Anda harus menyelesaikan rangkaian tahapan pembelajaran sebelum evaluasi akhir.
-              </p>
-            </div>
-
-            <!-- Daftar Kriteria Prasyarat -->
-            <div class="max-w-md mx-auto bg-slate-950/80 p-4 rounded-xl border border-slate-800 text-left space-y-2.5 text-xs">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Kriteria Prasyarat Penelitian:</span>
-              ${prereq.reasons
-                .map(
-                  (r) => `
-                <div class="flex items-center gap-2 text-[11px] ${r.passed ? "text-emerald-400 font-medium" : "text-slate-400"}">
-                  <span>${r.passed ? "✓" : "○"}</span>
-                  <span>${r.label}</span>
-                </div>
-              `
-                )
-                .join("")}
-            </div>
-
-            <!-- Tombol Aksi Navigasi -->
-            <div class="pt-2 flex items-center justify-center gap-3">
-              <button id="btn-post-go-pre" class="btn-secondary text-xs px-4 py-2">
-                ${prereq.hasPretest ? "Buka Diagnostik Baku" : "Kerjakan Pre-Test Dulu"}
-              </button>
-              <button id="btn-post-go-dash" class="btn-primary text-xs px-4 py-2 font-bold">
-                Kembali ke Dashboard
-              </button>
-            </div>
-
-          </div>
-        </div>
-      `;
-
-      this.containerPosttest.querySelector("#btn-post-go-dash")?.addEventListener("click", () => {
-        this.app?.switchTab("dashboard");
-      });
-
-      this.containerPosttest.querySelector("#btn-post-go-pre")?.addEventListener("click", () => {
-        if (!prereq.hasPretest) {
-          this.app?.switchTab("pretest");
-        } else {
-          this.app?.switchTab("diagnostic");
-        }
-      });
-      return;
-    }
-
-    // KONDISI 2: Prasyarat Terpenuhi - Tampilkan Layar Briefing Post-Test
     this.containerPosttest.innerHTML = `
       <div class="max-w-4xl mx-auto space-y-6 py-4">
         
-        <!-- Header Banner Riset -->
+        <!-- Header Banner Evaluasi & Remedial -->
         <div class="card-clean p-6 bg-gradient-to-r from-indigo-50/70 via-blue-50/40 to-slate-50 dark:from-slate-900 dark:via-indigo-950/40 dark:to-slate-900 border border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-2 mb-2">
             <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 dark:border-indigo-500/30">
-              Instrumen Riset EPE V2.2 &bull; Form B (Paralel)
+              Evaluasi Akhir &amp; Remedial &bull; Post-Test / Remedial Form
             </span>
-            <span class="text-xs text-slate-500 dark:text-slate-400">Post-Intervention Outcome Measurement</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400">Post-Intervention &amp; Mastery Layer</span>
           </div>
           <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Post-Test Persamaan Kuadrat
+            Post-Test / Remedial: ${activeSubjectName} &bull; ${activeTopicName}
           </h2>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
-            "Uji kembali pemahamanmu setelah menyelesaikan proses pembelajaran."
+            "Uji kembali pemahamanmu setelah proses belajar atau selesaikan evaluasi remedial pada bidang ${activeSubjectName}."
           </p>
+        </div>
+
+        <!-- Halaman (Mata Pelajaran) & Sub-Halaman (Bab) Selector -->
+        <div class="card-clean p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span class="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-lg border border-indigo-500/30 shadow-xs">
+              ${subj?.icon || "📚"}
+            </span>
+            <div>
+              <span class="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400 tracking-wider">Halaman &amp; Sub-Halaman Soal:</span>
+              <div class="text-sm font-extrabold text-slate-900 dark:text-white" id="posttest-selected-info">
+                ${activeSubjectName} &bull; ${activeTopicName}
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Pilih mata pelajaran dan bab untuk memuat soal evaluasi akhir.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap w-full md:w-auto">
+            <div class="space-y-1 w-full sm:w-auto min-w-[160px]">
+              <label for="posttest-subject-select" class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Halaman (Mapel):</label>
+              <select id="posttest-subject-select" class="w-full text-xs font-bold py-2.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white cursor-pointer focus:border-indigo-500 shadow-sm">
+                ${subjectsList.map(s => `<option value="${s.id}" ${s.id === (this.selectedSubject || "mathematics") ? "selected" : ""}>${s.icon || "📚"} ${s.name}</option>`).join("")}
+              </select>
+            </div>
+
+            <div class="space-y-1 w-full sm:w-auto min-w-[180px]">
+              <label for="posttest-topic-select" class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Sub-Halaman (Bab):</label>
+              <select id="posttest-topic-select" class="w-full text-xs font-bold py-2.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white cursor-pointer focus:border-indigo-500 shadow-sm">
+                <option value="all" ${(this.selectedTopic === "all" || !this.selectedTopic) ? "selected" : ""}>🌟 Semua Sub-Halaman</option>
+                ${topicsList.map(t => `<option value="${t}" ${t === this.selectedTopic ? "selected" : ""}>📖 ${t}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- PENGATURAN PARAMETER UJIAN GURU: JUMLAH SOAL (S.D 50+) & DURASI WAKTU (120 MENIT / 2 JAM) -->
+        <div class="card-clean p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/50 dark:from-slate-900 dark:via-slate-900/90 dark:to-indigo-950/30 border-2 border-indigo-200 dark:border-indigo-900/60 shadow-lg space-y-4">
+          <div class="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-indigo-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-indigo-600/30">
+                ⚙️
+              </span>
+              <div>
+                <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Konfigurasi Ujian Guru (Durasi &amp; Butir Soal)</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Tentukan jumlah soal (hingga 50+ butir) dan alokasi waktu ujian (misal 50 soal = 120 menit / 2 jam)</p>
+              </div>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+              Pengaturan Guru &bull; Otonom
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Pilihan Jumlah Soal -->
+            <div class="space-y-1.5">
+              <label for="posttest-question-count-select" class="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>📝 Target Jumlah Soal:</span>
+                <span class="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 font-extrabold">${totalQuestionsCount} Butir Aktif</span>
+              </label>
+              <select id="posttest-question-count-select" class="w-full text-xs font-bold py-2.5 px-3 rounded-xl bg-white dark:bg-slate-800 border border-indigo-300 dark:border-indigo-800 text-slate-900 dark:text-white cursor-pointer focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                <option value="10" ${this.targetQuestionCount === 10 ? "selected" : ""}>10 Butir (Kuis Ringkas)</option>
+                <option value="12" ${this.targetQuestionCount === 12 ? "selected" : ""}>12 Butir (Baku Standar Form B)</option>
+                <option value="20" ${this.targetQuestionCount === 20 ? "selected" : ""}>20 Butir (Ulangan Harian)</option>
+                <option value="25" ${this.targetQuestionCount === 25 ? "selected" : ""}>25 Butir (Asesmen Bab)</option>
+                <option value="30" ${this.targetQuestionCount === 30 ? "selected" : ""}>30 Butir (Asesmen Menengah)</option>
+                <option value="40" ${this.targetQuestionCount === 40 ? "selected" : ""}>40 Butir (Try Out)</option>
+                <option value="50" ${this.targetQuestionCount === 50 ? "selected" : ""}>50 Butir (Ujian Penuh 2 Jam / 120 Menit)</option>
+                <option value="all" ${this.targetQuestionCount === "all" ? "selected" : ""}>🌟 Semua Soal Tersedia (50+ Butir Lengkap)</option>
+              </select>
+            </div>
+
+            <!-- Pilihan Durasi Waktu Ujian -->
+            <div class="space-y-1.5">
+              <label for="posttest-duration-select" class="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>⏱️ Durasi Waktu Ujian (Ditentukan Guru):</span>
+                <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-extrabold">${this.customDurationMinutes} Menit (${(this.customDurationMinutes / 60).toFixed(1)} Jam)</span>
+              </label>
+              <select id="posttest-duration-select" class="w-full text-xs font-bold py-2.5 px-3 rounded-xl bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-800 text-slate-900 dark:text-white cursor-pointer focus:ring-2 focus:ring-emerald-500 shadow-sm">
+                <option value="15" ${this.customDurationMinutes === 15 ? "selected" : ""}>15 Menit (Kuis Kilat)</option>
+                <option value="30" ${this.customDurationMinutes === 30 ? "selected" : ""}>30 Menit (Latihan Cepat)</option>
+                <option value="45" ${this.customDurationMinutes === 45 ? "selected" : ""}>45 Menit (1 Jam Pelajaran)</option>
+                <option value="60" ${this.customDurationMinutes === 60 ? "selected" : ""}>60 Menit (1 Jam Standar)</option>
+                <option value="90" ${this.customDurationMinutes === 90 ? "selected" : ""}>90 Menit (1,5 Jam Asesmen)</option>
+                <option value="120" ${this.customDurationMinutes === 120 ? "selected" : ""}>120 Menit (2 Jam Penuh / Standar 50 Soal)</option>
+                <option value="custom" ${![15, 30, 45, 60, 90, 120].includes(this.customDurationMinutes) ? "selected" : ""}>✍️ Masukkan Durasi Kustom...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Input Kustom Menit (Muncul jika pilih custom) -->
+          <div id="container-posttest-custom-minutes" class="${[15, 30, 45, 60, 90, 120].includes(this.customDurationMinutes) ? "hidden" : ""} flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+            <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300">Durasi Menit Kustom:</span>
+            <input type="number" id="input-posttest-custom-minutes" min="5" max="360" step="5" value="${this.customDurationMinutes}" class="w-24 px-3 py-1.5 rounded-lg border border-emerald-400 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold text-xs" />
+            <span class="text-xs text-slate-500">Menit (Contoh: 120 = 2 jam, 150 = 2,5 jam)</span>
+          </div>
         </div>
 
         <!-- Kartu Panduan & Struktur Paralel -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Struktur Pengukuran</span>
-            <div class="text-xl font-extrabold text-slate-900 dark:text-white">12 Butir Paralel</div>
-            <p class="text-[11px] text-slate-500">Struktur kompetensi setara dengan Form A tanpa duplikasi soal.</p>
+            <div class="text-xl font-extrabold text-slate-900 dark:text-white">${totalQuestionsCount} Butir Soal</div>
+            <p class="text-[11px] text-slate-500">Mencakup materi ${activeTopicName} pada bidang ${activeSubjectName}.</p>
           </div>
 
           <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estimasi Waktu</span>
-            <div class="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">20 - 30 Menit</div>
-            <p class="text-[11px] text-slate-500">Kondisi pengukuran terstandar dan bebas adaptivitas butir.</p>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Alokasi Waktu Ujian</span>
+            <div class="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">${this.customDurationMinutes} Menit (${(this.customDurationMinutes / 60).toFixed(1)} Jam)</div>
+            <p class="text-[11px] text-slate-500">Dilengkapi hitung mundur otomatis dan peringatan waktu.</p>
           </div>
 
           <div class="card-clean p-4 space-y-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Integritas Pengukuran</span>
             <div class="text-xl font-extrabold text-teal-600 dark:text-teal-400">Comparable</div>
-            <p class="text-[11px] text-slate-500">Siap dibandingkan langsung dengan skor baseline Pre-Test.</p>
+            <p class="text-[11px] text-slate-500">Siap dibandingkan langsung dengan skor awal Pre-Test / Tugas.</p>
           </div>
         </div>
 
@@ -282,13 +625,31 @@ export class AssessmentUI {
         <div class="card-clean p-5 space-y-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <h4 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
             <svg class="w-4 h-4 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span>Protokol Post-Test:</span>
+            <span>Protokol Post-Test / Remedial:</span>
           </h4>
           <ul class="list-disc list-inside space-y-1.5 text-slate-600 dark:text-slate-400 text-[11px]">
             <li>Tidak ada petunjuk jawaban atau pembimbingan langkah selama tes berlangsung.</li>
-            <li>Kerjakan secara mandiri dengan teliti untuk mengukur retensi konsep aljabar Anda.</li>
-            <li>Hasil Post-Test akan otomatis dipetakan ke profil Before vs After di Mode Riset.</li>
+            <li>Kerjakan secara mandiri dengan teliti untuk mengukur penguasaan konsep Anda.</li>
+            <li>Hasil Post-Test / Remedial otomatis terekam ke database nilai guru.</li>
           </ul>
+        </div>
+
+        <!-- Konfirmasi Keterangan Kelas Siswa (Wajib diisi sebelum pengerjaan) -->
+        <div class="card-clean p-4 rounded-xl bg-indigo-50/50 dark:bg-slate-900/90 border border-indigo-200 dark:border-indigo-900/40 space-y-2">
+          <div class="flex items-center justify-between">
+            <label for="input-assessment-class-post" class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 5m-4 0h4"></path></svg>
+              <span>Keterangan Asal Kelas Siswa <span class="text-rose-500">*</span></span>
+            </label>
+            <span class="text-[10.5px] text-indigo-600 dark:text-indigo-400 font-semibold">Wajib diisi agar guru mudah merekap nilai Anda</span>
+          </div>
+          <input 
+            type="text" 
+            id="input-assessment-class-post" 
+            placeholder="Ketik kelas Anda (Contoh: X MIPA 1, XI IPA 2, 9A, dsb.)" 
+            value="${localStorage.getItem("epe_student_class") || localStorage.getItem("epe_student_grade") || ""}" 
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
         </div>
 
         <!-- Riwayat Pengerjaan Post-Test Terakhir (Jika ada) -->
@@ -299,7 +660,7 @@ export class AssessmentUI {
             <div class="space-y-0.5">
               <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Skor Evaluasi Terakhir:</span>
               <div class="text-xs font-semibold text-slate-900 dark:text-white">
-                Attempt: <strong class="text-indigo-600 dark:text-indigo-400 font-bold">${latest.score}%</strong> (${latest.correctCount}/${latest.totalQuestions} Benar) &bull; ${latest.timestamp}
+                Attempt Terakhir: <strong class="text-indigo-600 dark:text-indigo-400 font-bold">${latest.score}%</strong> (${latest.correctCount}/${latest.totalQuestions} Benar) &bull; ${latest.timestamp}
               </div>
             </div>
             <span class="px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 text-xs font-bold">
@@ -316,7 +677,7 @@ export class AssessmentUI {
             ← Kembali ke Dashboard
           </button>
           <button id="btn-start-posttest" class="btn-primary text-xs px-6 py-2.5 font-bold shadow-lg shadow-indigo-600/20 flex items-center gap-2">
-            <span>${latest ? "Ulangi Post-Test (Attempt Baru)" : "Mulai Post-Test Sekarang"}</span>
+            <span>${latest ? "Ulangi Post-Test / Remedial (Attempt Baru)" : "Mulai Post-Test / Remedial Sekarang"}</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
           </button>
         </div>
@@ -330,7 +691,71 @@ export class AssessmentUI {
     });
 
     this.containerPosttest.querySelector("#btn-start-posttest")?.addEventListener("click", () => {
+      const classInput = this.containerPosttest.querySelector("#input-assessment-class-post");
+      const enteredClass = classInput ? classInput.value.trim() : "";
+      if (!enteredClass) {
+        alert("Mohon masukkan keterangan kelas Anda terlebih dahulu agar guru dapat mengenali dan merekap nilai Anda.");
+        classInput?.focus();
+        return;
+      }
+      localStorage.setItem("epe_student_class", enteredClass);
       this.startTest("posttest");
+    });
+
+    // Subject & Topic selector change events
+    const subjSelect = this.containerPosttest.querySelector("#posttest-subject-select");
+    const topicSelect = this.containerPosttest.querySelector("#posttest-topic-select");
+    const countSelect = this.containerPosttest.querySelector("#posttest-question-count-select");
+    const durSelect = this.containerPosttest.querySelector("#posttest-duration-select");
+    const customMinutesContainer = this.containerPosttest.querySelector("#container-posttest-custom-minutes");
+    const customMinutesInput = this.containerPosttest.querySelector("#input-posttest-custom-minutes");
+
+    subjSelect?.addEventListener("change", (e) => {
+      this.selectedSubject = e.target.value;
+      this.selectedTopic = "all";
+      this.questions = this.loadAssessmentQuestions("posttest");
+      this.renderPostTestView();
+    });
+
+    topicSelect?.addEventListener("change", (e) => {
+      this.selectedTopic = e.target.value;
+      this.questions = this.loadAssessmentQuestions("posttest");
+      this.renderPostTestView();
+    });
+
+    countSelect?.addEventListener("change", (e) => {
+      const val = e.target.value;
+      this.targetQuestionCount = val === "all" ? "all" : parseInt(val, 10);
+      localStorage.setItem("epe_test_question_count", val);
+
+      // Jika guru memilih 50 soal, otomatis sarankan 120 menit (2 jam)
+      if ((val === "50" || val === "all") && this.customDurationMinutes < 90) {
+        this.customDurationMinutes = 120;
+        localStorage.setItem("epe_test_duration_minutes", "120");
+      }
+
+      this.questions = this.loadAssessmentQuestions("posttest");
+      this.renderPostTestView();
+    });
+
+    durSelect?.addEventListener("change", (e) => {
+      const val = e.target.value;
+      if (val === "custom") {
+        if (customMinutesContainer) customMinutesContainer.classList.remove("hidden");
+        customMinutesInput?.focus();
+      } else {
+        if (customMinutesContainer) customMinutesContainer.classList.add("hidden");
+        this.customDurationMinutes = parseInt(val, 10);
+        localStorage.setItem("epe_test_duration_minutes", val);
+        this.renderPostTestView();
+      }
+    });
+
+    customMinutesInput?.addEventListener("change", (e) => {
+      const val = parseInt(e.target.value, 10) || 60;
+      this.customDurationMinutes = val;
+      localStorage.setItem("epe_test_duration_minutes", val.toString());
+      this.renderPostTestView();
     });
   }
 
@@ -339,7 +764,7 @@ export class AssessmentUI {
    */
   startTest(testType = "pretest") {
     this.activeTestType = testType;
-    this.questions = testType === "pretest" ? [...FORM_A_PRETEST] : [...FORM_B_POSTTEST];
+    this.questions = this.loadAssessmentQuestions(testType);
     this.currentIndex = 0;
     this.userAnswers = {};
     this.questions.forEach((q) => {
@@ -352,21 +777,31 @@ export class AssessmentUI {
     });
     this.elapsedSeconds = 0;
     this.startTime = Date.now();
+    this.totalDurationSeconds = (this.customDurationMinutes || 120) * 60;
     this.isTestRunning = true;
 
     // Inisialisasi telemetri integritas akademik non-invasif
     const activeStudent = AssessmentStore.getActiveStudent();
+    const studentClass = localStorage.getItem("epe_student_class") || activeStudent.studentClass || "";
     integrityService.startSession(
       `asm_${testType}_${Date.now()}`,
       testType,
       activeStudent.studentId,
-      activeStudent.studentName
+      activeStudent.studentName,
+      this.selectedSubject || "matematika",
+      studentClass
     );
 
     if (this.timerInterval) clearInterval(this.timerInterval);
     this.timerInterval = setInterval(() => {
       this.elapsedSeconds++;
-      this.updateTimerDisplay();
+      const remaining = Math.max(0, this.totalDurationSeconds - this.elapsedSeconds);
+      this.updateTimerDisplay(remaining);
+
+      if (remaining <= 0) {
+        clearInterval(this.timerInterval);
+        this.handleTimeUpAutoSubmit();
+      }
     }, 1000);
 
     const targetContainer = testType === "pretest" ? this.containerPretest : this.containerPosttest;
@@ -374,14 +809,46 @@ export class AssessmentUI {
   }
 
   /**
-   * Memperbarui Tampilan Timer Pengerjaan
+   * Memperbarui Tampilan Timer Pengerjaan (Hitung Mundur Sesuai Waktu Guru)
    */
-  updateTimerDisplay() {
+  updateTimerDisplay(remainingSeconds = null) {
     const timerEl = document.getElementById("assessment-timer-display");
+    const timerContainer = document.getElementById("assessment-timer-container");
     if (!timerEl) return;
-    const mins = Math.floor(this.elapsedSeconds / 60);
-    const secs = this.elapsedSeconds % 60;
-    timerEl.textContent = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+
+    const remaining = remainingSeconds !== null
+      ? remainingSeconds
+      : Math.max(0, (this.totalDurationSeconds || 7200) - this.elapsedSeconds);
+
+    const hours = Math.floor(remaining / 3600);
+    const mins = Math.floor((remaining % 3600) / 60);
+    const secs = remaining % 60;
+
+    let timeStr = "";
+    if (hours > 0) {
+      timeStr = `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    } else {
+      timeStr = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
+    timerEl.textContent = timeStr;
+
+    if (timerContainer) {
+      if (remaining <= 180) { // < 3 mins
+        timerContainer.className = "flex items-center gap-1.5 text-xs font-mono font-bold bg-rose-500/15 text-rose-500 border border-rose-500 px-3 py-1.5 rounded-lg animate-pulse shadow-sm";
+      } else if (remaining <= 600) { // < 10 mins
+        timerContainer.className = "flex items-center gap-1.5 text-xs font-mono font-bold bg-amber-500/10 text-amber-500 border border-amber-400 px-3 py-1.5 rounded-lg shadow-sm";
+      } else {
+        timerContainer.className = "flex items-center gap-1.5 text-xs font-mono font-bold text-slate-800 dark:text-slate-300 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800";
+      }
+    }
+  }
+
+  /**
+   * Tangani Waktu Ujian Habis Secara Otomatis
+   */
+  handleTimeUpAutoSubmit() {
+    alert("⏰ Waktu ujian yang ditentukan guru telah berakhir! Sistem secara otomatis mengirim seluruh jawaban yang telah Anda kerjakan.");
+    this.submitAssessment();
   }
 
   /**
@@ -415,9 +882,10 @@ export class AssessmentUI {
           </div>
 
           <div class="flex items-center gap-4">
-            <div class="flex items-center gap-1.5 text-xs font-mono text-slate-800 dark:text-slate-300 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
+            <div id="assessment-timer-container" class="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-800 dark:text-slate-300 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 transition-all">
               <span class="text-blue-500 dark:text-blue-400">⏱️</span>
-              <span id="assessment-timer-display">00:00</span>
+              <span class="text-[10px] uppercase font-bold text-slate-400 hidden sm:inline">Sisa:</span>
+              <span id="assessment-timer-display">02:00:00</span>
             </div>
 
             <button id="btn-cancel-test" class="text-xs font-medium text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 transition-colors">
@@ -544,8 +1012,8 @@ export class AssessmentUI {
                 <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono font-bold">${answeredCount}/${totalQ}</span>
               </div>
 
-              <!-- Question Grid (1 - 12) -->
-              <div class="grid grid-cols-4 gap-2">
+              <!-- Question Grid (Mendukung 50+ butir dengan navigasi rapi) -->
+              <div class="grid grid-cols-5 gap-1.5 max-h-72 sm:max-h-96 overflow-y-auto pr-1">
                 ${this.questions
                   .map((item, idx) => {
                     const ans = this.userAnswers[item.id];
@@ -879,10 +1347,11 @@ export class AssessmentUI {
     const totalQ = this.questions.length;
     const answeredCount = Object.values(this.userAnswers).filter((u) => u.answer !== null).length;
     const unansweredCount = totalQ - answeredCount;
+    const testLabel = this.activeTestType === "pretest" ? "Pre-Test / Tugas" : "Post-Test / Remedial";
 
-    let msg = `Kirim dan selesaikan ${this.activeTestType === "pretest" ? "Pre-Test" : "Post-Test"}?`;
+    let msg = `Kirim dan selesaikan ${testLabel}?`;
     if (unansweredCount > 0) {
-      msg = `Perhatian: Masih ada ${unansweredCount} butir soal yang belum dijawab.\n\nApakah Anda yakin ingin menyelesaikan tes sekarang?`;
+      msg = `Perhatian: Masih ada ${unansweredCount} butir soal yang belum dijawab.\n\nApakah Anda yakin ingin menyelesaikan ${testLabel} sekarang?`;
     }
 
     const confirmSend = confirm(msg);
@@ -918,6 +1387,8 @@ export class AssessmentUI {
       testForm: this.activeTestType === "pretest" ? "Form A" : "Form B",
       studentId: student.studentId,
       studentName: student.studentName,
+      studentClass: localStorage.getItem("epe_student_class") || student.studentClass || "",
+      subject: this.selectedSubject || "mathematics",
       durationSeconds: this.elapsedSeconds,
       responses: responses,
       integritySessionId: integritySession?.sessionId || null,

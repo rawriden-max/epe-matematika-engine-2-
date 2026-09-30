@@ -144,9 +144,20 @@ export class TornadoEngine {
     this.cardElements.clear();
 
     const domainList = ["D1", "D2", "D3", "D4", "D5", "D6"];
+    const normalizedQuestions = (this.questions || []).map((q, idx) => {
+      let domId = q.domainId;
+      if (!domId && q.domain) {
+        const match = String(q.domain).match(/D[1-6]/i);
+        if (match) domId = match[0].toUpperCase();
+      }
+      if (!domId) {
+        domId = "D" + ((idx % 6) + 1);
+      }
+      return { ...q, domainId: domId };
+    });
 
     domainList.forEach((domId, dIdx) => {
-      const domQuestions = this.questions.filter(q => q.domainId === domId);
+      const domQuestions = normalizedQuestions.filter(q => q.domainId === domId);
       const angleStep = 360 / Math.max(domQuestions.length, 1);
 
       domQuestions.forEach((q, qIdx) => {
@@ -154,7 +165,7 @@ export class TornadoEngine {
         item.className = "tornado-item";
         item.setAttribute("data-qid", q.id);
         item.setAttribute("data-domain", q.domainId);
-        item.title = `${q.id} · ${q.title}`;
+        item.title = `${q.id} · ${q.title || q.questionText || ""}`;
 
         // Pasang di titik 0,0 dengan GPU transform3d
         item.style.left = "0px";
