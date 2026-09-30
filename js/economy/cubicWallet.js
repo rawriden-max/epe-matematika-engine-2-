@@ -62,6 +62,13 @@ export class CubicWallet {
   }
 
   /**
+   * Alias kompatibilitas untuk addCubic
+   */
+  static addBalance(amount, description = "Perolehan Cubic") {
+    return this.addCubic(amount, "reward", description);
+  }
+
+  /**
    * Mengurangi Cubic untuk pembelian kosmetik di Avatar Lab
    */
   static deductCubic(amount, source = "shop_purchase", description = "Pembelian Kosmetik") {

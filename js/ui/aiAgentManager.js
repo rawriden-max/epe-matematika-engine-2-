@@ -4077,7 +4077,7 @@ Untuk topik spesifik ini, aspek mana yang ingin kamu ketahui lebih mendalam? Apa
 
             <div>
               <label class="block font-semibold text-slate-300 mb-1">API Key:</label>
-              <input type="password" id="ai-api-key-input" value="${this.apiKey}" placeholder="AIzaSy... atau sk-..." class="input-clean w-full p-2 font-mono text-xs" />
+              <input type="text" id="ai-api-key-input" value="${this.apiKey}" placeholder="AIzaSy... atau sk-..." autocomplete="off" data-lpignore="true" data-form-type="other" style="-webkit-text-security: disc; text-security: disc;" class="input-clean w-full p-2 font-mono text-xs" />
               <span class="text-[10px] text-slate-400 mt-1 block">API Key disimpan secara aman di browser lokal Anda (localStorage).</span>
             </div>
 

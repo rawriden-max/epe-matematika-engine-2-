@@ -1689,45 +1689,40 @@
     <!-- VIEW 2: DATA RISET & KOMPARASI EPE PERSAMAAN KUADRAT -->
     <div id="container-research-epe-view" class="space-y-6 hidden">
 
-    <!-- EPE V2.2: Research Dataset Export Suite (5 Varian CSV) -->
-    <div class="card-clean p-4 bg-slate-900/90 border border-slate-800 space-y-3">
-      <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-800">
+    <!-- EPE V2.2: Research Dataset Export Suite (Excel Asli & Dataset Ujian) -->
+    <div class="card-clean p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 space-y-3">
+      <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-2.5">
-          <span class="w-7 h-7 rounded-lg flex items-center justify-center bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <span class="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/30 shrink-0">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
               <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
           </span>
           <div>
-            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Ekspor Database Nilai Siswa &amp; Dataset Ujian Guru</h4>
-            <p class="text-[10px] text-slate-400">Unduh database nilai siswa per bidang studi dan naskah soal ujian untuk rekap guru</p>
+            <h4 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Ekspor Database Nilai Siswa &amp; Dataset Ujian Guru</h4>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 font-medium">Unduh database nilai siswa per bidang studi dan naskah soal ujian untuk rekap guru</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <label for="select-export-subject" class="text-[10px] text-slate-400 font-semibold hidden sm:inline">Bidang Studi:</label>
-          <select id="select-export-subject" class="bg-slate-900 border border-slate-700 text-white text-[11px] rounded-lg px-2.5 py-1 font-medium focus:border-amber-500 cursor-pointer">
+          <label for="select-export-subject" class="text-[11px] text-slate-700 dark:text-slate-300 font-bold hidden sm:inline">Bidang Studi:</label>
+          <select id="select-export-subject" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-[11px] rounded-lg px-2.5 py-1 font-semibold focus:border-emerald-500 cursor-pointer shadow-xs">
             <option value="all">🌐 Semua Bidang Studi</option>
             <option value="mathematics">📐 Matematika</option>
             <option value="physics">⚡ Fisika</option>
             <option value="chemistry">🧪 Kimia</option>
             <option value="biology">🧬 Biologi</option>
           </select>
-          <span class="text-[10px] font-mono text-emerald-400 hidden md:inline">CSV UTF-8 BOM</span>
+          <span class="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-400 hidden md:inline">EXCEL .XLS FORMAT</span>
         </div>
       </div>
 
-      <!-- Tombol Ekspor Utama: Excel Asli (.XLS) & CSV Rapi -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800">
-        <button id="btn-export-gradebook-excel" class="py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer" title="Unduh Buku Nilai Lengkap format Excel (.xls) dengan kolom rapi A-M, styling resmi, dan gridlines">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+      <!-- Tombol Ekspor Utama: Excel Asli (.XLS) Siap Buka -->
+      <div class="p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+        <button id="btn-export-gradebook-excel" class="w-full py-3 px-5 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-600/25 transition-all hover:scale-[1.005] active:scale-[0.995] cursor-pointer" title="Unduh Buku Nilai Lengkap format Excel (.xls) dengan kolom rapi A-M, styling resmi, dan gridlines">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-emerald-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
           <span>📊 Unduh Buku Nilai Excel (.XLS Rapi Siap Buka)</span>
-        </button>
-
-        <button id="btn-export-gradebook-csv" class="py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 flex items-center justify-center gap-2 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer" title="Unduh Buku Nilai format CSV dengan delimiter titik-koma (;) standar Excel Indonesia">
-          <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>📑 Unduh Buku Nilai CSV (Format Rapi)</span>
         </button>
       </div>
 
@@ -2473,16 +2468,19 @@ Remediasi = -</pre>
           </label>
           <div class="relative">
             <input
-              type="password"
+              type="text"
               id="educator-pin-input"
               placeholder="Masukkan kata sandi Guru..."
               class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-950 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 pr-10 font-mono shadow-xs"
-              autocomplete="current-password"
+              autocomplete="off"
+              data-lpignore="true"
+              data-form-type="other"
+              style="-webkit-text-security: disc; text-security: disc;"
             />
             <button
               type="button"
               id="btn-toggle-pin-visibility"
-              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 transition-colors"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 transition-colors cursor-pointer"
               title="Lihat / Sembunyikan PIN"
             >
               <svg id="icon-pin-eye" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -2534,15 +2532,15 @@ Remediasi = -</pre>
       <div class="space-y-3 text-xs">
         <div>
           <label class="block text-slate-800 dark:text-slate-300 font-semibold mb-1">PIN Saat Ini:</label>
-          <input type="password" id="input-current-pin" placeholder="Masukkan PIN saat ini" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:border-indigo-600 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none font-mono" />
+          <input type="text" id="input-current-pin" placeholder="Masukkan PIN saat ini" autocomplete="off" data-lpignore="true" data-form-type="other" style="-webkit-text-security: disc; text-security: disc;" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:border-indigo-600 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none font-mono" />
         </div>
         <div>
           <label class="block text-slate-800 dark:text-slate-300 font-semibold mb-1">PIN Baru:</label>
-          <input type="password" id="input-new-pin" placeholder="PIN baru (minimal 4 karakter)" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:border-indigo-600 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none font-mono" />
+          <input type="text" id="input-new-pin" placeholder="PIN baru (minimal 4 karakter)" autocomplete="off" data-lpignore="true" data-form-type="other" style="-webkit-text-security: disc; text-security: disc;" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:border-indigo-600 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none font-mono" />
         </div>
         <div>
           <label class="block text-slate-800 dark:text-slate-300 font-semibold mb-1">Konfirmasi PIN Baru:</label>
-          <input type="password" id="input-confirm-pin" placeholder="Ulangi PIN baru" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:border-indigo-600 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none font-mono" />
+          <input type="text" id="input-confirm-pin" placeholder="Ulangi PIN baru" autocomplete="off" data-lpignore="true" data-form-type="other" style="-webkit-text-security: disc; text-security: disc;" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:border-indigo-600 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none font-mono" />
         </div>
         <p id="change-pin-error" class="text-[11px] text-rose-600 dark:text-rose-400 hidden font-medium"></p>
       </div>

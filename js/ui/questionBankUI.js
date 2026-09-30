@@ -102,18 +102,18 @@ export class QuestionBankUI {
       <div class="space-y-6">
         
         <!-- Header & Action Controls -->
-        <div class="card-clean p-5 sm:p-6 bg-[#18110b] text-slate-100 border-2 border-amber-500/40 rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="card-clean p-5 sm:p-6 bg-white dark:bg-[#18110b] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-amber-500/40 rounded-3xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <div class="flex items-center gap-2 mb-1 flex-wrap">
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30">
                 Authoring Suite &bull; Subject-Agnostic
               </span>
-              <span class="text-xs text-amber-200/80 font-semibold">Total: ${questions.length} Butir Soal Terfilter</span>
+              <span class="text-xs text-amber-900 dark:text-amber-200 font-bold">Total: ${questions.length} Butir Soal Terfilter</span>
             </div>
-            <h3 class="text-lg sm:text-2xl font-black text-white tracking-tight">
+            <h3 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               Bank Soal &amp; Pengelolaan Asesmen Terpadu
             </h3>
-            <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+            <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed font-medium">
               Kumpulan pengerjaan soal terstruktur berdasarkan bidang (Matematika, Fisika, Kimia, Biologi, Informatika) dan sub-halaman / bab (seperti Persamaan Kuadrat). Anda dapat menambah bidang atau bab baru dengan sekali klik.
             </p>
           </div>
@@ -130,29 +130,24 @@ export class QuestionBankUI {
               <span>📥 Input Berkas Soal Guru</span>
             </button>
 
-            <button id="btn-add-subject-top" class="py-2.5 px-3.5 text-xs font-bold bg-cyan-950/90 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/50 rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer transition-all hover:scale-105 active:scale-95">
-              <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+            <button id="btn-add-subject-top" class="py-2.5 px-3.5 text-xs font-bold bg-cyan-900 hover:bg-cyan-800 text-cyan-100 dark:bg-cyan-950/90 dark:hover:bg-cyan-900 dark:text-cyan-300 border border-cyan-500/50 rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer transition-all hover:scale-105 active:scale-95">
+              <svg class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
               <span>+ Tambah Bidang / Mapel</span>
             </button>
 
-            <button id="btn-export-subject-gradebook" class="py-2.5 px-3 text-xs font-bold bg-emerald-950/90 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/50 rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer transition-all hover:scale-105 active:scale-95" title="Unduh database nilai siswa pengerjaan bidang ini (CSV / Excel)">
-              <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              <span>📊 Unduh Nilai Siswa</span>
-            </button>
-
-            <button id="btn-export-subject-paper" class="py-2.5 px-3 text-xs font-bold bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-500/50 rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer transition-all hover:scale-105 active:scale-95" title="Unduh naskah soal dan kunci jawaban lengkap untuk pedoman input nilai guru">
-              <svg class="w-3.5 h-3.5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            <button id="btn-export-subject-paper" class="py-2.5 px-3 text-xs font-bold bg-indigo-900 hover:bg-indigo-800 text-indigo-100 dark:bg-indigo-950/90 dark:hover:bg-indigo-900 dark:text-indigo-300 border border-indigo-500/50 rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer transition-all hover:scale-105 active:scale-95" title="Unduh naskah soal dan kunci jawaban lengkap untuk pedoman input nilai guru">
+              <svg class="w-3.5 h-3.5 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
               <span>📄 Unduh Naskah Soal &amp; Kunci</span>
             </button>
 
-            <button id="btn-export-bank-json" class="btn-secondary py-2.5 px-3 text-xs font-semibold text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl flex items-center gap-1.5 cursor-pointer" title="Unduh cadangan Bank Soal dalam format JSON">
-              <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <button id="btn-export-bank-json" class="btn-secondary py-2.5 px-3 text-xs font-semibold text-slate-800 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl flex items-center gap-1.5 cursor-pointer" title="Unduh cadangan Bank Soal dalam format JSON">
+              <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               <span>Ekspor JSON</span>
             </button>
 
             <input type="file" id="input-import-bank-json" accept=".json" class="hidden" />
-            <button id="btn-import-bank-json" class="btn-secondary py-2.5 px-3 text-xs font-semibold text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl flex items-center gap-1.5 cursor-pointer" title="Unggah file JSON untuk menambahkan butir soal baru">
-              <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <button id="btn-import-bank-json" class="btn-secondary py-2.5 px-3 text-xs font-semibold text-slate-800 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl flex items-center gap-1.5 cursor-pointer" title="Unggah file JSON untuk menambahkan butir soal baru">
+              <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <span>Impor JSON</span>
             </button>
           </div>
@@ -620,15 +615,6 @@ export class QuestionBankUI {
     // Tombol Input Berkas Soal Guru (Smart File & Text Importer)
     this.container.querySelector("#btn-smart-import-file")?.addEventListener("click", () => {
       this.openSmartFileImportModal();
-    });
-
-    // Unduh Nilai Siswa (Gradebook Guru)
-    this.container.querySelector("#btn-export-subject-gradebook")?.addEventListener("click", () => {
-      const subj = this.currentFilterSubject || "all";
-      const res = ResearchExport.exportSubjectGradebookCSV({ subject: subj });
-      if (res.success) {
-        NotificationToast.show(`Rekap Nilai Siswa (${res.count} data) berhasil diunduh!`, "success");
-      }
     });
 
     // Unduh Naskah Soal & Kunci Guru

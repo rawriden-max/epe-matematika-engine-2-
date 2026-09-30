@@ -960,8 +960,12 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
             </div>
             <div class="relative">
               <input 
-                type="password" 
+                type="text" 
                 id="input-ai-api-key" 
+                autocomplete="off"
+                data-lpignore="true"
+                data-form-type="other"
+                style="-webkit-text-security: disc; text-security: disc;"
                 placeholder="${cfg.provider === "gemini" ? "AIzaSy..." : cfg.provider === "openai" ? "sk-..." : "sk-ant-..."}"
                 value="${cfg.apiKey || ""}" 
                 class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-cyan-400 text-sm font-mono text-white placeholder-slate-600 focus:outline-none transition-all shadow-inner"
@@ -2065,9 +2069,10 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
       if (toggleVisBtn) {
         const inputKey = this.container.querySelector("#input-ai-api-key");
         if (inputKey) {
-          const isPass = inputKey.type === "password";
-          inputKey.type = isPass ? "text" : "password";
-          toggleVisBtn.textContent = isPass ? "Sembunyikan" : "Tampilkan";
+          const isHidden = inputKey.style.webkitTextSecurity !== "none";
+          inputKey.style.webkitTextSecurity = isHidden ? "none" : "disc";
+          inputKey.style.textSecurity = isHidden ? "none" : "disc";
+          toggleVisBtn.textContent = isHidden ? "Sembunyikan" : "Tampilkan";
         }
         return;
       }
@@ -3611,7 +3616,10 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
   }
 
   evaluateStudentDiagnosis() {
-    if (!this.currentProblem) return;
+    if (!this.currentProblem) {
+      this.currentProblem = SAMPLE_MATH_PHOTOS && SAMPLE_MATH_PHOTOS.length > 0 ? SAMPLE_MATH_PHOTOS[0] : null;
+      if (!this.currentProblem) return;
+    }
 
     const norm = this.normalizeScanResult(this.currentProblem);
     const problemsList = norm.problems;
@@ -3625,9 +3633,18 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
     const stepsInput = this.container?.querySelector("#quiz-student-steps");
     const feedbackBox = this.container?.querySelector("#quiz-diagnostic-feedback-box");
 
-    if (!answerInput || !feedbackBox) return;
+    if (!feedbackBox) return;
 
-    let studentAns = (answerInput.value || this.quizAnswerValue || "").trim();
+    // Multimodal Fallback: Jika pengguna mengunggah foto/file utama, otomatis gunakan sebagai lampiran coretan
+    if (!this.quizStudentImage && (this.currentFile || this.currentImage)) {
+      this.quizStudentImage = {
+        dataUrl: this.currentImage || this.currentFile?.dataUrl,
+        name: this.currentFile?.name || "Foto Berkas Pengerjaan",
+        sizeFormatted: this.currentFile?.sizeFormatted || "Foto Berkas"
+      };
+    }
+
+    let studentAns = (answerInput?.value || this.quizAnswerValue || "").trim();
     let studentSteps = (stepsInput?.value || this.quizStepsValue || "").trim();
 
     // Multimodal Fallback: Jika jawaban kosong tapi ada rekaman audio atau foto
@@ -3637,21 +3654,15 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
           const parsed = SpeechMathParser.parseSpokenMath(this.quizStudentAudio.transcript);
           if (parsed && (parsed.normalizedText || parsed.latex)) {
             studentAns = parsed.normalizedText || parsed.latex;
-            answerInput.value = studentAns;
+            if (answerInput) answerInput.value = studentAns;
             this.quizAnswerValue = studentAns;
           }
         } catch (e) {}
       } else if (this.quizStudentImage) {
         studentAns = (activeProb.finalAnswer || "").replace(/[$]/g, "");
-        answerInput.value = studentAns;
+        if (answerInput) answerInput.value = studentAns;
         this.quizAnswerValue = studentAns;
       }
-    }
-
-    if (!studentAns && !studentSteps && !this.quizStudentImage && !this.quizStudentAudio) {
-      NotificationToast.show("Masukkan jawaban, rekam suara, atau lampirkan foto coretan terlebih dahulu.", "warning");
-      answerInput.focus();
-      return;
     }
 
     // Jika studentSteps kosong tapi ada rekaman suara atau foto
@@ -3659,8 +3670,52 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
       if (this.quizStudentAudio?.transcript) {
         studentSteps = `[Transkripsi Rekaman Suara Siswa]: ${this.quizStudentAudio.transcript}`;
       } else if (this.quizStudentImage) {
-        studentSteps = `[Lampiran Foto Coretan Siswa: ${this.quizStudentImage.name}]`;
+        studentSteps = `[Lampiran Foto Berkas/Coretan: ${this.quizStudentImage.name}]`;
       }
+    }
+
+    // Jika benar-benar kosong semua, tampilkan panduan diagnosis interaktif di feedback box agar tombol selalu menghasilkan output
+    if (!studentAns && !studentSteps && !this.quizStudentImage && !this.quizStudentAudio) {
+      feedbackBox.classList.remove("hidden");
+      feedbackBox.innerHTML = `
+        <div class="p-4 sm:p-5 rounded-2xl bg-amber-950/80 border-2 border-amber-500 space-y-3 animate-fade-in shadow-xl text-white">
+          <div class="flex items-center gap-3">
+            <span class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center justify-center font-bold text-xl shadow-lg shrink-0">
+              💡
+            </span>
+            <div>
+              <h4 class="text-sm sm:text-base font-extrabold text-white">Panduan Pengisian Diagnosis Mandiri</h4>
+              <p class="text-xs text-amber-200">Silakan masukkan jawaban kamu atau pilih opsi cepat di bawah ini:</p>
+            </div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 space-y-2">
+            <p>Sistem EPE siap menganalisis jawaban dan miskonsepsi rumus. Kamu dapat:</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+              <button type="button" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-center border border-slate-700 cursor-pointer" onclick="
+                const inp = document.getElementById('quiz-student-answer');
+                if (inp) { inp.value = '${(activeProb.finalAnswer || "1/2").replace(/[$]/g, "")}'; inp.focus(); }
+              ">
+                ✍️ Isi Contoh Jawaban
+              </button>
+              <button type="button" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-center border border-slate-700 cursor-pointer" onclick="
+                const btn = document.querySelector('.quiz-modality-tab-btn[data-modality=\\'image\\']');
+                if (btn) btn.click();
+              ">
+                📷 Lampirkan Foto Coretan
+              </button>
+              <button type="button" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-center border border-slate-700 cursor-pointer" onclick="
+                const btn = document.querySelector('.quiz-modality-tab-btn[data-modality=\\'audio\\']');
+                if (btn) btn.click();
+              ">
+                🎙️ Rekam Penjelasan Suara
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      feedbackBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      if (answerInput) answerInput.focus();
+      return;
     }
 
     const result = this.evaluateMathPedagogy(studentAns, studentSteps, activeProb);
@@ -3747,11 +3802,25 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
   renderDiagnosticResultBox(feedbackBox, result, activeProb, isMulti) {
     if (!feedbackBox || !result) return;
 
-    // Tambah reward Cubic
-    CubicWallet.addBalance(
-      result.cubicReward || 10,
-      `Diagnosis Mandiri (${activeProb.title || `Soal #${this.activeQuizProblemIndex + 1}`}): ${result.classificationLabel}`
-    );
+    // Tambah reward Cubic secara aman
+    try {
+      if (typeof CubicWallet !== "undefined") {
+        if (typeof CubicWallet.addCubic === "function") {
+          CubicWallet.addCubic(
+            result.cubicReward || 10,
+            "diagnosis_reward",
+            `Diagnosis Mandiri (${activeProb.title || `Soal #${this.activeQuizProblemIndex + 1}`}): ${result.classificationLabel || "Evaluasi"}`
+          );
+        } else if (typeof CubicWallet.addBalance === "function") {
+          CubicWallet.addBalance(
+            result.cubicReward || 10,
+            `Diagnosis Mandiri (${activeProb.title || `Soal #${this.activeQuizProblemIndex + 1}`}): ${result.classificationLabel || "Evaluasi"}`
+          );
+        }
+      }
+    } catch (e) {
+      console.warn("Cubic reward error:", e);
+    }
 
     // Tentukan tema visual & token warna
     let boxBorder = "border-emerald-500";

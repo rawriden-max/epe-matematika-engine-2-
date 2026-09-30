@@ -2925,7 +2925,9 @@ class EpeAppV2 {
       this.elements.btnTogglePinVisibility.addEventListener("click", () => {
         const inp = this.elements.educatorPinInput;
         if (!inp) return;
-        inp.type = inp.type === "password" ? "text" : "password";
+        const isHidden = inp.style.webkitTextSecurity !== "none";
+        inp.style.webkitTextSecurity = isHidden ? "none" : "disc";
+        inp.style.textSecurity = isHidden ? "none" : "disc";
       });
     }
 
