@@ -316,9 +316,9 @@
     <div id="header-motivation-strip" class="w-full flex items-center justify-center px-3">
       <div id="header-quote-banner" class="inline-flex items-center justify-center gap-2 sm:gap-3 px-3.5 sm:px-5 py-1.5 rounded-full bg-white/92 dark:bg-[#1a110b]/92 border border-slate-200/90 dark:border-amber-900/40 shadow-lg shadow-black/10 hover:border-amber-500/50 backdrop-blur-2xl transition-all cursor-pointer select-none max-w-[94vw] sm:max-w-2xl group" title="Kutipan Filosofis Motivasi Belajar (Klik untuk Menutup Notifikasi)">
         <span class="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0">EPE MOTIVASI</span>
-        <span id="widget-motivation-quote" class="text-xs sm:text-[12px] font-medium text-slate-800 dark:text-slate-200 tracking-tight whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-300">“Jika kamu tak tahan akan penatnya belajar, maka kamu akan menanggung perihnya kebodohan” — Imam Syafi'i</span>
+        <span id="widget-motivation-quote" class="text-xs sm:text-[12px] font-medium text-slate-800 dark:text-slate-200 tracking-tight whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-300">“Jika kamu tak tahan akan penatnya belajar, maka kamu akan menanggung perihnya kebodohan” (Imam Syafi'i)</span>
         <div class="flex items-center gap-1 shrink-0 ml-1">
-          <button id="btn-close-motivation" type="button" class="w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-slate-200/60 dark:hover:bg-amber-950/60 transition-colors cursor-pointer" title="Tutup Notifikasi Motivasi">
+          <button id="btn-close-motivation" type="button" class="w-8 h-8 sm:w-7 sm:h-7 min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-slate-200/60 dark:hover:bg-amber-950/60 transition-colors cursor-pointer" title="Tutup Notifikasi Motivasi" aria-label="Tutup notifikasi kutipan motivasi">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -511,52 +511,49 @@
           <!-- Target Terdekat & Action -->
           <div class="pt-2 flex items-center gap-3 text-xs text-amber-200/80 flex-wrap">
             <span>Target Terdekat: <strong id="next-target-title" class="text-white font-bold">Lanjutkan: Q1 (D1 - Konsep Aljabar)</strong></span>
-            <button id="btn-continue-diagnostic" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-white shadow-md shadow-emerald-500/30 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95 cursor-pointer">
+            <button id="btn-continue-diagnostic" class="px-4 py-2 rounded-full text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-white shadow-md shadow-emerald-500/30 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95 cursor-pointer min-h-[44px]">
               <span>Lanjutkan Diagnostik</span>
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
             </button>
-            <button id="hero-btn-open-photo-solver" type="button" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-cyan-600/80 hover:bg-cyan-500 text-white shadow-md shadow-cyan-600/30 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95 border border-cyan-400/40 cursor-pointer" title="Pindai &amp; Diagnosis Foto Soal Matematika">
-              <svg class="w-3.5 h-3.5 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              <span>Foto Soal AI</span>
-              <span class="px-1.5 py-0.2 rounded text-[9px] bg-white/20 text-white font-mono uppercase font-black">Baru</span>
+            <button id="hero-btn-open-photo-solver" type="button" class="px-4 py-2 rounded-full text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white shadow-md shadow-cyan-600/30 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95 border border-cyan-400/40 cursor-pointer min-h-[44px]" title="Pindai &amp; Diagnosis Foto Lembar Jawaban Siswa">
+              <svg class="w-3.5 h-3.5 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>Pindai Foto Soal</span>
             </button>
           </div>
         </div>
 
-        <!-- Right: Image 4 Matrix AI Quantum Glass Core with Robotic Probe Arms & Floating Rumus MTK -->
-        <div class="minimal-matrix-ai-card p-3 sm:p-4 flex flex-col items-center justify-between sm:min-w-[280px] lg:w-[325px] shrink-0 border border-white/15 bg-white/5 backdrop-blur-xl relative overflow-hidden group">
-          <!-- Image 2 Exact Header: MATRIX AI ONLINE    3D Saturn Core -->
-          <div class="flex items-center justify-between w-full pb-2 border-b border-white/10 z-10">
+        <!-- Right: Kartu Asisten Diagnostik Matematika Interaktif EPE -->
+        <div class="minimal-matrix-ai-card p-4 sm:p-5 flex flex-col items-center justify-between sm:min-w-[280px] lg:w-[325px] shrink-0 rounded-2xl border border-amber-500/25 bg-slate-900/95 shadow-xl relative overflow-hidden group">
+          <!-- Card Header: Status Asisten Pembelajaran -->
+          <div class="flex items-center justify-between w-full pb-2.5 border-b border-slate-700/60 z-10">
             <div class="flex items-center gap-2">
-              <span class="text-[11px] font-mono font-extrabold text-emerald-400 uppercase tracking-wider">MATRIX AI ONLINE</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="text-xs font-mono font-bold text-slate-200 uppercase tracking-wide">Asisten Diagnostik</span>
             </div>
-            <span class="text-[10px] text-amber-300 font-mono flex items-center gap-1">
-              <svg class="w-2.5 h-2.5 text-amber-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              <span>3D Saturn Core</span>
-            </span>
+            <span class="text-[11px] text-amber-300 font-mono font-medium">Model EPE Terintegrasi</span>
           </div>
 
-          <!-- 3D Saturn Core + Gyroscopic Rings + Floating Rumus MTK Canvas Container -->
-          <div class="relative w-full py-0.5 flex flex-col items-center justify-center my-0.5">
-            <div id="ai-orb-container" class="w-full relative cursor-pointer" style="min-height: 185px; height: 185px; width: 100%; position: relative; overflow: hidden;" title="Matrix AI 3D Saturn Core (Klik untuk Buka Percakapan)"></div>
-            <p class="text-[10px] text-center text-amber-200/90 font-mono tracking-tight -mt-0.5">
-              Saturn Orbit Rings &bull; Rumus Aljabar Interaktif
+          <!-- Canvas Container untuk Visualisasi Taksonomi Aljabar -->
+          <div class="relative w-full py-1 flex flex-col items-center justify-center my-1">
+            <div id="ai-orb-container" class="w-full relative cursor-pointer" style="min-height: 175px; height: 175px; width: 100%; position: relative; overflow: hidden;" title="Klik untuk membuka dialog bimbingan belajar"></div>
+            <p class="text-[11px] text-center text-slate-300 font-medium tracking-tight mt-1">
+              Visualisasi Topik &amp; Pemetaan Pola Berpikir
             </p>
           </div>
 
-          <!-- Quick AI Buttons -->
-          <div class="grid grid-cols-3 gap-1.5 w-full pt-1.5 z-10">
-            <button id="hero-btn-chat-ai" class="btn-primary py-1.5 px-2 text-[11px] font-bold flex items-center justify-center gap-1 shadow-sm bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl transition-all cursor-pointer">
-              <svg class="w-3.5 h-3.5 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+          <!-- Quick Action Buttons -->
+          <div class="grid grid-cols-3 gap-2 w-full pt-2 z-10">
+            <button id="hero-btn-chat-ai" class="btn-primary py-2 px-2 min-h-[44px] text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm bg-slate-800 hover:bg-slate-700 text-white border border-slate-600/60 rounded-xl transition-all cursor-pointer" title="Konsultasi Soal dengan Asisten">
+              <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
               <span>Tanya</span>
             </button>
 
-            <button id="hero-btn-voice-ai" class="btn-primary py-1.5 px-2 text-[11px] font-bold flex items-center justify-center gap-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-sm rounded-xl transition-all cursor-pointer" title="Mode Bicara Langsung dengan AI">
-              <svg class="w-3.5 h-3.5 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+            <button id="hero-btn-voice-ai" class="btn-primary py-2 px-2 min-h-[44px] text-xs font-semibold flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm rounded-xl transition-all cursor-pointer" title="Mode Percakapan Suara">
+              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"></path></svg>
               <span>Bicara</span>
             </button>
 
-            <button id="hero-btn-guide-step" class="btn-secondary py-1.5 px-2 text-[11px] font-semibold flex items-center justify-center gap-1 bg-white/10 hover:bg-white/20 text-amber-200 border border-amber-400/20 rounded-xl transition-all cursor-pointer">
+            <button id="hero-btn-guide-step" class="btn-secondary py-2 px-2 min-h-[44px] text-xs font-semibold flex items-center justify-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 border border-amber-500/30 rounded-xl transition-all cursor-pointer" title="Panduan Langkah Pengerjaan">
               <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
               <span>Bimbing</span>
             </button>
@@ -565,50 +562,50 @@
 
       </div>
 
-      <!-- WayGO Transformational Container (Bar initially, transforms into 3 Squircle/Oval Feature Cards on Scroll) -->
+      <!-- Roadmap Navigasi Asesmen 4 Tahap EPE Matematika -->
       <div id="waygo-pill-wrapper" class="w-full flex justify-center pt-2 relative z-10">
         
-        <!-- INITIAL STATE: Horizontal WayGO Search / Diagnostic Bar (Image 3 Style) -->
-        <div id="waygo-search-pill" class="waygo-search-bar bg-white/95 dark:bg-[#1a110b]/95 backdrop-blur-xl border border-slate-200/90 dark:border-amber-900/50 rounded-full shadow-2xl flex items-center p-2 sm:p-2.5 gap-2 sm:gap-3.5 max-w-4xl w-full justify-between transition-all duration-500">
+        <!-- INITIAL STATE: Horizontal Assessment Roadmap Bar -->
+        <div id="waygo-search-pill" class="waygo-search-bar bg-white/95 dark:bg-[#1a110b]/95 border border-slate-200/90 dark:border-amber-900/50 rounded-full shadow-2xl flex items-center p-2 sm:p-2.5 gap-2 sm:gap-3.5 max-w-4xl w-full justify-between transition-all duration-500">
           <div class="flex items-center gap-2 sm:gap-4 px-3 flex-1 overflow-x-auto scrollbar-none">
             
             <div class="flex flex-col text-left shrink-0">
-              <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-amber-300/70">Type</span>
-              <span class="text-xs font-extrabold text-slate-800 dark:text-white flex items-center gap-1">One Way Diagnostik <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></span>
+              <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-amber-300/70">Alur Asesmen</span>
+              <span class="text-xs font-extrabold text-slate-800 dark:text-white flex items-center gap-1">Diagnostik Terarah <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></span>
             </div>
             
             <span class="h-6 w-px bg-slate-200 dark:bg-amber-900/50 shrink-0"></span>
             
             <div class="flex flex-col text-left shrink-0">
-              <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-amber-300/70">Dari</span>
-              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Konsep Aljabar</span>
+              <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-amber-300/70">Tahap 1</span>
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Pre-Test Awal</span>
             </div>
             
             <span class="h-6 w-px bg-slate-200 dark:bg-amber-900/50 shrink-0"></span>
             
             <div class="flex flex-col text-left shrink-0">
-              <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-amber-300/70">Tujuan</span>
-              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Penguasaan Tuntas</span>
+              <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-amber-300/70">Tahap 2</span>
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Diagnostik 24 Butir (D1–D6)</span>
             </div>
             
             <span class="h-6 w-px bg-slate-200 dark:bg-amber-900/50 shrink-0"></span>
             
             <div class="flex flex-col text-left shrink-0">
-              <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-amber-300/70">Fokus Model</span>
-              <span class="text-xs font-extrabold text-slate-800 dark:text-white flex items-center gap-1">Taksonomi D1–D6 <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></span>
+              <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-amber-300/70">Tahap 3</span>
+              <span class="text-xs font-extrabold text-slate-800 dark:text-white flex items-center gap-1">Remediasi (E1–E4) <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></span>
             </div>
             
             <span class="h-6 w-px bg-slate-200 dark:bg-amber-900/50 shrink-0"></span>
             
             <div class="flex flex-col text-left shrink-0">
-              <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-amber-300/70">Analisis</span>
-              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Matrix AI Reasoning</span>
+              <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-amber-300/70">Tahap 4</span>
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Post-Test Evaluasi</span>
             </div>
 
           </div>
 
-          <!-- Circular Dark Action Button (WayGO Search Icon Style) -->
-          <button id="waygo-btn-start-diag" class="w-10 h-10 rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-amber-600 dark:hover:bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer" title="Mulai Diagnostik Cepat Aljabar">
+          <!-- Circular Action Button -->
+          <button id="waygo-btn-start-diag" class="w-11 h-11 min-h-[44px] min-w-[44px] rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-amber-600 dark:hover:bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-lg transition-transform hover:scale-105 active:scale-95 cursor-pointer" title="Mulai Diagnostik Cepat Aljabar">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           </button>
         </div>
@@ -702,7 +699,7 @@
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-2.5" id="pipeline-step-pretest">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 font-mono">1. Pre-Test</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400" id="pipeline-badge-pretest">○ Belum</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400" id="pipeline-badge-pretest">Belum Mulai</span>
           </div>
           <div>
             <h5 class="text-xs font-bold text-slate-800 dark:text-white">Baseline Awal</h5>
@@ -717,7 +714,7 @@
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-2.5" id="pipeline-step-diagnostic">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 font-mono">2. Diagnostik</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400" id="pipeline-badge-diagnostic">○ 0/24</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400" id="pipeline-badge-diagnostic">0/24 Soal</span>
           </div>
           <div>
             <h5 class="text-xs font-bold text-slate-800 dark:text-white">Deteksi Pola Error</h5>
@@ -732,7 +729,7 @@
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-2.5" id="pipeline-step-remediation">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 font-mono">3. Remediasi</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400" id="pipeline-badge-remediation">○ Belum</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400" id="pipeline-badge-remediation">Belum Ada</span>
           </div>
           <div>
             <h5 class="text-xs font-bold text-slate-800 dark:text-white">Intervensi Belajar</h5>
@@ -1368,9 +1365,9 @@
                 <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Dokumen Soal</span>
               </span>
-              <a id="practice-media-file-link" href="#" download class="btn-secondary w-full py-1.5 px-2 text-[11px] truncate flex items-center gap-1">
-                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                <span id="practice-media-file-name" class="truncate">Unduh File</span>
+              <a id="practice-media-file-link" download class="btn-secondary w-full py-2 px-2.5 min-h-[44px] text-xs truncate flex items-center justify-center gap-1.5 cursor-pointer" title="Unduh Berkas Lampiran Soal">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span id="practice-media-file-name" class="truncate">Unduh Lampiran Soal</span>
               </a>
             </div>
           </div>
@@ -1879,8 +1876,16 @@ Remediasi = -</pre>
         </table>
       </div>
 
-      <div id="history-empty-state" class="p-8 text-center text-xs text-slate-500">
-        Belum ada riwayat diagnostik pengerjaan siswa.
+      <div id="history-empty-state" class="py-12 px-4 text-center space-y-3">
+        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        </div>
+        <div class="space-y-1 max-w-sm mx-auto">
+          <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">Belum Ada Riwayat Diagnostik</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Data evaluasi akan muncul secara otomatis setelah siswa menyelesaikan pengerjaan soal diagnostik aljabar.
+          </p>
+        </div>
       </div>
     </section>
     </div> <!-- /#container-research-epe-view -->
@@ -2439,7 +2444,7 @@ Remediasi = -</pre>
   <!-- MODAL: AKSES KHUSUS GURU / PENDIDIK (PROTEKSI PRIVASI SISWA)             -->
   <!-- ========================================================================= -->
   <div id="educator-auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-    <div class="card-clean max-w-md w-full p-6 space-y-4 shadow-2xl relative border border-slate-200 dark:border-indigo-500/30 bg-white dark:bg-slate-900/98 backdrop-blur-xl rounded-2xl">
+    <div class="card-clean max-w-md w-full p-6 space-y-4 shadow-2xl relative border border-slate-200 dark:border-indigo-500/30 bg-white dark:bg-slate-900 rounded-2xl">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 shrink-0">
@@ -2513,7 +2518,7 @@ Remediasi = -</pre>
   <!-- MODAL: GANTI KATA SANDI / PIN GURU                                       -->
   <!-- ========================================================================= -->
   <div id="change-pin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-    <div class="card-clean max-w-md w-full p-6 space-y-4 shadow-2xl relative border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/98 backdrop-blur-xl rounded-2xl">
+    <div class="card-clean max-w-md w-full p-6 space-y-4 shadow-2xl relative border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-600/30 border border-indigo-200 dark:border-indigo-500/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
@@ -2737,7 +2742,7 @@ Remediasi = -</pre>
   <!-- MODAL: GANTI NAMA / IDENTITAS SISWA (PROFILE MANAGER NICKNAME MODAL)       -->
   <!-- ========================================================================= -->
   <div id="edit-nickname-modal" class="fixed inset-0 z-[2000010] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md hidden transition-all duration-300">
-    <div class="card-clean max-w-sm sm:max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl relative border border-slate-700 bg-slate-900/98 backdrop-blur-2xl rounded-2xl text-white" onclick="event.stopPropagation()">
+    <div class="card-clean max-w-sm sm:max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl relative border border-slate-700 bg-slate-900 rounded-2xl text-white" onclick="event.stopPropagation()">
       <!-- Modal Header -->
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
         <div class="flex items-center gap-3">
@@ -2803,7 +2808,7 @@ Remediasi = -</pre>
   <!-- MODAL: PENGATURAN TATA LETAK NAVIGASI (MUNCUL DI TENGAH LAYAR)            -->
   <!-- ========================================================================= -->
   <div id="nav-layout-menu" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md hidden transition-opacity nav-layout-modal-backdrop">
-    <div class="card-clean max-w-sm sm:max-w-md w-full p-5 space-y-4 shadow-2xl relative border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/98 backdrop-blur-2xl rounded-2xl transform transition-all nav-layout-modal-card" onclick="event.stopPropagation()">
+    <div class="card-clean max-w-sm sm:max-w-md w-full p-5 space-y-4 shadow-2xl relative border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl transform transition-all nav-layout-modal-card" onclick="event.stopPropagation()">
       
       <!-- Modal Header -->
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">

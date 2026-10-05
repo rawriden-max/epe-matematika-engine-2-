@@ -323,6 +323,12 @@ export class PhotoMathSolver {
     this.scanStatusText = "";
     this.isApiKeyModalOpen = false;
 
+    // Anti-duplicate: track which problem+answer combos have already received Cubic reward
+    // Key format: "probIndex_answerNormalized" - persisted in sessionStorage per session
+    this.diagnosedProblems = new Set(
+      JSON.parse(sessionStorage.getItem("epe_diagnosed_problems") || "[]")
+    );
+
     // Multimodal Quiz Answer State (Teks, Gambar Coretan, Audio Rekaman Suara)
     this.quizInputModality = "text"; // "text" | "image" | "audio"
     this.quizStudentImage = null; // { dataUrl, name, sizeFormatted }
@@ -3799,27 +3805,63 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
     }
   }
 
+  /**
+   * Membuat problem key unik berdasarkan indeks soal + konten soal.
+   * Dipakai untuk mencegah reward Cubic ganda pada soal yang sama.
+   */
+  _makeProblemKey(probIndex, probTitle) {
+    // Gunakan title / latex sebagai fingerprint soal supaya berbeda per soal
+    const fingerprint = (probTitle || `prob_${probIndex}`)
+      .replace(/\s+/g, "_")
+      .toLowerCase()
+      .substring(0, 40);
+    return `diag_${probIndex}_${fingerprint}`;
+  }
+
+  _saveDiagnosedProblems() {
+    try {
+      sessionStorage.setItem(
+        "epe_diagnosed_problems",
+        JSON.stringify([...this.diagnosedProblems])
+      );
+    } catch (e) {}
+  }
+
   renderDiagnosticResultBox(feedbackBox, result, activeProb, isMulti) {
     if (!feedbackBox || !result) return;
 
-    // Tambah reward Cubic secara aman
-    try {
-      if (typeof CubicWallet !== "undefined") {
-        if (typeof CubicWallet.addCubic === "function") {
-          CubicWallet.addCubic(
-            result.cubicReward || 10,
-            "diagnosis_reward",
-            `Diagnosis Mandiri (${activeProb.title || `Soal #${this.activeQuizProblemIndex + 1}`}): ${result.classificationLabel || "Evaluasi"}`
-          );
-        } else if (typeof CubicWallet.addBalance === "function") {
-          CubicWallet.addBalance(
-            result.cubicReward || 10,
-            `Diagnosis Mandiri (${activeProb.title || `Soal #${this.activeQuizProblemIndex + 1}`}): ${result.classificationLabel || "Evaluasi"}`
-          );
+    // ─── Anti-Duplicate Cubic Reward ─────────────────────────────────────
+    // Buat unique key untuk soal ini
+    const probKey = this._makeProblemKey(
+      this.activeQuizProblemIndex,
+      activeProb.title || activeProb.latex || activeProb.question
+    );
+    const alreadyRewarded = this.diagnosedProblems.has(probKey);
+    const cubicToGive = alreadyRewarded ? 0 : (result.cubicReward || 10);
+
+    // Hanya beri reward jika belum pernah
+    if (!alreadyRewarded) {
+      try {
+        if (typeof CubicWallet !== "undefined") {
+          if (typeof CubicWallet.addCubic === "function") {
+            CubicWallet.addCubic(
+              cubicToGive,
+              "diagnosis_reward",
+              `Diagnosis Mandiri (${activeProb.title || `Soal #${this.activeQuizProblemIndex + 1}`}): ${result.classificationLabel || "Evaluasi"}`
+            );
+          } else if (typeof CubicWallet.addBalance === "function") {
+            CubicWallet.addBalance(
+              cubicToGive,
+              `Diagnosis Mandiri (${activeProb.title || `Soal #${this.activeQuizProblemIndex + 1}`}): ${result.classificationLabel || "Evaluasi"}`
+            );
+          }
         }
+      } catch (e) {
+        console.warn("Cubic reward error:", e);
       }
-    } catch (e) {
-      console.warn("Cubic reward error:", e);
+      // Tandai soal ini sudah pernah didiagnosis & sudah dapat reward
+      this.diagnosedProblems.add(probKey);
+      this._saveDiagnosedProblems();
     }
 
     // Tentukan tema visual & token warna
@@ -3896,8 +3938,8 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
               <p class="text-xs ${subtitleColor}">${result.headerSubtitle}</p>
             </div>
           </div>
-          <span class="px-3 py-1 rounded-full text-xs font-mono font-bold ${rewardStyle} shrink-0 shadow-md">
-            +${result.cubicReward || 10} Cubic ◆
+          <span class="px-3 py-1 rounded-full text-xs font-mono font-bold ${alreadyRewarded ? 'bg-slate-500/20 text-slate-400 border border-slate-600/40' : rewardStyle} shrink-0 shadow-md">
+            ${alreadyRewarded ? '✓ Sudah Diklaim' : `+${cubicToGive} Cubic ◆`}
           </span>
         </div>
 
@@ -3945,8 +3987,8 @@ ${this.escapeHtml((this.currentFile?.textContent || "").slice(0, 1000))}${((this
                 <span>📎</span>
                 <span>Bukti Lampiran Multimodal Siswa:</span>
               </span>
-              <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono text-[10.5px]">
-                Bonus Multimodal +3 Cubic
+              <span class="px-2 py-0.5 rounded-md ${alreadyRewarded ? 'bg-slate-500/10 text-slate-500' : 'bg-amber-500/20 text-amber-300'} font-mono text-[10.5px]">
+                ${alreadyRewarded ? 'Bonus sudah diklaim' : 'Bonus Multimodal +3 Cubic'}
               </span>
             </div>
             <div class="flex flex-wrap items-center gap-3 pt-1">

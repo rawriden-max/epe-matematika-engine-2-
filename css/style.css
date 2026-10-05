@@ -117,11 +117,17 @@ body {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.input-clean:focus {
-  outline: none;
+.input-clean:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-subtle);
 }
+.input-clean:focus:not(:focus-visible) {
+  outline: none;
+  border-color: var(--accent);
+}
+
 
 .input-clean::placeholder {
   color: var(--text-light);
@@ -553,10 +559,15 @@ body {
   font-family: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.tornado-search input:focus {
+.tornado-search input:focus-visible {
+  outline: 2px solid #06b6d4;
+  outline-offset: 1px;
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+}
+.tornado-search input:focus:not(:focus-visible) {
   outline: none;
   border-color: #06b6d4;
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
 }
 .tornado-search .search-icon {
   position: absolute;
@@ -2191,13 +2202,19 @@ body:not(.theme-dark) [data-jump-idx].bg-amber-500 {
   border: 1px solid rgba(56, 189, 248, 0.2);
   color: #f8fafc;
   font-size: 0.85rem;
-  outline: none;
   transition: all 0.2s ease;
 }
-.tornado-search input:focus {
+.tornado-search input:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 1px;
   border-color: #38bdf8;
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
-  background: rgba(15, 23, 42, 0.85);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+  background: rgba(15, 23, 42, 0.95);
+}
+.tornado-search input:focus:not(:focus-visible) {
+  outline: none;
+  border-color: #38bdf8;
+  background: rgba(15, 23, 42, 0.95);
 }
 .tornado-search .search-icon {
   position: absolute;
