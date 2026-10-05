@@ -1513,23 +1513,61 @@ body:not(.theme-dark) .ai-msg-assistant .katex-display {
 }
 
 /* Tables in Light Theme Assistant Bubbles */
+body:not(.theme-dark) .ai-msg-assistant .ai-table-container,
 body:not(.theme-dark) .ai-msg-assistant table {
   border: 1px solid #cbd5e1 !important;
   background: #ffffff !important;
 }
+body:not(.theme-dark) .ai-msg-assistant thead,
 body:not(.theme-dark) .ai-msg-assistant th {
   background: #f1f5f9 !important;
   color: #0f172a !important;
   border-bottom: 1.5px solid #cbd5e1 !important;
   border-right: 1px solid #e2e8f0 !important;
 }
+body:not(.theme-dark) .ai-msg-assistant tbody {
+  background: #ffffff !important;
+}
 body:not(.theme-dark) .ai-msg-assistant td {
-  color: #1e293b !important;
-  border-bottom: 1px solid #f1f5f9 !important;
-  border-right: 1px solid #f1f5f9 !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+body:not(.theme-dark) .ai-msg-assistant td * {
+  color: #0f172a;
+}
+body:not(.theme-dark) .ai-msg-assistant td .katex,
+body:not(.theme-dark) .ai-msg-assistant td .katex * {
+  color: #0f172a !important;
 }
 body:not(.theme-dark) .ai-msg-assistant tr:hover td {
   background: #f8fafc !important;
+}
+
+/* Tables in Dark Theme Assistant Bubbles */
+.ai-msg-assistant .ai-table-container,
+.ai-msg-assistant table {
+  border: 1px solid rgba(138, 77, 36, 0.45);
+  background: rgba(28, 17, 11, 0.85);
+}
+.ai-msg-assistant thead,
+.ai-msg-assistant th {
+  background: rgba(55, 34, 23, 0.96) !important;
+  color: #fde68a !important;
+  border-bottom: 1px solid rgba(138, 77, 36, 0.4) !important;
+  border-right: 1px solid rgba(138, 77, 36, 0.25) !important;
+}
+.ai-msg-assistant tbody {
+  background: rgba(28, 17, 11, 0.65) !important;
+}
+.ai-msg-assistant td {
+  color: #fdfaf7 !important;
+  border-bottom: 1px solid rgba(138, 77, 36, 0.2) !important;
+  border-right: 1px solid rgba(138, 77, 36, 0.2) !important;
+}
+.ai-msg-assistant tr:hover td {
+  background: rgba(74, 46, 31, 0.35) !important;
 }
 
 .ai-msg-user {
@@ -3548,15 +3586,21 @@ body.theme-dark .waygo-squircle-card,
   pointer-events: auto !important;
 }
 
-/* 4. Minimalist Matrix AI Card (Clean & Transparent - Borderless) */
+/* 4. Minimalist Matrix AI Card (Modern Frosted Glass / Kotak Transparan Mewah) */
 .minimal-matrix-ai-card {
   border-radius: 24px !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  transition: all 0.3s ease;
+  background: rgba(30, 18, 12, 0.48) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.minimal-matrix-ai-card:hover {
+  background: rgba(36, 22, 14, 0.58) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.5), 0 0 24px rgba(245, 158, 11, 0.14), inset 0 1px 0 0 rgba(255, 255, 255, 0.18) !important;
 }
 
 /* Subtle Soundwave Pulse Indicator */
