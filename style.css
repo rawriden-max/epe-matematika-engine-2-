@@ -117,11 +117,17 @@ body {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.input-clean:focus {
-  outline: none;
+.input-clean:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-subtle);
 }
+.input-clean:focus:not(:focus-visible) {
+  outline: none;
+  border-color: var(--accent);
+}
+
 
 .input-clean::placeholder {
   color: var(--text-light);
@@ -553,10 +559,15 @@ body {
   font-family: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.tornado-search input:focus {
+.tornado-search input:focus-visible {
+  outline: 2px solid #06b6d4;
+  outline-offset: 1px;
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+}
+.tornado-search input:focus:not(:focus-visible) {
   outline: none;
   border-color: #06b6d4;
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
 }
 .tornado-search .search-icon {
   position: absolute;
@@ -1502,23 +1513,61 @@ body:not(.theme-dark) .ai-msg-assistant .katex-display {
 }
 
 /* Tables in Light Theme Assistant Bubbles */
+body:not(.theme-dark) .ai-msg-assistant .ai-table-container,
 body:not(.theme-dark) .ai-msg-assistant table {
   border: 1px solid #cbd5e1 !important;
   background: #ffffff !important;
 }
+body:not(.theme-dark) .ai-msg-assistant thead,
 body:not(.theme-dark) .ai-msg-assistant th {
   background: #f1f5f9 !important;
   color: #0f172a !important;
   border-bottom: 1.5px solid #cbd5e1 !important;
   border-right: 1px solid #e2e8f0 !important;
 }
+body:not(.theme-dark) .ai-msg-assistant tbody {
+  background: #ffffff !important;
+}
 body:not(.theme-dark) .ai-msg-assistant td {
-  color: #1e293b !important;
-  border-bottom: 1px solid #f1f5f9 !important;
-  border-right: 1px solid #f1f5f9 !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+body:not(.theme-dark) .ai-msg-assistant td * {
+  color: #0f172a;
+}
+body:not(.theme-dark) .ai-msg-assistant td .katex,
+body:not(.theme-dark) .ai-msg-assistant td .katex * {
+  color: #0f172a !important;
 }
 body:not(.theme-dark) .ai-msg-assistant tr:hover td {
   background: #f8fafc !important;
+}
+
+/* Tables in Dark Theme Assistant Bubbles */
+.ai-msg-assistant .ai-table-container,
+.ai-msg-assistant table {
+  border: 1px solid rgba(138, 77, 36, 0.45);
+  background: rgba(28, 17, 11, 0.85);
+}
+.ai-msg-assistant thead,
+.ai-msg-assistant th {
+  background: rgba(55, 34, 23, 0.96) !important;
+  color: #fde68a !important;
+  border-bottom: 1px solid rgba(138, 77, 36, 0.4) !important;
+  border-right: 1px solid rgba(138, 77, 36, 0.25) !important;
+}
+.ai-msg-assistant tbody {
+  background: rgba(28, 17, 11, 0.65) !important;
+}
+.ai-msg-assistant td {
+  color: #fdfaf7 !important;
+  border-bottom: 1px solid rgba(138, 77, 36, 0.2) !important;
+  border-right: 1px solid rgba(138, 77, 36, 0.2) !important;
+}
+.ai-msg-assistant tr:hover td {
+  background: rgba(74, 46, 31, 0.35) !important;
 }
 
 .ai-msg-user {
@@ -1760,7 +1809,7 @@ main[id^="section-"] {
 }
 
 /* ========================================================================= */
-/* EPE V2.1 AVATAR & CUBIC ECONOMY SYSTEM STYLING                            */
+/* EPE V3 AVATAR & CUBIC ECONOMY SYSTEM STYLING                              */
 /* ========================================================================= */
 
 #cubic-reward-toast-container {
@@ -2191,13 +2240,19 @@ body:not(.theme-dark) [data-jump-idx].bg-amber-500 {
   border: 1px solid rgba(56, 189, 248, 0.2);
   color: #f8fafc;
   font-size: 0.85rem;
-  outline: none;
   transition: all 0.2s ease;
 }
-.tornado-search input:focus {
+.tornado-search input:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 1px;
   border-color: #38bdf8;
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
-  background: rgba(15, 23, 42, 0.85);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+  background: rgba(15, 23, 42, 0.95);
+}
+.tornado-search input:focus:not(:focus-visible) {
+  outline: none;
+  border-color: #38bdf8;
+  background: rgba(15, 23, 42, 0.95);
 }
 .tornado-search .search-icon {
   position: absolute;
@@ -3531,14 +3586,21 @@ body.theme-dark .waygo-squircle-card,
   pointer-events: auto !important;
 }
 
-/* 4. Minimalist Matrix AI Card (Clean Header matching Image 2 & 4) */
+/* 4. Minimalist Matrix AI Card (Modern Frosted Glass / Kotak Transparan Mewah) */
 .minimal-matrix-ai-card {
-  border-radius: 28px !important;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  transition: all 0.3s ease;
+  border-radius: 24px !important;
+  background: rgba(30, 18, 12, 0.48) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.minimal-matrix-ai-card:hover {
+  background: rgba(36, 22, 14, 0.58) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.5), 0 0 24px rgba(245, 158, 11, 0.14), inset 0 1px 0 0 rgba(255, 255, 255, 0.18) !important;
 }
 
 /* Subtle Soundwave Pulse Indicator */
@@ -4465,4 +4527,562 @@ body.nav-pos-bottom main,
 .qbank-portal-root > * {
   pointer-events: auto !important;
 }
+
+/* ========================================================================= */
+/* 15. MOBILE-ONLY POLISH & SYMMETRICAL CENTERING (max-width: 768px)         */
+/* Menghadirkan layout HP yang rapi, simetris, presisi, dan proporsional     */
+/* ========================================================================= */
+@media (max-width: 768px) {
+  /* 1. Kontainer Utama Dashboard */
+  #section-dashboard-mode {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    padding-top: 0.75rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* 2. Kartu Hero EPE WayGO (Pusatkan Teks & Elemen Secara Elegan) */
+  .waygo-hero-card {
+    padding: 1.5rem 1rem !important;
+    border-radius: 28px !important;
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 1.5rem !important;
+  }
+
+  .waygo-hero-card > .flex {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    gap: 1.25rem !important;
+  }
+
+  .waygo-hero-card .space-y-3 {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  /* Badge ID & Nama Siswa di Tengah */
+  .waygo-hero-card .space-y-3 > .flex {
+    justify-content: center !important;
+    align-items: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Judul Besar EPE Matematika */
+  .waygo-hero-card h1 {
+    text-align: center !important;
+    font-size: 2.35rem !important;
+    line-height: 1.12 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .waygo-hero-card p {
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    max-width: 95% !important;
+  }
+
+  /* Target Terdekat & Tombol Aksi */
+  .waygo-hero-card .pt-2.flex {
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    gap: 0.65rem !important;
+  }
+
+  /* 3. Kartu Saturn Core 3D di Tengah Pas */
+  .minimal-matrix-ai-card {
+    width: 100% !important;
+    max-width: 380px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    border-radius: 24px !important;
+    align-self: center !important;
+  }
+
+  /* 4. WayGO Search Bar & Fitur Cards di Tengah */
+  #waygo-pill-wrapper {
+    width: 100% !important;
+    justify-content: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  #waygo-search-pill {
+    width: 100% !important;
+    max-width: 380px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    border-radius: 24px !important;
+  }
+
+  /* 5. Alur Penelitian Siswa (Research Flow) Rapi & Simetris */
+  #research-journey-pipeline {
+    border-radius: 24px !important;
+    padding: 1.25rem 1rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 100% !important;
+  }
+
+  #research-journey-pipeline > .flex {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 0.5rem !important;
+  }
+
+  #research-journey-pipeline > .flex > .flex {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  /* 6. Bottom Dock Melayang di HP - Presisi di Tengah Tanpa Terpotong */
+  #epe-bottom-dock {
+    bottom: 0.65rem !important;
+    max-width: calc(100vw - 1rem) !important;
+    width: auto !important;
+    padding: 0.35rem 0.5rem !important;
+    gap: 0.2rem !important;
+    justify-content: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    border-radius: 9999px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+  }
+  #epe-bottom-dock::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Sembunyikan label teks di dock HP agar ikon muat rapi simetris tanpa overflow */
+  #epe-bottom-dock .bottom-dock-btn span {
+    display: none !important;
+  }
+
+  #epe-bottom-dock .bottom-dock-btn {
+    padding: 0.5rem 0.55rem !important;
+    border-radius: 9999px !important;
+  }
+
+  /* Tombol Melayang Matrix AI di HP (di atas dock, tidak menabrak) */
+  #floating-ai-trigger {
+    bottom: 4.85rem !important;
+    right: 0.85rem !important;
+  }
+
+  /* Banner Motivasi Atas */
+  #header-quote-banner {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
+    font-size: 0.72rem !important;
+  }
+}
+
+/* ========================================================================= */
+/* AVATAR CUSTOMIZATION LAB - CREATIVE & MINIMAL (DARK & LIGHT THEMES)       */
+/* ========================================================================= */
+
+.avatar-lab-card {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Light Theme Avatar Lab */
+body:not(.theme-dark) .avatar-lab-card,
+html:not(.dark) .avatar-lab-card {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(226, 232, 240, 1) !important;
+  color: #0f172a !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15), 0 0 35px rgba(245, 158, 11, 0.08) !important;
+}
+
+body:not(.theme-dark) .avatar-lab-header,
+html:not(.dark) .avatar-lab-header {
+  background: rgba(248, 250, 252, 0.95) !important;
+  border-color: rgba(226, 232, 240, 1) !important;
+}
+
+body:not(.theme-dark) .avatar-lab-header h3,
+html:not(.dark) .avatar-lab-header h3 {
+  color: #0f172a !important;
+}
+
+body:not(.theme-dark) .avatar-lab-header p,
+html:not(.dark) .avatar-lab-header p {
+  color: #64748b !important;
+}
+
+body:not(.theme-dark) .avatar-lab-preview-col,
+html:not(.dark) .avatar-lab-preview-col {
+  background: rgba(248, 250, 252, 0.75) !important;
+  border-color: rgba(226, 232, 240, 1) !important;
+}
+
+body:not(.theme-dark) .avatar-lab-summary,
+html:not(.dark) .avatar-lab-summary {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+body:not(.theme-dark) .avatar-lab-summary span.summary-val,
+html:not(.dark) .avatar-lab-summary span.summary-val {
+  color: #0f172a !important;
+}
+
+body:not(.theme-dark) .avatar-lab-footer,
+html:not(.dark) .avatar-lab-footer {
+  background: rgba(248, 250, 252, 0.95) !important;
+  border-color: rgba(226, 232, 240, 1) !important;
+  color: #475569 !important;
+}
+
+body:not(.theme-dark) .avatar-item-card,
+html:not(.dark) .avatar-item-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+body:not(.theme-dark) .avatar-item-card:hover,
+html:not(.dark) .avatar-item-card:hover {
+  background: #f8fafc !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08) !important;
+}
+
+body:not(.theme-dark) .avatar-item-card h5,
+html:not(.dark) .avatar-item-card h5 {
+  color: #0f172a !important;
+}
+
+body:not(.theme-dark) .avatar-item-card p,
+html:not(.dark) .avatar-item-card p {
+  color: #64748b !important;
+}
+
+body:not(.theme-dark) .avatar-cat-tab,
+html:not(.dark) .avatar-cat-tab {
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+body:not(.theme-dark) .avatar-cat-tab:hover,
+html:not(.dark) .avatar-cat-tab:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Dark Theme Avatar Lab (Deep Cosmic Obsidian Glass) */
+.dark .avatar-lab-card,
+body.theme-dark .avatar-lab-card {
+  background: linear-gradient(135deg, rgba(20, 14, 10, 0.96) 0%, rgba(15, 23, 42, 0.96) 100%) !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 35px rgba(245, 158, 11, 0.12) !important;
+  color: #f8fafc !important;
+}
+
+.dark .avatar-lab-header,
+body.theme-dark .avatar-lab-header {
+  background: rgba(15, 23, 42, 0.7) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .avatar-lab-preview-col,
+body.theme-dark .avatar-lab-preview-col {
+  background: rgba(10, 15, 29, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .avatar-lab-summary,
+body.theme-dark .avatar-lab-summary {
+  background: rgba(15, 23, 42, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #cbd5e1 !important;
+}
+
+.dark .avatar-item-card,
+body.theme-dark .avatar-item-card {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+}
+
+.dark .avatar-item-card:hover,
+body.theme-dark .avatar-item-card:hover {
+  background: rgba(30, 41, 59, 0.95) !important;
+}
+
+.dark .avatar-cat-tab,
+body.theme-dark .avatar-cat-tab {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #94a3b8 !important;
+}
+
+.dark .avatar-cat-tab:hover,
+body.theme-dark .avatar-cat-tab:hover {
+  background: rgba(30, 41, 59, 0.9) !important;
+  color: #ffffff !important;
+}
+
+/* Hologram Effects */
+.hologram-orbit-ring {
+  position: absolute;
+  inset: -10px;
+  border-radius: 9999px;
+  border: 1.5px dashed rgba(6, 182, 212, 0.45);
+  animation: hologram-spin 22s linear infinite;
+  pointer-events: none;
+}
+
+.hologram-orbit-ring-secondary {
+  position: absolute;
+  inset: -18px;
+  border-radius: 9999px;
+  border: 1px dotted rgba(245, 158, 11, 0.35);
+  animation: hologram-spin-reverse 30s linear infinite;
+  pointer-events: none;
+}
+
+.hologram-scanline {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, transparent 40%, rgba(6, 182, 212, 0.18) 50%, transparent 60%);
+  animation: hologram-scan 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes hologram-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes hologram-spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes hologram-scan {
+  0%, 100% { transform: translateY(-35%); opacity: 0; }
+  50% { transform: translateY(35%); opacity: 1; }
+}
+
+/* ========================================================================= */
+/* PHOTO MATH SCANNER - PROMINENT API KEY CALLOUT BANNER & MINI TAB          */
+/* ========================================================================= */
+
+.photo-api-callout-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(6, 182, 212, 0.12) 50%, rgba(147, 51, 234, 0.08) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.55);
+  box-shadow: 0 12px 36px -4px rgba(245, 158, 11, 0.22), 0 0 24px rgba(6, 182, 212, 0.12);
+}
+
+.photo-api-callout-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.22), transparent 45%);
+  pointer-events: none;
+}
+
+.photo-api-callout-card.connected {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(6, 182, 212, 0.09) 100%);
+  border: 1.5px solid rgba(16, 185, 129, 0.5);
+  box-shadow: 0 10px 30px -4px rgba(16, 185, 129, 0.18);
+}
+
+/* Light mode overrides for callout card */
+html:not(.dark) .photo-api-callout-card {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.95) 0%, rgba(224, 242, 254, 0.9) 50%, rgba(243, 232, 255, 0.85) 100%);
+  border-color: rgba(217, 119, 6, 0.65);
+  box-shadow: 0 12px 32px -4px rgba(217, 119, 6, 0.18);
+}
+
+html:not(.dark) .photo-api-callout-card h4 {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .photo-api-callout-card p {
+  color: #334155 !important;
+}
+
+html:not(.dark) .photo-api-callout-card .text-amber-200\/90 {
+  color: #92400e !important;
+}
+
+html:not(.dark) .photo-api-callout-card.connected,
+body:not(.theme-dark) .photo-api-callout-card.connected {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 50%, #eff6ff 100%) !important;
+  border: 1.5px solid #10b981 !important;
+  box-shadow: 0 10px 30px -4px rgba(16, 185, 129, 0.22) !important;
+}
+
+html:not(.dark) .photo-api-callout-card.connected .text-emerald-300,
+body:not(.theme-dark) .photo-api-callout-card.connected .text-emerald-300 {
+  color: #065f46 !important;
+  font-weight: 800 !important;
+}
+
+html:not(.dark) .photo-api-callout-card.connected .text-emerald-200,
+body:not(.theme-dark) .photo-api-callout-card.connected .text-emerald-200 {
+  color: #047857 !important;
+  font-weight: 800 !important;
+}
+
+html:not(.dark) .photo-api-callout-card.connected .bg-emerald-500\/20,
+body:not(.theme-dark) .photo-api-callout-card.connected .bg-emerald-500\/20 {
+  background-color: #d1fae5 !important;
+  border-color: #34d399 !important;
+}
+
+html:not(.dark) .photo-api-callout-card.connected p,
+body:not(.theme-dark) .photo-api-callout-card.connected p {
+  color: #0f172a !important;
+  font-weight: 500 !important;
+}
+
+/* ========================================================================= */
+/* PHOTO MATH SAMPLE CARDS - ANTI-GLARE & SEAMLESS HARMONIOUS PALETTE        */
+/* ========================================================================= */
+
+.photo-sample-card {
+  position: relative;
+  background: rgba(18, 14, 11, 0.94);
+  border: 1.5px solid rgba(245, 158, 11, 0.25);
+  box-shadow: 0 12px 36px -6px rgba(0, 0, 0, 0.6);
+  border-radius: 1.25rem;
+}
+
+html:not(.dark) .photo-sample-card,
+body:not(.theme-dark) .photo-sample-card {
+  background: #f8fafc !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.06) !important;
+}
+
+.photo-sample-featured-pdf {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 60%, rgba(136, 19, 55, 0.3) 100%);
+  border: 1.5px solid rgba(244, 63, 94, 0.45);
+}
+
+html:not(.dark) .photo-sample-featured-pdf,
+body:not(.theme-dark) .photo-sample-featured-pdf {
+  background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%) !important;
+  border: 1.5px solid #fda4af !important;
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.08) !important;
+}
+
+html:not(.dark) .photo-sample-featured-pdf p,
+body:not(.theme-dark) .photo-sample-featured-pdf p {
+  color: #0f172a !important;
+}
+
+.photo-sample-featured-latex {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 60%, rgba(8, 145, 178, 0.3) 100%);
+  border: 1.5px solid rgba(6, 182, 212, 0.45);
+}
+
+html:not(.dark) .photo-sample-featured-latex,
+body:not(.theme-dark) .photo-sample-featured-latex {
+  background: linear-gradient(135deg, #ffffff 0%, #ecfeff 100%) !important;
+  border: 1.5px solid #67e8f9 !important;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.08) !important;
+}
+
+html:not(.dark) .photo-sample-featured-latex p,
+body:not(.theme-dark) .photo-sample-featured-latex p {
+  color: #0f172a !important;
+}
+
+.photo-sample-pill {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(51, 65, 85, 0.7);
+}
+
+html:not(.dark) .photo-sample-pill,
+body:not(.theme-dark) .photo-sample-pill {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+}
+
+html:not(.dark) .photo-sample-pill p,
+body:not(.theme-dark) .photo-sample-pill p {
+  color: #0f172a !important;
+}
+
+@keyframes gentle-pulse-card {
+  0%, 100% { box-shadow: 0 12px 36px -4px rgba(245, 158, 11, 0.2), 0 0 24px rgba(6, 182, 212, 0.12); }
+  50% { box-shadow: 0 16px 48px -2px rgba(245, 158, 11, 0.35), 0 0 32px rgba(6, 182, 212, 0.22); }
+}
+
+.animate-pulse-gentle {
+  animation: gentle-pulse-card 3.2s ease-in-out infinite;
+}
+
+/* Creative Floating / Slide-in Mini Tab */
+@keyframes slide-in-float-tab {
+  0% {
+    transform: translateX(120%) scale(0.9);
+    opacity: 0;
+  }
+  70% {
+    transform: translateX(-10px) scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-tab {
+  animation: slide-in-float-tab 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+#floating-photo-api-tab {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#floating-photo-api-tab:hover {
+  transform: translateY(-3px) scale(1.04);
+}
+
+html:not(.dark) #floating-photo-api-tab > div {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: #d97706 !important;
+  box-shadow: 0 10px 30px rgba(217, 119, 6, 0.28) !important;
+}
+
+html:not(.dark) #floating-photo-api-tab span.text-white {
+  color: #0f172a !important;
+}
+
+
 
